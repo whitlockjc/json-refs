@@ -24,9 +24,50 @@
 
 'use strict';
 
+var _ = require('lodash');
+var browserify = require('browserify');
+var exposify = require('exposify');
 var gulp = require('gulp');
 var jshint = require('gulp-jshint');
 var mocha = require('gulp-mocha');
+var source = require('vinyl-source-stream');
+
+gulp.task('browserify', function () {
+  // Builds 4 browser binaries:
+  //
+  // 1 (swagger-tools.js): Bower build without uglification and including source maps
+  // 2 (swagger-tools-min.js): Bower build uglified and without source maps
+  // 3 (swagger-tools-standalone.js): Standalone build without uglification and including source maps
+  // 4 (swagger-tools-standalone-min.js): Standalone build uglified and without source maps
+
+  _.times(4, function (n) {
+    var useDebug = n === 0 || n === 2;
+    var isStandalone = n >= 2;
+    var b = browserify('./index.js', {
+      debug: useDebug,
+      standalone: 'JsonRefs'
+    });
+
+    if (!useDebug) {
+      b.transform({global: true}, 'uglifyify');
+    }
+
+    if (!isStandalone) {
+      // Expose Bower modules so they can be required
+      exposify.config = {
+        'lodash': '_',
+        'traverse': 'traverse'
+      };
+
+      b.transform('exposify');
+    }
+
+    b.transform('brfs')
+      .bundle()
+      .pipe(source('json-refs' + (isStandalone ? '-standalone' : '') + (!useDebug ? '-min' : '') + '.js'))
+      .pipe(gulp.dest('./browser/'));
+  });
+});
 
 gulp.task('lint', function () {
   return gulp.src([
@@ -45,3 +86,4 @@ gulp.task('test', function () {
 });
 
 gulp.task('default', ['lint', 'test']);
+gulp.task('dist', ['default', 'browserify']);

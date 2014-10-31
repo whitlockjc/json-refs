@@ -14,6 +14,10 @@
   "bugs": {
     "url": "https://github.com/whitlockjc/json-refs/issues"
   },
+  "files": [
+    "index.js",
+    "LICENSE"
+  ],
   "homepage": "https://github.com/whitlockjc/json-refs",
   "license": "MIT",
   "repository": {
@@ -24,10 +28,15 @@
     "json"
   ],
   "devDependencies": {
+    "brfs": "^1.2.0",
+    "browserify": "^6.2.0",
+    "exposify": "^0.2.0",
     "gulp": "^3.8.9",
     "gulp-jshint": "^1.8.6",
     "gulp-mocha": "^1.1.1",
-    "jshint-stylish": "^1.0.0"
+    "jshint-stylish": "^1.0.0",
+    "uglifyify": "^2.6.0",
+    "vinyl-source-stream": "^1.0.0"
   },
   "dependencies": {
     "lodash": "^2.4.1",

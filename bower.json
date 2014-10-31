@@ -14,12 +14,15 @@
   "ignore": [
     "**/.*",
     "node_modules",
-    "bin",
     "bower_components",
     "browser/*-standalone*.js",
     "gulpfile.js",
     "index.js",
     "package.json",
     "test"
-  ]
+  ],
+  "dependencies": {
+    "lodash": "~2.4.1",
+    "traverse": "~0.6.7"
+  }
 }
