@@ -12,13 +12,45 @@ References are part JSON Pointer.
 * License: [![License](http://img.shields.io/npm/l/json-refs.svg)](https://github.com/whitlockjc/json-refs/blob/master/LICENSE)
 * Version: [![NPM Version](http://img.shields.io/npm/v/json-refs.svg)](https://www.npmjs.org/package/json-refs)
 
-# APIs
+## Installation
 
-All examples below use a variable called `jsonRefs`.  Here is how to create it:
+json-refs is available for both Node.js and the browser.  Installation instructions for each environment are below.
+
+### Browser
+
+Installation for browser applications can be done via [Bower][bower] or by downloading a standalone binary.
+
+#### Using Bower
+
+```
+bower install json-refs --save
+```
+
+#### Standalone Binaries
+
+The standalone binaries come in two flavors:
+
+* [json-refs-standalone.js](https://raw.github.com/whitlockjc/json-refs/master/browser/json-refs-standalone.js): _1,104kb_, full source and source maps
+* [json-refs-standalone-min.js](https://raw.github.com/whitlockjc/json-refs/master/browser/json-refs-standalone-min.js): _112kb_, minified, compressed
+and no sourcemap
+
+### Node.js
+
+Installation for Node.js applications can be done via [NPM][npm].
+
+```
+npm install json-refs --save
+```
+
+## APIs
+
+All examples below use a variable called `jsonRefs`.  Here is how to create it in Node.js:
 
 ```js
 var jsRefs = require('jsonRefs');
 ```
+
+For the browser, `JsonRefs` is exported.
 
 ## `findRefs (json)`
 
