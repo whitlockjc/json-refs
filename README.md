@@ -1,6 +1,6 @@
 # json-refs
 
-Various utilities for [JSON References][json-reference-draft-spec], and [JSON Pointers][json-pointers-spe] since JSON
+Various utilities for [JSON References][json-reference-draft-spec], and [JSON Pointers][json-pointer-spec] since JSON
 References are part JSON Pointer.
 
 ## Project Badges
