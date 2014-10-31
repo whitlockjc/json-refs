@@ -35,10 +35,10 @@ var source = require('vinyl-source-stream');
 gulp.task('browserify', function () {
   // Builds 4 browser binaries:
   //
-  // 1 (swagger-tools.js): Bower build without uglification and including source maps
-  // 2 (swagger-tools-min.js): Bower build uglified and without source maps
-  // 3 (swagger-tools-standalone.js): Standalone build without uglification and including source maps
-  // 4 (swagger-tools-standalone-min.js): Standalone build uglified and without source maps
+  // 1 (json-refs.js): Bower build without uglification and including source maps
+  // 2 (json-refs-min.js): Bower build uglified and without source maps
+  // 3 (json-refs-standalone.js): Standalone build without uglification and including source maps
+  // 4 (json-refs-standalone-min.js): Standalone build uglified and without source maps
 
   _.times(4, function (n) {
     var useDebug = n === 0 || n === 2;
