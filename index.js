@@ -27,9 +27,7 @@
 'use strict';
 
 var _ = require('lodash');
-var http = require('http');
-var https = require('https');
-var parseurl = require('url').parse;
+var request = require('superagent');
 var traverse = require('traverse');
 
 /**
@@ -52,33 +50,24 @@ var traverse = require('traverse');
  * @throws Error if there is a problem making the request or the content is not JSON
  */
 var getRemoteJson = function getRemoteJson (url, done) {
-  var options = parseurl(url);
-  var transport = url.indexOf('https') > -1 ? https : http;
-
-  options.headers = {
-    'user-agent': 'whitlockjc/json-refs'
-  };
-
-  transport.get(options, function (res) {
-    var body = '';
-
-    res.on('data', function(chunk) {
-      body += chunk;
-    });
-
-    res.on('end', function() {
+  request.get(url)
+    .set('user-agent', 'whitlockjc/json-refs')
+    .end(function (res) {
       var err;
       var json;
 
-      try {
-        json = JSON.parse(body);
-      } catch (e) {
-        err = e;
+      if (_.isPlainObject(res.body)) {
+        json = res.body;
+      } else {
+        try {
+          json = JSON.parse(res.text);
+        } catch (e) {
+          err = e;
+        }
       }
 
       done(err, json);
     });
-  });
 };
 
 /* Exported Functions */
@@ -260,7 +249,9 @@ var resolveRefs = module.exports.resolveRefs = function resolveRefs (json, done)
                 if (parentPath.length === 0) {
                   cJsonT.value = json;
                 } else {
-                  cJsonT.set(parentPath, traverse(json).get(pathFromPointer(parseurl(ref).hash || '#')));
+                  cJsonT.set(parentPath, traverse(json).get(pathFromPointer(ref.indexOf('#') === -1 ?
+                                                              '#' :
+                                                              ref.substring(ref.indexOf('#')))));
                 }
 
                 done(undefined, removeCircular(cJsonT));

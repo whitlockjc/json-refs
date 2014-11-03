@@ -30,8 +30,8 @@ bower install json-refs --save
 
 The standalone binaries come in two flavors:
 
-* [json-refs-standalone.js](https://raw.github.com/whitlockjc/json-refs/master/browser/json-refs-standalone.js): _1,104kb_, full source and source maps
-* [json-refs-standalone-min.js](https://raw.github.com/whitlockjc/json-refs/master/browser/json-refs-standalone-min.js): _112kb_, minified, compressed
+* [json-refs-standalone.js](https://raw.github.com/whitlockjc/json-refs/master/browser/json-refs-standalone.js): _692kb_, full source and source maps
+* [json-refs-standalone-min.js](https://raw.github.com/whitlockjc/json-refs/master/browser/json-refs-standalone-min.js): _48kb_, minified, compressed
 and no sourcemap
 
 ### Node.js

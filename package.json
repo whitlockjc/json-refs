@@ -40,6 +40,7 @@
   },
   "dependencies": {
     "lodash": "^2.4.1",
+    "superagent": "^0.20.0",
     "traverse": "^0.6.6"
   }
 }
