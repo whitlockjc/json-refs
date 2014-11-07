@@ -1,4 +1,4 @@
-/* exported findRefs, isRemotePointer, pathFromPointer, pathToPointer, resolveRefs */
+/* exported findRefs, isJsonReference, isRemotePointer, pathFromPointer, pathToPointer, resolveRefs */
 
 /*
  * The MIT License (MIT)
