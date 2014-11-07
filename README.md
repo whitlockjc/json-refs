@@ -62,6 +62,26 @@ For the browser, `JsonRefs` is exported.
 
 An `object` whose keys are JSON Pointers to where the JSON Reference's `$ref` node is and the JSON Reference `string`.
 
+## `isJsonReference (obj)`
+
+**Arguments**
+
+* `[obj] {*}` - The object to check
+
+**Response**
+
+`true` if the argument is an `object` and its `$ref` property is a JSON Pointer and `false` otherwise.
+
+## `isRemotePointer (ptr)`
+
+**Arguments**
+
+* `ptr {*}` - The JSON Pointer to check
+
+**Response**
+
+`true` if the argument is an is a JSON Pointer to a remote document and `false` otherwise.
+
 ## `pathFromPointer (ptr)`
 
 **Arguments**

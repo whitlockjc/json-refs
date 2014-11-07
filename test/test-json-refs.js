@@ -71,6 +71,20 @@ describe('json-refs', function () {
     });
   });
 
+  describe('#isJsonReference', function () {
+    it('should return proper response', function () {
+      var tests = [
+        [undefined, false],
+        [{$ref: 1}, false],
+        [{$ref: '#'}, true]
+      ];
+
+      _.each(tests, function (test) {
+        assert.ok(jsonRefs.isJsonReference(test[0]) === test[1]);
+      });
+    });
+  });
+
   describe('#isRemotePointer', function () {
     it('should throw an Error when passed the wrong arguments', function () {
       var errors = {

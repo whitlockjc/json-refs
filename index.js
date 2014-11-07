@@ -73,6 +73,18 @@ var getRemoteJson = function getRemoteJson (url, done) {
 /* Exported Functions */
 
 /**
+ * Returns whether or not the object represents a JSON Reference.
+ *
+ * @param {*} [obj] - The object to check
+ *
+ * @returns true if the argument is an object and its $ref property is a string and false otherwise
+ */
+var isJsonReference = module.exports.isJsonReference = function isJsonReference (obj) {
+  // TODO: Add check that the value is a valid JSON Pointer
+  return _.isPlainObject(obj) && _.isString(obj.$ref);
+};
+
+/**
  * Takes an array of path segments and creates a JSON Pointer from it.
  *
  * @see {@link http://tools.ietf.org/html/rfc6901}
@@ -122,7 +134,7 @@ var findRefs = module.exports.findRefs = function findRefs (json) {
   return traverse(json).reduce(function (acc) {
     var val = this.node;
 
-    if (this.key === '$ref' && _.isString(val)) {
+    if (this.key === '$ref' && isJsonReference(this.parent.node)) {
       acc[pathToPointer(this.path)] = val;
     }
 
