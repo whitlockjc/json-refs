@@ -30,6 +30,8 @@ var _ = require('lodash');
 var request = require('superagent');
 var traverse = require('traverse');
 
+var remoteCache = {};
+
 /**
  * Callback used by all json-refs functions.
  *
@@ -50,24 +52,31 @@ var traverse = require('traverse');
  * @throws Error if there is a problem making the request or the content is not JSON
  */
 var getRemoteJson = function getRemoteJson (url, done) {
-  request.get(url)
-    .set('user-agent', 'whitlockjc/json-refs')
-    .end(function (res) {
-      var err;
-      var json;
+  var realUrl = url.split('#')[0];
+  var json = remoteCache[realUrl];
+  var err;
 
-      if (_.isPlainObject(res.body)) {
-        json = res.body;
-      } else {
-        try {
-          json = JSON.parse(res.text);
-        } catch (e) {
-          err = e;
+  if (!_.isUndefined(json)) {
+    done(err, json);
+  } else {
+    request.get(url)
+      .set('user-agent', 'whitlockjc/json-refs')
+      .end(function (res) {
+        if (_.isPlainObject(res.body)) {
+          json = res.body;
+        } else {
+          try {
+            json = JSON.parse(res.text);
+          } catch (e) {
+            err = e;
+          }
         }
-      }
 
-      done(err, json);
-    });
+        remoteCache[realUrl] = json;
+
+        done(err, json);
+      });
+  }
 };
 
 /* Exported Functions */
