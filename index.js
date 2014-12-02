@@ -61,6 +61,7 @@ var getRemoteJson = function getRemoteJson (url, done) {
   } else {
     request.get(url)
       .set('user-agent', 'whitlockjc/json-refs')
+      .set('Accept', 'application/json')
       .end(function (res) {
         if (_.isPlainObject(res.body)) {
           json = res.body;
