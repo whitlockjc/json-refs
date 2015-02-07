@@ -142,6 +142,6 @@ jsonRefs.resolveRefs(json, function (err, rJson) {
   console.log(JSON.stringify(rJson)); // {name: 'json-refs', owner: {/* GitHub Repository Owner Information */}}
 });
 ```
-
+[bower]: http://bower.io/
 [json-reference-draft-spec]: http://tools.ietf.org/html/draft-pbryan-zyp-json-ref-03
 [json-pointer-spec]: http://tools.ietf.org/html/rfc6901
