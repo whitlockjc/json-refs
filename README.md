@@ -127,8 +127,9 @@ If there is an `Error`, the callback is called with the `Error` in the first arg
 argument.  If there is no `Error`, the first argument is `undefined` and the second argument is an `object` whose value
 is the fully resolved document.
 
-**Example**
+##Usage
 
+###Node.js
 ```js
 var json = {
   name: 'json-refs',
@@ -141,6 +142,66 @@ jsonRefs.resolveRefs(json, function (err, rJson) {
 
   console.log(JSON.stringify(rJson)); // {name: 'json-refs', owner: {/* GitHub Repository Owner Information */}}
 });
+```
+
+###Browser
+
+**Bower**
+
+```html
+<html>
+  <head>
+    <title>Bower Example</title>
+    <script src="bower_components/lodash/lodash.js"></script>
+    <script src="bower_components/superagent/superagent.js"></script>
+    <script src="bower_components/traverse/traverse.js"></script>
+    <script src="bower_components/json-refs/browser/json-refs.js"></script>
+  </head>
+  <body>
+  </body>
+  <script>
+    var json = {
+      name: 'json-refs',
+      owner: {
+        $ref: 'https://api.github.com/repos/whitlockjc/json-refs#/owner'
+      }
+    };
+
+    JsonRefs.resolveRefs(json, function (err, rJson) {
+      if (err) throw err;
+
+      console.log(rJson);
+    });
+  </script>
+</html>
+```
+
+**Standalone**
+
+```html
+<html>
+  <head>
+    <title>Standalone Example</title>
+    <script src="json-refs-standalone.js"></script>
+  </head>
+  <body>
+
+  </body>
+  <script>
+    var json = {
+      name: 'json-refs',
+      owner: {
+        $ref: 'https://api.github.com/repos/whitlockjc/json-refs#/owner'
+      }
+    };
+
+    JsonRefs.resolveRefs(json, function (err, rJson) {
+      if (err) throw err;
+
+      console.log(rJson);
+    });
+  </script>
+</html>
 ```
 [bower]: http://bower.io/
 [json-reference-draft-spec]: http://tools.ietf.org/html/draft-pbryan-zyp-json-ref-03
