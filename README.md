@@ -47,7 +47,7 @@ npm install json-refs --save
 All examples below use a variable called `jsonRefs`.  Here is how to create it in Node.js:
 
 ```js
-var jsRefs = require('jsonRefs');
+var jsRefs = require('json-refs');
 ```
 
 For the browser, `JsonRefs` is exported.
