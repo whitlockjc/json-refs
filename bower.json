@@ -22,8 +22,8 @@
     "test"
   ],
   "dependencies": {
-    "lodash": "~3.0.0",
     "traverse": "~0.6.7",
-    "superagent": "~0.21.0"
+    "superagent": "~0.21.0",
+    "lodash-compat": "~3.5.0"
   }
 }
