@@ -26,7 +26,7 @@
 
 'use strict';
 
-var _ = require('lodash');
+var _ = require('lodash-compat');
 var assert = require('assert');
 var http = require('http');
 var jsonRefs = require('../');

@@ -24,7 +24,7 @@
 
 'use strict';
 
-var _ = require('lodash');
+var _ = require('lodash-compat');
 var browserify = require('browserify');
 var exposify = require('exposify');
 var gulp = require('gulp');
@@ -44,7 +44,7 @@ gulp.task('browserify', function () {
   _.times(4, function (n) {
     var useDebug = n === 0 || n === 2;
     var isStandalone = n >= 2;
-    var b = browserify('./index.js', {
+    var b = browserify('index.js', {
       debug: useDebug,
       standalone: 'JsonRefs'
     });
@@ -66,15 +66,15 @@ gulp.task('browserify', function () {
     b.transform('brfs')
       .bundle()
       .pipe(source('json-refs' + (isStandalone ? '-standalone' : '') + (!useDebug ? '-min' : '') + '.js'))
-      .pipe(gulp.dest('./browser/'));
+      .pipe(gulp.dest('browser/'));
   });
 });
 
 gulp.task('lint', function () {
   return gulp.src([
-      './index.js',
-      './test/**/*.js',
-      './gulpfile.js'
+      'index.js',
+      'test/**/*.js',
+      'gulpfile.js'
     ])
     .pipe(jshint())
     .pipe(jshint.reporter('jshint-stylish'))
@@ -82,8 +82,9 @@ gulp.task('lint', function () {
 });
 
 gulp.task('test', function () {
-  gulp.src('./index.js')
-    .pipe(istanbul())
+  gulp.src('index.js')
+    .pipe(istanbul({includeUntested: true}))
+    .pipe(istanbul.hookRequire()) // Force `require` to return covered files 
     .on('finish', function () {
       gulp.src('test/**/test-*.js')
         .pipe(mocha({reporter: 'spec'}))

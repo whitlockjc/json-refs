@@ -26,7 +26,16 @@
 
 'use strict';
 
-var _ = require('lodash');
+var _ = {
+  cloneDeep: require('lodash-compat/lang/cloneDeep'),
+  each: require('lodash-compat/collection/each'),
+  isArray: require('lodash-compat/lang/isArray'),
+  isFunction: require('lodash-compat/lang/isFunction'),
+  isPlainObject: require('lodash-compat/lang/isPlainObject'),
+  isString: require('lodash-compat/lang/isString'),
+  isUndefined: require('lodash-compat/lang/isUndefined'),
+  map: require('lodash-compat/collection/map'),
+};
 var request = require('superagent');
 var traverse = require('traverse');
 
