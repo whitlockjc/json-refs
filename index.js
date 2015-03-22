@@ -34,7 +34,7 @@ var _ = {
   isPlainObject: require('lodash-compat/lang/isPlainObject'),
   isString: require('lodash-compat/lang/isString'),
   isUndefined: require('lodash-compat/lang/isUndefined'),
-  map: require('lodash-compat/collection/map'),
+  map: require('lodash-compat/collection/map')
 };
 var request = require('superagent');
 var traverse = require('traverse');
@@ -257,14 +257,44 @@ var resolveRefs = module.exports.resolveRefs = function resolveRefs (json, done)
       }
     });
   };
+  var metadata = {};
   var cJsonT;
 
   if (Object.keys(refs).length > 0) {
     cJsonT = traverse(_.cloneDeep(json)); // Clone the input JSON to avoid altering it
 
     _.each(refs, function (ref, refPtr) {
-      var refPath = pathFromPointer(refPtr);
-      var parentPath = refPath.slice(0, refPath.length - 1);
+      var replaceReference = function (to, from, ref, refPtr) {
+        var refMetadata = {
+          ref: ref
+        };
+        var missing = false;
+        var parentPath;
+        var refPath;
+        var value;
+
+        ref = ref.indexOf('#') === -1 ?
+          '#' :
+          ref.substring(ref.indexOf('#'));
+        refPath = pathFromPointer(refPtr);
+        parentPath = refPath.slice(0, refPath.length - 1);
+
+        if (parentPath.length === 0) {
+          missing = !_.isUndefined(from.value);
+          value = from.value;
+          to.value = value;
+        } else {
+          missing = !from.has(pathFromPointer(ref));
+          value = from.get(pathFromPointer(ref));
+          to.set(parentPath, value);
+        }
+
+        if (!missing) {
+          refMetadata.value = value;
+        }
+
+        metadata[refPtr] = refMetadata;
+      };
 
       if (isRemotePointer(ref)) {
         isAsync = true;
@@ -277,32 +307,22 @@ var resolveRefs = module.exports.resolveRefs = function resolveRefs (json, done)
               if (err) {
                 done(err);
               } else {
-                if (parentPath.length === 0) {
-                  cJsonT.value = json;
-                } else {
-                  cJsonT.set(parentPath, traverse(json).get(pathFromPointer(ref.indexOf('#') === -1 ?
-                                                              '#' :
-                                                              ref.substring(ref.indexOf('#')))));
-                }
+                replaceReference(cJsonT, traverse(json), ref, refPtr);
 
-                done(undefined, removeCircular(cJsonT));
+                done(undefined, removeCircular(cJsonT), metadata);
               }
             });
           }
         });
       } else {
-        if (parentPath.length === 0) {
-          cJsonT.value = json;
-        } else {
-          cJsonT.set(parentPath, cJsonT.get(pathFromPointer(ref)));
-        }
+        replaceReference(cJsonT, cJsonT, ref, refPtr);
       }
     });
 
     if (!isAsync) {
-      done(undefined, removeCircular(cJsonT));
+      done(undefined, removeCircular(cJsonT), metadata);
     }
   } else {
-    done(undefined, json);
+    done(undefined, json, metadata);
   }
 };

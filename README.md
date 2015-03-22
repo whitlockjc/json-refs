@@ -119,13 +119,21 @@ console.log(jsonRefs.pathToPointer(['owner', 'login'])); // #/owner/login
 **Arguments**
 
 * `json {object}`: The JavaScript object containing zero or more JSON References
-* `done {function}`: An error-first callback to be called with the fully-resolved object
+* `done {function}`: An error-first callback to be called with the fully-resolved object and metadata for the reference
+resolution
 
 **Response**
 
 If there is an `Error`, the callback is called with the `Error` in the first argument and `undefined` in the second
 argument.  If there is no `Error`, the first argument is `undefined` and the second argument is an `object` whose value
-is the fully resolved document.
+is the fully resolved document.  The third argument is an `object` whose value is the reference resolution metadata.
+Its keys are the location of the reference and it's values are as follows:
+
+* `ref {string}`: The reference value as it existed in the original document
+* `[value] {*}`: The resolved value of the reference, if there is one.  If this property was set, this means that the
+reference was resolvable and it resolved to an explicit value.  If this property is not set, that means the reference
+was unresolvable.  A value of `undefined` means that the reference was resolvable to an actual value of `undefined` and
+is not indicative of an unresolvable reference.
 
 ##Usage
 
@@ -137,10 +145,11 @@ var json = {
     $ref: 'https://api.github.com/repos/whitlockjc/json-refs#/owner'
   }
 };
-jsonRefs.resolveRefs(json, function (err, rJson) {
+jsonRefs.resolveRefs(json, function (err, rJson, metadata) {
   if (err) throw err;
 
   console.log(JSON.stringify(rJson)); // {name: 'json-refs', owner: {/* GitHub Repository Owner Information */}}
+  console.log(JSON.stringify(metadata)); // {'#/owner/$ref': {ref: 'https://api.github.com/repos/whitlockjc/json-refs#/owner', value: {/*GitHub Repository Onwer Information */}}}
 });
 ```
 

@@ -211,9 +211,10 @@ describe('json-refs', function () {
           url: 'https://github.com/whitlockjc/json-refs'
         };
 
-        jsonRefs.resolveRefs(json, function (err, rJson) {
+        jsonRefs.resolveRefs(json, function (err, rJson, metadata) {
           assert.ok(_.isUndefined(err));
           assert.deepEqual(json, rJson);
+          assert.deepEqual({}, metadata);
 
           return done();
         });
@@ -228,14 +229,36 @@ describe('json-refs', function () {
             name: 'json-refs',
             maintainer: {
               $ref: '#/person'
-            }
+            },
+            organization: undefined
+          },
+          fake: {
+            $ref: '#/unresolvable'
+          },
+          undefined: {
+            $ref: '#/project/organization'
           }
         };
         var cJson = _.cloneDeep(json);
 
-        jsonRefs.resolveRefs(json, function (err, rJson) {
+        jsonRefs.resolveRefs(json, function (err, rJson, metadata) {
           assert.ok(_.isUndefined(err));
           assert.notDeepEqual(json, rJson);
+          assert.deepEqual({
+            '#/project/maintainer/$ref': {
+              ref: '#/person',
+              value: {
+                name: 'Jeremy'
+              }
+            },
+            '#/fake/$ref': {
+              ref: '#/unresolvable'
+            },
+            '#/undefined/$ref': {
+              ref: '#/project/organization',
+              value: undefined
+            }
+          }, metadata);
 
           // Make sure the original JSON is untouched
           assert.deepEqual(json, cJson);
@@ -248,8 +271,11 @@ describe('json-refs', function () {
               name: 'json-refs',
               maintainer: {
                 name: 'Jeremy'
-              }
-            }
+              },
+              organization: undefined
+            },
+            fake: undefined,
+            undefined: undefined
           });
 
           done();
@@ -397,12 +423,18 @@ describe('json-refs', function () {
         };
         var cJson = _.cloneDeep(json);
 
-        jsonRefs.resolveRefs(json, function (err, rJson) {
+        jsonRefs.resolveRefs(json, function (err, rJson, metadata) {
           assert.ok(_.isUndefined(err));
           assert.notDeepEqual(json, rJson);
 
           // Make sure the original JSON is untouched
           assert.deepEqual(json, cJson);
+          assert.deepEqual({
+            '#/project/$ref': {
+              ref: ghProjectUrl,
+              value: rJson.project
+            }
+          }, metadata);
 
           assert.equal(rJson.project.name, 'json-refs');
 
@@ -448,12 +480,18 @@ describe('json-refs', function () {
         };
         var cJson = _.cloneDeep(json);
 
-        jsonRefs.resolveRefs(json, function (err, rJson) {
+        jsonRefs.resolveRefs(json, function (err, rJson, metadata) {
           assert.ok(_.isUndefined(err));
           assert.notDeepEqual(json, rJson);
 
           // Make sure the original JSON is untouched
           assert.deepEqual(json, cJson);
+          assert.deepEqual({
+            '#/owner/$ref': {
+              ref: ghProjectUrl + '#/owner/login',
+              value: rJson.owner
+            }
+          }, metadata);
 
           assert.equal(rJson.owner, 'whitlockjc');
 
