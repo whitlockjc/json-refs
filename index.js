@@ -262,61 +262,65 @@ var resolveRefs = module.exports.resolveRefs = function resolveRefs (json, done)
 
   if (Object.keys(refs).length > 0) {
     cJsonT = traverse(_.cloneDeep(json)); // Clone the input JSON to avoid altering it
-
-    _.each(refs, function (ref, refPtr) {
-      var replaceReference = function (to, from, ref, refPtr) {
-        var refMetadata = {
-          ref: ref
-        };
-        var missing = false;
-        var parentPath;
-        var refPath;
-        var value;
-
-        ref = ref.indexOf('#') === -1 ?
-          '#' :
-          ref.substring(ref.indexOf('#'));
-        refPath = pathFromPointer(refPtr);
-        parentPath = refPath.slice(0, refPath.length - 1);
-
-        if (parentPath.length === 0) {
-          missing = !_.isUndefined(from.value);
-          value = from.value;
-          to.value = value;
-        } else {
-          missing = !from.has(pathFromPointer(ref));
-          value = from.get(pathFromPointer(ref));
-          to.set(parentPath, value);
-        }
-
-        if (!missing) {
-          refMetadata.value = value;
-        }
-
-        metadata[refPtr] = refMetadata;
+    var replaceReference = function (to, from, ref, refPtr) {
+      var refMetadata = {
+        ref: ref
       };
+      var missing = false;
+      var parentPath;
+      var refPath;
+      var value;
 
+      ref = ref.indexOf('#') === -1 ?
+        '#' :
+        ref.substring(ref.indexOf('#'));
+      refPath = pathFromPointer(refPtr);
+      parentPath = refPath.slice(0, refPath.length - 1);
+
+      if (parentPath.length === 0) {
+        missing = !_.isUndefined(from.value);
+        value = from.value;
+        to.value = value;
+      } else {
+        missing = !from.has(pathFromPointer(ref));
+        value = from.get(pathFromPointer(ref));
+        to.set(parentPath, value);
+      }
+
+      if (!missing) {
+        refMetadata.value = value;
+      }
+
+      metadata[refPtr] = refMetadata;
+    };
+
+    var remoteRefs = {};
+    _.each(refs, function (ref, refPtr) {
       if (isRemotePointer(ref)) {
         isAsync = true;
-
+        remoteRefs[refPtr] = ref;
+      } else {
+        replaceReference(cJsonT, cJsonT, ref, refPtr);
+      }
+    });
+    _.each(remoteRefs, function(ref, refPtr){
         getRemoteJson(ref, function (err, json) {
           if (err) {
             done(err);
           } else {
             resolveRefs(json, function (err, json) {
+              delete remoteRefs[refPtr];
               if (err) {
                 done(err);
               } else {
                 replaceReference(cJsonT, traverse(json), ref, refPtr);
-
-                done(undefined, removeCircular(cJsonT), metadata);
+                if(!Object.keys(remoteRefs).length){
+                  done(undefined, removeCircular(cJsonT), metadata);
+                }
               }
             });
           }
         });
-      } else {
-        replaceReference(cJsonT, cJsonT, ref, refPtr);
-      }
     });
 
     if (!isAsync) {

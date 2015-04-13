@@ -498,6 +498,41 @@ describe('json-refs', function () {
           done();
         });
       });
+
+      it('multple remote references with hash', function (done) {
+        var json = {
+          owner: {
+            $ref: ghProjectUrl + '#/owner/login'
+          },
+          name: {
+            $ref: ghProjectUrl + '#/name'
+          }
+        };
+        var cJson = _.cloneDeep(json);
+
+        jsonRefs.resolveRefs(json, function (err, rJson, metadata) {
+          assert.ok(_.isUndefined(err));
+          assert.notDeepEqual(json, rJson);
+
+          // Make sure the original JSON is untouched
+          assert.deepEqual(json, cJson);
+          assert.deepEqual({
+            '#/owner/$ref': {
+              ref: ghProjectUrl + '#/owner/login',
+              value: rJson.owner
+            },
+            '#/name/$ref': {
+              ref: ghProjectUrl + '#/name',
+              value: rJson.name
+            }
+          }, metadata);
+
+          assert.equal(rJson.owner, 'whitlockjc');
+          assert.equal(rJson.name, 'json-refs');
+
+          done();
+        });
+      });
     });
   });
 });
