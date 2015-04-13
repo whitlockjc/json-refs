@@ -44,7 +44,7 @@ gulp.task('browserify', function () {
   _.times(4, function (n) {
     var useDebug = n === 0 || n === 2;
     var isStandalone = n >= 2;
-    var b = browserify('index.js', {
+    var b = browserify('./index.js', {
       debug: useDebug,
       standalone: 'JsonRefs'
     });
@@ -92,5 +92,4 @@ gulp.task('test', function () {
     });
 });
 
-gulp.task('default', ['lint', 'test']);
-gulp.task('dist', ['default', 'browserify']);
+gulp.task('default', ['lint', 'test', 'browserify']);

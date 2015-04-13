@@ -105,7 +105,9 @@ describe('json-refs', function () {
       var tests = {
         '#': false,
         '#/some/path': false,
-        'http://json-schema.org/draft-04/schema': true
+        'http://json-schema.org/draft-04/schema': true,
+        './some/relative.json': true,
+        'file://some/path': true
       };
 
       _.each(tests, function (response, ptr) {

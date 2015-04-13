@@ -177,9 +177,7 @@ var isRemotePointer = module.exports.isRemotePointer = function isRemotePointer 
     throw new Error('ptr must be a string');
   }
 
-  // TODO: Update to work with relative file/path references
-
-  return /^https?:\/\//.test(ptr);
+  return /^((https?|file):\/\/|\.\/)/.test(ptr);
 };
 
 /**
