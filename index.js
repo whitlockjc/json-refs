@@ -50,46 +50,75 @@ var remoteCache = {};
  * @callback resultCallback
  */
 
+/**
+ * Callback used to provide access to altering a remote request prior to the request being made.
+ *
+ * @param {object} req - The Superagent request object
+ * @param {string} ref - The reference being resolved (When applicable)
+ *
+ * @callback prepareRequestCallback
+ */
+
 /* Internal Functions */
 
 /**
  * Retrieves the content at the URL and returns its JSON content.
  *
  * @param {string} url - The URL to retrieve
+ * @param {object} options - The options passed to resolveRefs
  * @param {resultCallback} done - The result callback
  *
  * @throws Error if there is a problem making the request or the content is not JSON
  */
-var getRemoteJson = function getRemoteJson (url, done) {
+var getRemoteJson = function getRemoteJson (url, options, done) {
   var realUrl = url.split('#')[0];
   var json = remoteCache[realUrl];
-  var err;
+  var userErr;
+  var realRequest;
 
   if (!_.isUndefined(json)) {
-    done(err, json);
+    done(userErr, json);
   } else {
-    request.get(url)
+    realRequest = request.get(url)
       .set('user-agent', 'whitlockjc/json-refs')
-      .set('Accept', 'application/json')
-      .end(function (res) {
+      .set('Accept', 'application/json');
+
+    if (!_.isUndefined(options.prepareRequest)) {
+      options.prepareRequest(realRequest, url);
+    }
+    
+    realRequest.end(function (err, res) {
+      if (err) {
+        userErr = err;
+      } else if (res.error) {
+        userErr = res.error;
+      } else {
         if (_.isPlainObject(res.body)) {
           json = res.body;
         } else {
           try {
             json = JSON.parse(res.text);
           } catch (e) {
-            err = e;
+            userErr = e;
           }
         }
+      }
 
-        remoteCache[realUrl] = json;
+      remoteCache[realUrl] = json;
 
-        done(err, json);
-      });
+      done(userErr, json);
+    });
   }
 };
 
 /* Exported Functions */
+
+/**
+ * Clears the internal cache of url -> JavaScript object mappings based on previously resolved references.
+ */
+module.exports.clearCache = function clearCache () {
+  remoteCache = {};
+};
 
 /**
  * Returns whether or not the object represents a JSON Reference.
@@ -225,19 +254,33 @@ var pathFromPointer = module.exports.pathFromPointer = function pathFromPointer 
  * resolved, the returned document is cloned and returned fully resolved.  The original document is untouched.
  *
  * @param {object} json - The JSON  document having zero or more JSON References
+ * @param {object} [options] - The options
+ * @param {prepareRequestCallback} [options.prepareRequest] - The callback used to prepare a request
  * @param {resultCallback} done - The result callback
  *
  * @throws Error if the arguments are missing or invalid
  */
-var resolveRefs = module.exports.resolveRefs = function resolveRefs (json, done) {
+var resolveRefs = module.exports.resolveRefs = function resolveRefs (json, options, done) {
+  if (arguments.length < 3) {
+    done = arguments[1];
+    options = {};
+  }
+
   if (_.isUndefined(json)) {
     throw new Error('json is required');
   } else if (!_.isPlainObject(json)) {
     throw new Error('json must be an object');
+  } else if (!_.isPlainObject(options)) {
+    throw new Error('options must be an object');
   } else if (_.isUndefined(done)) {
     throw new Error('done is required');
   } else if (!_.isFunction(done)) {
     throw new Error('done must be a function');
+  }
+
+  // Validate the options
+  if (!_.isUndefined(options.prepareRequest) && !_.isFunction(options.prepareRequest)) {
+    throw new Error('options.prepareRequest must be a function');
   }
 
   var isAsync = false;
@@ -301,24 +344,25 @@ var resolveRefs = module.exports.resolveRefs = function resolveRefs (json, done)
         replaceReference(cJsonT, cJsonT, ref, refPtr);
       }
     });
+
     _.each(remoteRefs, function(ref, refPtr){
-        getRemoteJson(ref, function (err, json) {
-          if (err) {
-            done(err);
-          } else {
-            resolveRefs(json, function (err, json) {
-              delete remoteRefs[refPtr];
-              if (err) {
-                done(err);
-              } else {
-                replaceReference(cJsonT, traverse(json), ref, refPtr);
-                if(!Object.keys(remoteRefs).length){
-                  done(undefined, removeCircular(cJsonT), metadata);
-                }
+      getRemoteJson(ref, options, function (err, json) {
+        if (err) {
+          done(err);
+        } else {
+          resolveRefs(json, options, function (err, json) {
+            delete remoteRefs[refPtr];
+            if (err) {
+              done(err);
+            } else {
+              replaceReference(cJsonT, traverse(json), ref, refPtr);
+              if(!Object.keys(remoteRefs).length){
+                done(undefined, removeCircular(cJsonT), metadata);
               }
-            });
-          }
-        });
+            }
+          });
+        }
+      });
     });
 
     if (!isAsync) {

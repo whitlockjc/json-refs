@@ -1,4 +1,4 @@
-/* global after, describe, it */
+/* global afterEach, describe, it */
 
 /*
  * The MIT License (MIT)
@@ -185,6 +185,7 @@ describe('json-refs', function () {
       var errors = {
         'json is required': [],
         'json must be an object': ['wrongType'],
+        'options must be an object': [{}, 'wrongType', function () {}],
         'done is required': [{}],
         'done must be a function': [{}, 'wrongType']
       };
@@ -201,10 +202,12 @@ describe('json-refs', function () {
     describe('should return the appropriate response', function () {
       var server;
 
-      after(function () {
+      afterEach(function () {
         if (server) {
           server.close();
         }
+
+        jsonRefs.clearCache();
       });
 
       it('no references', function (done) {
@@ -533,6 +536,64 @@ describe('json-refs', function () {
           assert.equal(rJson.name, 'json-refs');
 
           done();
+        });
+      });
+
+      it('remote reference requiring prepareRequest usage (Issue 12)', function (done) {
+        var json = {
+          project: {
+            $ref: 'http://localhost:3000/'
+          }
+        };
+        var cJson = _.cloneDeep(json);
+        var invalidRequestText = JSON.stringify({
+          message: 'Unauthorized access'
+        });
+
+        server = http.createServer(function (req, res) {
+          var statusCode = 200;
+          var body;
+
+          if (req.headers['x-api-key'] === 'Issue 12') {
+            body = JSON.stringify({
+              $ref: ghProjectUrl
+            });
+          } else {
+            body = invalidRequestText;
+            statusCode = 401;
+          }
+
+          res.writeHead(statusCode, {
+            'Content-Length': body.length,
+            'Content-Type': 'application/json'
+          });
+          res.end(body);
+        });
+
+        server.listen(3000, function () {
+          jsonRefs.resolveRefs(json, function (err, rJson) {
+            assert.ok(!_.isUndefined(err));
+            assert.ok(_.isUndefined(rJson));
+
+            assert.equal(401, err.status);
+            assert.equal(invalidRequestText, err.text);
+
+            jsonRefs.resolveRefs(json, {
+              prepareRequest: function (req) {
+                req.set('X-API-Key', 'Issue 12');
+              }
+            }, function (err, rJson) {
+              assert.ok(_.isUndefined(err));
+              assert.notDeepEqual(json, rJson);
+
+              // Make sure the original JSON is untouched
+              assert.deepEqual(json, cJson);
+
+              assert.equal(rJson.project.name, 'json-refs');
+
+              done();
+            });
+          });
         });
       });
     });

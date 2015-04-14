@@ -114,11 +114,13 @@ A `string` representing a JSON Pointer.
 console.log(jsonRefs.pathToPointer(['owner', 'login'])); // #/owner/login
 ```
 
-## `resolveRefs (json, done)`
+## `resolveRefs (json, options, done)`
 
 **Arguments**
 
 * `json {object}`: The JavaScript object containing zero or more JSON References
+* `[options] {object}`: The options
+* `[options.prepareRequest] {function}`: The callback used to prepare a request
 * `done {function}`: An error-first callback to be called with the fully-resolved object and metadata for the reference
 resolution
 
@@ -134,11 +136,43 @@ Its keys are the location of the reference and it's values are as follows:
 reference was resolvable and it resolved to an explicit value.  If this property is not set, that means the reference
 was unresolvable.  A value of `undefined` means that the reference was resolvable to an actual value of `undefined` and
 is not indicative of an unresolvable reference.
+* `
 
 ##Usage
 
+**Note:** If you need to alter your request in any way, for example to add specific headers to the request or to add
+authentication to the request or any other situation in which the request might need to be altered, you will need to use
+the `options.prepareRequest` callback.  Here is a simple example that uses `options.prepareRequest` to make a secure
+request using an Basic Authentication _(The example is written for Node.js but the actual business logic in how
+`resolveRefs` is called sould be the same in the browser)_:
+
+```js
+var jsonRefs = require('json-refs');
+var json = {
+  name: 'json-refs',
+  owner: {
+    $ref: 'https://api.github.com/repos/whitlockjc/json-refs#/owner'
+  }
+};
+jsonRefs.resolveRefs(json, {
+  prepareRequest: function (req) {
+    // Add the 'Basic Authentication' credentials
+    req.auth('whitlockjc', 'MY_GITHUB_PASSWORD');
+
+    // Add the 'X-API-Key' header for an API Key based authentication
+    // req.set('X-API-Key', 'MY_API_KEY');
+  }
+}, function (err, rJson, metadata) {
+  if (err) throw err;
+
+  console.log(JSON.stringify(rJson)); // {name: 'json-refs', owner: {/* GitHub Repository Owner Information */}}
+  console.log(JSON.stringify(metadata)); // {'#/owner/$ref': {ref: 'https://api.github.com/repos/whitlockjc/json-refs#/owner', value: {/*GitHub Repository Onwer Information */}}}
+});
+```
+
 ###Node.js
 ```js
+var jsonRefs = require('json-refs');
 var json = {
   name: 'json-refs',
   owner: {
