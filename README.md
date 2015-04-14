@@ -121,6 +121,7 @@ console.log(jsonRefs.pathToPointer(['owner', 'login'])); // #/owner/login
 * `json {object}`: The JavaScript object containing zero or more JSON References
 * `[options] {object}`: The options
 * `[options.prepareRequest] {function}`: The callback used to prepare a request
+* `[options.processContent] {function}`: The callback used to process the remote request content
 * `done {function}`: An error-first callback to be called with the fully-resolved object and metadata for the reference
 resolution
 
@@ -167,6 +168,27 @@ jsonRefs.resolveRefs(json, {
 
   console.log(JSON.stringify(rJson)); // {name: 'json-refs', owner: {/* GitHub Repository Owner Information */}}
   console.log(JSON.stringify(metadata)); // {'#/owner/$ref': {ref: 'https://api.github.com/repos/whitlockjc/json-refs#/owner', value: {/*GitHub Repository Onwer Information */}}}
+});
+```
+
+**Note:** If you need to pre-process the content of your remote requets, like to support data not explicitly supported
+by Superagent, you can use the `options.processContent` callback.  Here is a simple example that uses
+`options.processContent` to retrieve a YAML resource:
+
+```js
+var jsonRefs = require('json-resf');
+var YAML = require('yamljs');
+
+jsonRefs.resolveRefs({
+  $ref: 'http://somehost/somefile.yaml'
+}, {
+  processContent: function (content) {
+    return YAML.parse(content);
+  }
+}, function (err, rJson, metadata) {
+  if (err) throw err;
+
+  console.log(JSON.stringify(rJson)); // Document should be JSON equivalent of your YAML document
 });
 ```
 

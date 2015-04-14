@@ -37,7 +37,8 @@
     "gulp-mocha": "~2.0.0",
     "jshint-stylish": "~1.0.0",
     "uglifyify": "~3.0.1",
-    "vinyl-source-stream": "~1.0.0"
+    "vinyl-source-stream": "~1.0.0",
+    "yamljs": "^0.2.1"
   },
   "dependencies": {
     "lodash-compat": "^3.5.0",

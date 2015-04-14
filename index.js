@@ -59,6 +59,18 @@ var remoteCache = {};
  * @callback prepareRequestCallback
  */
 
+/**
+ * Callback used to process the content of a reference.
+ *
+ * @param {string} content - The content loaded from the file/URL
+ * @param {string} ref - The reference string (When applicable)
+ * @param {object} [res] - The Superagent response object (For remote URL requests only)
+ *
+ * @returns {object} The JavaScript object representation of the reference
+ *
+ * @callback processContentCallback
+ */
+
 /* Internal Functions */
 
 /**
@@ -80,21 +92,25 @@ var getRemoteJson = function getRemoteJson (url, options, done) {
     done(userErr, json);
   } else {
     realRequest = request.get(url)
-      .set('user-agent', 'whitlockjc/json-refs')
-      .set('Accept', 'application/json');
+      .set('user-agent', 'whitlockjc/json-refs');
 
     if (!_.isUndefined(options.prepareRequest)) {
       options.prepareRequest(realRequest, url);
     }
     
-    realRequest.end(function (err, res) {
-      if (err) {
-        userErr = err;
-      } else if (res.error) {
-        userErr = res.error;
-      } else {
-        if (_.isPlainObject(res.body)) {
-          json = res.body;
+    realRequest
+      .buffer()
+      .end(function (err, res) {
+        if (err) {
+          userErr = err;
+        } else if (res.error) {
+          userErr = res.error;
+        } else if (!_.isUndefined(options.processContent)) {
+          try {
+            json = options.processContent(res.text, url, res);
+          } catch (e) {
+            userErr = e;
+          }
         } else {
           try {
             json = JSON.parse(res.text);
@@ -102,12 +118,11 @@ var getRemoteJson = function getRemoteJson (url, options, done) {
             userErr = e;
           }
         }
-      }
 
-      remoteCache[realUrl] = json;
+        remoteCache[realUrl] = json;
 
-      done(userErr, json);
-    });
+        done(userErr, json);
+      });
   }
 };
 
@@ -256,6 +271,7 @@ var pathFromPointer = module.exports.pathFromPointer = function pathFromPointer 
  * @param {object} json - The JSON  document having zero or more JSON References
  * @param {object} [options] - The options
  * @param {prepareRequestCallback} [options.prepareRequest] - The callback used to prepare a request
+ * @param {processContentCallback} [options.processContent] - The callback used to process a reference's content
  * @param {resultCallback} done - The result callback
  *
  * @throws Error if the arguments are missing or invalid
@@ -281,6 +297,8 @@ var resolveRefs = module.exports.resolveRefs = function resolveRefs (json, optio
   // Validate the options
   if (!_.isUndefined(options.prepareRequest) && !_.isFunction(options.prepareRequest)) {
     throw new Error('options.prepareRequest must be a function');
+  } else if (!_.isUndefined(options.processContent) && !_.isFunction(options.processContent)) {
+    throw new Error('options.processContent must be a function');
   }
 
   var isAsync = false;
@@ -303,6 +321,7 @@ var resolveRefs = module.exports.resolveRefs = function resolveRefs (json, optio
 
   if (Object.keys(refs).length > 0) {
     cJsonT = traverse(_.cloneDeep(json)); // Clone the input JSON to avoid altering it
+
     var replaceReference = function (to, from, ref, refPtr) {
       var refMetadata = {
         ref: ref

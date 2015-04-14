@@ -30,6 +30,7 @@ var _ = require('lodash-compat');
 var assert = require('assert');
 var http = require('http');
 var jsonRefs = require('../');
+var YAML = require('yamljs');
 
 var ghProjectUrl = 'https://api.github.com/repos/whitlockjc/json-refs';
 
@@ -573,6 +574,7 @@ describe('json-refs', function () {
         });
 
         server.listen(3000, function () {
+          // Make request for reference that requires authentication (Should fail)
           jsonRefs.resolveRefs(json, function (err, rJson) {
             assert.ok(!_.isUndefined(err));
             assert.ok(_.isUndefined(rJson));
@@ -580,6 +582,7 @@ describe('json-refs', function () {
             assert.equal(401, err.status);
             assert.equal(invalidRequestText, err.text);
 
+            // Make same request for the same reference but use prepareRequest to add authentication to the request
             jsonRefs.resolveRefs(json, {
               prepareRequest: function (req) {
                 req.set('X-API-Key', 'Issue 12');
@@ -590,6 +593,52 @@ describe('json-refs', function () {
 
               // Make sure the original JSON is untouched
               assert.deepEqual(json, cJson);
+
+              assert.equal(rJson.project.name, 'json-refs');
+
+              done();
+            });
+          });
+        });
+      });
+
+      it('remote reference requiring processContent usage', function (done) {
+        var json = {
+          project: {
+            $ref: 'http://localhost:3000/'
+          }
+        };
+        var yamlAsJson = {
+          name: 'json-refs'
+        };
+
+        server = http.createServer(function (req, res) {
+          var body = YAML.stringify(yamlAsJson, 2);
+
+          res.writeHead(200, {
+            'Content-Length': body.length,
+            'Content-Type': 'application/yaml'
+          });
+          res.end(body);
+        });
+
+        server.listen(3000, function () {
+          // Make request for YAML reference (Should fail)
+          jsonRefs.resolveRefs(json, function (err, rJson) {
+            assert.ok(!_.isUndefined(err));
+            assert.ok(_.isUndefined(rJson));
+
+            // Make same request for the same reference but use processContent to parse the YAML
+            jsonRefs.resolveRefs(json, {
+              processContent: function (content, ref, res) {
+                assert.equal(ref, 'http://localhost:3000/');
+                assert.equal(res.text, content);
+
+                return YAML.parse(content);
+              }
+            }, function (err, rJson) {
+              assert.ok(_.isUndefined(err));
+              assert.notDeepEqual(json, rJson);
 
               assert.equal(rJson.project.name, 'json-refs');
 
