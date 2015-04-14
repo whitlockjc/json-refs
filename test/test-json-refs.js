@@ -54,7 +54,7 @@ describe('json-refs', function () {
       assert.deepEqual(jsonRefs.findRefs({
         '$ref': {
           '$ref': 1
-        },
+        }
       }), {});
     });
 
@@ -205,6 +205,8 @@ describe('json-refs', function () {
       afterEach(function () {
         if (server) {
           server.close();
+
+          server = undefined;
         }
 
         jsonRefs.clearCache();
