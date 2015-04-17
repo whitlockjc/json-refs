@@ -1,5 +1,9 @@
 ## Release Notes
 
+### v0.1.9 (2015-04-16)
+
+* Fixed a browser build issue
+
 ### v0.1.8 (2015-04-16)
 
 * Updated `isRemotePointer` to only return `true` for explicit URLs or relative paths
