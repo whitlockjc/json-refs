@@ -29,6 +29,7 @@
 var _ = {
   cloneDeep: require('lodash-compat/lang/cloneDeep'),
   each: require('lodash-compat/collection/each'),
+  indexOf: require('lodash-compat/array/indexOf'),
   isArray: require('lodash-compat/lang/isArray'),
   isFunction: require('lodash-compat/lang/isFunction'),
   isPlainObject: require('lodash-compat/lang/isPlainObject'),
@@ -40,6 +41,7 @@ var request = require('superagent');
 var traverse = require('traverse');
 
 var remoteCache = {};
+var supportedSchemes = ['http', 'https'];
 
 /**
  * Callback used by all json-refs functions.
@@ -221,7 +223,7 @@ var isRemotePointer = module.exports.isRemotePointer = function isRemotePointer 
     throw new Error('ptr must be a string');
   }
 
-  return /^((https?|file):\/\/|\.\/)/.test(ptr);
+  return ptr.charAt(0) !== '#';
 };
 
 /**
@@ -353,8 +355,8 @@ var resolveRefs = module.exports.resolveRefs = function resolveRefs (json, optio
 
       metadata[refPtr] = refMetadata;
     };
-
     var remoteRefs = {};
+
     _.each(refs, function (ref, refPtr) {
       if (isRemotePointer(ref)) {
         isAsync = true;
@@ -364,17 +366,31 @@ var resolveRefs = module.exports.resolveRefs = function resolveRefs (json, optio
       }
     });
 
-    _.each(remoteRefs, function(ref, refPtr){
+    _.each(remoteRefs, function(ref, refPtr) {
+      var scheme = ref.split(':')[0];
+
+      if (ref.charAt(0) === '.') {
+        done(new Error('Relative remote references are not yet supported'));
+
+        return false;
+      } else if (_.indexOf(supportedSchemes, scheme) === -1) {
+        done(new Error('Unsupported remote reference scheme: ' + scheme));
+
+        return false;
+      }
+
       getRemoteJson(ref, options, function (err, json) {
         if (err) {
           done(err);
         } else {
           resolveRefs(json, options, function (err, json) {
             delete remoteRefs[refPtr];
+
             if (err) {
               done(err);
             } else {
               replaceReference(cJsonT, traverse(json), ref, refPtr);
+
               if(!Object.keys(remoteRefs).length){
                 done(undefined, removeCircular(cJsonT), metadata);
               }
@@ -382,6 +398,8 @@ var resolveRefs = module.exports.resolveRefs = function resolveRefs (json, optio
           });
         }
       });
+
+      return true; // Here to avoid jshint from freaking out
     });
 
     if (!isAsync) {

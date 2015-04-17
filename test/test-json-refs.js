@@ -141,7 +141,9 @@ describe('json-refs', function () {
         '#/~0whitlockjc': ['~whitlockjc'],
         '#/~1home/whitlockjc': ['/home', 'whitlockjc'],
         '#/~0~1home/whitlockjc': ['~/home', 'whitlockjc'],
-        'http://json-schema.org/draft-04/schema#': 'http://json-schema.org/draft-04/schema#'
+        'http://json-schema.org/draft-04/schema#': 'http://json-schema.org/draft-04/schema#',
+        './testing.json': './testing.json',
+        '../testing.json': '../testing.json'
       };
 
       _.each(tests, function (path, ptr) {
@@ -645,6 +647,32 @@ describe('json-refs', function () {
               done();
             });
           });
+        });
+      });
+
+      it('return error for invalid remote reference scheme', function (done) {
+        var json = {
+          $ref: 'file://' + __dirname + '../package.json'
+        };
+
+        jsonRefs.resolveRefs(json, function (err, rJson) {
+          assert.equal(err.message, 'Unsupported remote reference scheme: file');
+          assert.ok(_.isUndefined(rJson));
+
+          return done();
+        });
+      });
+
+      it('return error for unsupported remote references', function (done) {
+        var json = {
+          $ref: '../package.json'
+        };
+
+        jsonRefs.resolveRefs(json, function (err, rJson) {
+          assert.equal(err.message, 'Relative remote references are not yet supported');
+          assert.ok(_.isUndefined(rJson));
+
+          return done();
         });
       });
     });
