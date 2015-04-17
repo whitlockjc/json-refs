@@ -101,9 +101,13 @@ var getRemoteJson = function getRemoteJson (url, options, done) {
     if (!_.isUndefined(options.prepareRequest)) {
       options.prepareRequest(realRequest, url);
     }
-    
+
+    // buffer() is only available in Node.js
+    if (_.isFunction(realRequest.buffer)) {
+      realRequest.buffer(true);
+    }
+
     realRequest
-      .buffer()
       .end(function (err, res) {
         if (err) {
           userErr = err;

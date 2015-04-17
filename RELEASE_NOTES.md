@@ -1,5 +1,9 @@
 ## Release Notes
 
+### v0.1.10 (2015-04-16)
+
+* Fixed an issue due to difference in superagent in browser vs. Node.js
+
 ### v0.1.9 (2015-04-16)
 
 * Fixed a browser build issue
