@@ -35,8 +35,10 @@ var _ = {
   isPlainObject: require('lodash-compat/lang/isPlainObject'),
   isString: require('lodash-compat/lang/isString'),
   isUndefined: require('lodash-compat/lang/isUndefined'),
+  keys: require('lodash-compat/object/keys'),
   map: require('lodash-compat/collection/map')
 };
+var async = require('async');
 var request = require('superagent');
 var traverse = require('traverse');
 
@@ -303,7 +305,6 @@ var resolveRefs = module.exports.resolveRefs = function resolveRefs (json, optio
     throw new Error('options.processContent must be a function');
   }
 
-  var isAsync = false;
   var refs = findRefs(json);
   var removeCircular = function removeCircular (jsonT) {
     // Remove circular references
@@ -359,55 +360,45 @@ var resolveRefs = module.exports.resolveRefs = function resolveRefs (json, optio
 
     _.each(refs, function (ref, refPtr) {
       if (isRemotePointer(ref)) {
-        isAsync = true;
         remoteRefs[refPtr] = ref;
       } else {
         replaceReference(cJsonT, cJsonT, ref, refPtr);
       }
     });
 
-    _.each(remoteRefs, function(ref, refPtr) {
+    async.map(_.keys(remoteRefs), function (refPtr, callback) {
+      var ref = remoteRefs[refPtr];
       var scheme = ref.split(':')[0];
-      var result = true;
 
-      if (ref.charAt(0) === '.') {
-        done(new Error('Relative remote references are not yet supported'));
+      // Do not process relative references or references to unsupported resources
+      if (ref.charAt(0) === '.' || _.indexOf(supportedSchemes, scheme) === -1) {
+        callback();
+      } else {
+        getRemoteJson(ref, options, function (err, json) {
+          if (err) {
+            callback(err);
+          } else {
+            resolveRefs(json, options, function (err, json) {
+              delete remoteRefs[refPtr];
 
-        return false;
-      } else if (_.indexOf(supportedSchemes, scheme) === -1) {
-        done(new Error('Unsupported remote reference scheme: ' + scheme));
+              if (err) {
+                callback(err);
+              } else {
+                replaceReference(cJsonT, traverse(json), ref, refPtr);
 
-        return false;
-      }
-
-      getRemoteJson(ref, options, function (err, json) {
-        if (err) {
-          done(err);
-        } else {
-          resolveRefs(json, options, function (err, json) {
-            delete remoteRefs[refPtr];
-
-            if (err) {
-              done(err);
-
-              result = false;
-            } else {
-              replaceReference(cJsonT, traverse(json), ref, refPtr);
-
-              if(!Object.keys(remoteRefs).length){
-                done(undefined, removeCircular(cJsonT), metadata);
+                callback();
               }
-            }
-          });
-        }
-      });
-
-      return result;
+            });
+          }
+        });
+      }
+    }, function (err) {
+      if (err) {
+        done(err);
+      } else {
+        done(undefined, removeCircular(cJsonT), metadata);
+      }
     });
-
-    if (!isAsync) {
-      done(undefined, removeCircular(cJsonT), metadata);
-    }
   } else {
     done(undefined, json, metadata);
   }

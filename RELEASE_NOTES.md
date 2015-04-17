@@ -9,5 +9,3 @@ _(Issue #12)_
 * Updated `isRemotePointer` to handle relative references and file URL references _(Issue #9)_
 * Updated `resolveRefs` to return resolution metadata _(What references were resolved, where they were located and what
 they resolved to)_
-* Updated `resolveRefs` to return an `Error` whenever a relative reference is encountered or whenever a remote reference
-uses an unsupported URL scheme

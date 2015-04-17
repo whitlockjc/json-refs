@@ -650,27 +650,29 @@ describe('json-refs', function () {
         });
       });
 
-      it('return error for invalid remote reference scheme', function (done) {
+      it('do not return error for invalid remote reference scheme', function (done) {
         var json = {
           $ref: 'file://' + __dirname + '../package.json'
         };
 
-        jsonRefs.resolveRefs(json, function (err, rJson) {
-          assert.equal(err.message, 'Unsupported remote reference scheme: file');
-          assert.ok(_.isUndefined(rJson));
+        jsonRefs.resolveRefs(json, function (err, rJson, metadata) {
+          assert.ok(_.isUndefined(err));
+          assert.deepEqual(json, rJson);
+          assert.deepEqual({}, metadata);
 
           return done();
         });
       });
 
-      it('return error for unsupported remote references', function (done) {
+      it('do not return error for unsupported remote references', function (done) {
         var json = {
           $ref: '../package.json'
         };
 
-        jsonRefs.resolveRefs(json, function (err, rJson) {
-          assert.equal(err.message, 'Relative remote references are not yet supported');
-          assert.ok(_.isUndefined(rJson));
+        jsonRefs.resolveRefs(json, function (err, rJson, metadata) {
+          assert.ok(_.isUndefined(err));
+          assert.deepEqual(json, rJson);
+          assert.deepEqual({}, metadata);
 
           return done();
         });
