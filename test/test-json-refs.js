@@ -108,6 +108,7 @@ describe('json-refs', function () {
         '#/some/path': false,
         'http://json-schema.org/draft-04/schema': true,
         './some/relative.json': true,
+        '../some/relative.json': true,
         'file://some/path': true
       };
 

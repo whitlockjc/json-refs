@@ -225,7 +225,7 @@ var isRemotePointer = module.exports.isRemotePointer = function isRemotePointer 
     throw new Error('ptr must be a string');
   }
 
-  return ptr.charAt(0) !== '#';
+  return /^(([a-zA-Z0-9+.-]+):\/\/|\.{1,2}\/)/.test(ptr);
 };
 
 /**
