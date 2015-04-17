@@ -368,6 +368,7 @@ var resolveRefs = module.exports.resolveRefs = function resolveRefs (json, optio
 
     _.each(remoteRefs, function(ref, refPtr) {
       var scheme = ref.split(':')[0];
+      var result = true;
 
       if (ref.charAt(0) === '.') {
         done(new Error('Relative remote references are not yet supported'));
@@ -388,6 +389,8 @@ var resolveRefs = module.exports.resolveRefs = function resolveRefs (json, optio
 
             if (err) {
               done(err);
+
+              result = false;
             } else {
               replaceReference(cJsonT, traverse(json), ref, refPtr);
 
@@ -399,7 +402,7 @@ var resolveRefs = module.exports.resolveRefs = function resolveRefs (json, optio
         }
       });
 
-      return true; // Here to avoid jshint from freaking out
+      return result;
     });
 
     if (!isAsync) {
