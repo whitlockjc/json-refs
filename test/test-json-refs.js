@@ -189,6 +189,8 @@ describe('json-refs', function () {
         'json is required': [],
         'json must be an object': ['wrongType'],
         'options must be an object': [{}, 'wrongType', function () {}],
+        'options.prepareRequest must be a function': [{}, {prepareRequest: 'wrongType'}, function () {}],
+        'options.processContent must be a function': [{}, {processContent: 'wrongType'}, function () {}],
         'done is required': [{}],
         'done must be a function': [{}, 'wrongType']
       };
