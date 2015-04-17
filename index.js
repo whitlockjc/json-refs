@@ -383,8 +383,6 @@ var resolveRefs = module.exports.resolveRefs = function resolveRefs (json, optio
             callback(err);
           } else {
             resolveRefs(json, options, function (err, json) {
-              delete remoteRefs[refPtr];
-
               if (err) {
                 callback(err);
               } else {
