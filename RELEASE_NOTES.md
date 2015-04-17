@@ -1,5 +1,9 @@
 ## Release Notes
 
+### v0.1.8 (2015-04-16)
+
+* Updated `isRemotePointer` to only return `true` for explicit URLs or relative paths
+
 ### v0.1.7 (2015-04-16)
 
 * Added support in `resolveRefs` to alter a remote request prior to sending the request _(Useful for authentication)_
