@@ -30,8 +30,8 @@ bower install json-refs --save
 
 The standalone binaries come in two flavors:
 
-* [json-refs-standalone.js](https://raw.github.com/whitlockjc/json-refs/master/browser/json-refs-standalone.js): _692kb_, full source and source maps
-* [json-refs-standalone-min.js](https://raw.github.com/whitlockjc/json-refs/master/browser/json-refs-standalone-min.js): _48kb_, minified, compressed
+* [json-refs-standalone.js](https://raw.github.com/whitlockjc/json-refs/master/browser/json-refs-standalone.js): _432kb_, full source and source maps
+* [json-refs-standalone-min.js](https://raw.github.com/whitlockjc/json-refs/master/browser/json-refs-standalone-min.js): _64kb_, minified, compressed
 and no sourcemap
 
 ### Node.js
@@ -47,7 +47,7 @@ npm install json-refs --save
 All examples below use a variable called `jsonRefs`.  Here is how to create it in Node.js:
 
 ```js
-var jsRefs = require('json-refs');
+var jsonRefs = require('json-refs');
 ```
 
 For the browser, `JsonRefs` is exported.
@@ -269,5 +269,6 @@ jsonRefs.resolveRefs(json, function (err, rJson, metadata) {
 </html>
 ```
 [bower]: http://bower.io/
+[npm]: https://www.npmjs.com/
 [json-reference-draft-spec]: http://tools.ietf.org/html/draft-pbryan-zyp-json-ref-03
 [json-pointer-spec]: http://tools.ietf.org/html/rfc6901
