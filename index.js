@@ -86,7 +86,7 @@ var supportedSchemes = ['http', 'https'];
  *
  * @throws Error if there is a problem making the request or the content is not JSON
  */
-var getRemoteJson = function getRemoteJson (url, options, done) {
+function getRemoteJson (url, options, done) {
   var realUrl = url.split('#')[0];
   var json = remoteCache[realUrl];
   var userErr;
@@ -132,7 +132,7 @@ var getRemoteJson = function getRemoteJson (url, options, done) {
         done(userErr, json);
       });
   }
-};
+}
 
 /* Exported Functions */
 
@@ -146,9 +146,9 @@ module.exports.clearCache = function clearCache () {
 /**
  * Returns whether or not the object represents a JSON Reference.
  *
- * @param {*} [obj] - The object to check
+ * @param {object|string} [obj] - The object to check
  *
- * @returns true if the argument is an object and its $ref property is a string and false otherwise
+ * @returns {boolean} true if the argument is an object and its $ref property is a string and false otherwise
  */
 var isJsonReference = module.exports.isJsonReference = function isJsonReference (obj) {
   // TODO: Add check that the value is a valid JSON Pointer
@@ -162,7 +162,7 @@ var isJsonReference = module.exports.isJsonReference = function isJsonReference 
  *
  * @param {string[]} path - The path segments
  *
- * @returns a JSON Pointer based on the path segments
+ * @returns {string} A JSON Pointer based on the path segments
  *
  * @throws Error if the arguments are missing or invalid
  */
@@ -191,7 +191,7 @@ var pathToPointer = module.exports.pathToPointer = function pathToPointer (path)
  *
  * @param {object} json - The JSON document to find references in
  *
- * @returns an object whose keys are JSON Pointers to the '$ref' node of the JSON Reference
+ * @returns {object} An object whose keys are JSON Pointers to the '$ref' node of the JSON Reference
  *
  * @throws Error if the arguments are missing or invalid
  */
@@ -218,7 +218,7 @@ var findRefs = module.exports.findRefs = function findRefs (json) {
  *
  * @param {string} ptr - The JSON Pointer
  *
- * @returns true if the JSON Pointer is remote or false if not
+ * @returns {boolean} true if the JSON Pointer is remote or false if not
  *
  * @throws Error if the arguments are missing or invalid
  */
@@ -239,7 +239,7 @@ var isRemotePointer = module.exports.isRemotePointer = function isRemotePointer 
  *
  * @param {string} ptr - The JSON Pointer for the JSON Reference
  *
- * @returns an array of path segments or the passed in string if it is a remote reference
+ * @returns {string[]} An array of path segments or the passed in string if it is a remote reference
  *
  * @throws Error if the arguments are missing or invalid
  */
@@ -284,7 +284,7 @@ var pathFromPointer = module.exports.pathFromPointer = function pathFromPointer 
  *
  * @throws Error if the arguments are missing or invalid
  */
-var resolveRefs = module.exports.resolveRefs = function resolveRefs (json, options, done) {
+module.exports.resolveRefs = function resolveRefs (json, options, done) {
   if (arguments.length < 3) {
     done = arguments[1];
     options = {};
@@ -309,58 +309,59 @@ var resolveRefs = module.exports.resolveRefs = function resolveRefs (json, optio
     throw new Error('options.processContent must be a function');
   }
 
+  var remoteRefs = {};
   var refs = findRefs(json);
-  var removeCircular = function removeCircular (jsonT) {
+  var metadata = {};
+  var cJsonT;
+
+  function removeCircular (jsonT) {
     // Remove circular references
     return jsonT.map(function () {
       if (this.circular) {
         // Always traverse one depth after recognizing a circular dependency
-        this.update(traverse(this.node).map(function() {
+        this.update(traverse(this.node).map(function () {
           if (this.circular) {
             this.parent.remove();
           }
         }));
       }
     });
-  };
-  var metadata = {};
-  var cJsonT;
+  }
+  function replaceReference (to, from, ref, refPtr) {
+    var refMetadata = {
+      ref: ref
+    };
+    var missing = false;
+    var parentPath;
+    var refPath;
+    var value;
+
+    ref = ref.indexOf('#') === -1 ?
+      '#' :
+      ref.substring(ref.indexOf('#'));
+    refPath = pathFromPointer(refPtr);
+    parentPath = refPath.slice(0, refPath.length - 1);
+
+    if (parentPath.length === 0) {
+      missing = !_.isUndefined(from.value);
+      value = from.value;
+      to.value = value;
+    } else {
+      missing = !from.has(pathFromPointer(ref));
+      value = from.get(pathFromPointer(ref));
+      to.set(parentPath, value);
+    }
+
+    if (!missing) {
+      refMetadata.value = value;
+    }
+
+    metadata[refPtr] = refMetadata;
+  }
 
   if (Object.keys(refs).length > 0) {
+
     cJsonT = traverse(_.cloneDeep(json)); // Clone the input JSON to avoid altering it
-
-    var replaceReference = function (to, from, ref, refPtr) {
-      var refMetadata = {
-        ref: ref
-      };
-      var missing = false;
-      var parentPath;
-      var refPath;
-      var value;
-
-      ref = ref.indexOf('#') === -1 ?
-        '#' :
-        ref.substring(ref.indexOf('#'));
-      refPath = pathFromPointer(refPtr);
-      parentPath = refPath.slice(0, refPath.length - 1);
-
-      if (parentPath.length === 0) {
-        missing = !_.isUndefined(from.value);
-        value = from.value;
-        to.value = value;
-      } else {
-        missing = !from.has(pathFromPointer(ref));
-        value = from.get(pathFromPointer(ref));
-        to.set(parentPath, value);
-      }
-
-      if (!missing) {
-        refMetadata.value = value;
-      }
-
-      metadata[refPtr] = refMetadata;
-    };
-    var remoteRefs = {};
 
     _.each(refs, function (ref, refPtr) {
       if (isRemotePointer(ref)) {
@@ -378,15 +379,15 @@ var resolveRefs = module.exports.resolveRefs = function resolveRefs (json, optio
       if (ref.charAt(0) === '.' || _.indexOf(supportedSchemes, scheme) === -1) {
         callback();
       } else {
-        getRemoteJson(ref, options, function (err, json) {
+        getRemoteJson(ref, options, function (err, remoteJson) {
           if (err) {
             callback(err);
           } else {
-            resolveRefs(json, options, function (err, json) {
-              if (err) {
-                callback(err);
+            resolveRefs(remoteJson, options, function (err2, resolvedJson) {
+              if (err2) {
+                callback(err2);
               } else {
-                replaceReference(cJsonT, traverse(json), ref, refPtr);
+                replaceReference(cJsonT, traverse(resolvedJson), ref, refPtr);
 
                 callback();
               }

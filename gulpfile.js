@@ -26,10 +26,10 @@
 
 var _ = require('lodash-compat');
 var browserify = require('browserify');
+var eslint = require('gulp-eslint');
 var exposify = require('exposify');
 var gulp = require('gulp');
 var istanbul = require('gulp-istanbul');
-var jshint = require('gulp-jshint');
 var mocha = require('gulp-mocha');
 var source = require('vinyl-source-stream');
 
@@ -78,15 +78,15 @@ gulp.task('lint', function () {
       'test/**/*.js',
       'gulpfile.js'
     ])
-    .pipe(jshint())
-    .pipe(jshint.reporter('jshint-stylish'))
-    .pipe(jshint.reporter('fail'));
+    .pipe(eslint())
+    .pipe(eslint.format('stylish'))
+    .pipe(eslint.failAfterError());
 });
 
 gulp.task('test', function () {
   gulp.src('index.js')
     .pipe(istanbul({includeUntested: true}))
-    .pipe(istanbul.hookRequire()) // Force `require` to return covered files 
+    .pipe(istanbul.hookRequire()) // Force `require` to return covered files
     .on('finish', function () {
       gulp.src('test/**/test-*.js')
         .pipe(mocha({reporter: 'spec'}))

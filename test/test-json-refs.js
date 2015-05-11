@@ -29,6 +29,7 @@
 var _ = require('lodash-compat');
 var assert = require('assert');
 var http = require('http');
+var path = require('path');
 var jsonRefs = require('../');
 var YAML = require('yamljs');
 
@@ -147,8 +148,8 @@ describe('json-refs', function () {
         '../testing.json': '../testing.json'
       };
 
-      _.each(tests, function (path, ptr) {
-        assert.deepEqual(jsonRefs.pathFromPointer(ptr), path);
+      _.each(tests, function (pathSegments, ptr) {
+        assert.deepEqual(jsonRefs.pathFromPointer(ptr), pathSegments);
       });
     });
   });
@@ -178,8 +179,8 @@ describe('json-refs', function () {
         '#/~0~1home/whitlockjc': ['~/home', 'whitlockjc']
       };
 
-      _.each(tests, function (path, ptr) {
-        assert.equal(jsonRefs.pathToPointer(path), ptr);
+      _.each(tests, function (pathSegments, ptr) {
+        assert.equal(jsonRefs.pathToPointer(pathSegments), ptr);
       });
     });
   });
@@ -464,7 +465,7 @@ describe('json-refs', function () {
         var cJson = _.cloneDeep(json);
 
         server = http.createServer(function (req, res) {
-          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.writeHead(200, {'Content-Type': 'application/json'});
           res.end(JSON.stringify({
             $ref: ghProjectUrl
           }));
@@ -592,14 +593,14 @@ describe('json-refs', function () {
               prepareRequest: function (req) {
                 req.set('X-API-Key', 'Issue 12');
               }
-            }, function (err, rJson) {
-              assert.ok(_.isUndefined(err));
-              assert.notDeepEqual(json, rJson);
+            }, function (err2, rJson2) {
+              assert.ok(_.isUndefined(err2));
+              assert.notDeepEqual(json, rJson2);
 
               // Make sure the original JSON is untouched
               assert.deepEqual(json, cJson);
 
-              assert.equal(rJson.project.name, 'json-refs');
+              assert.equal(rJson2.project.name, 'json-refs');
 
               done();
             });
@@ -641,11 +642,11 @@ describe('json-refs', function () {
 
                 return YAML.parse(content);
               }
-            }, function (err, rJson) {
-              assert.ok(_.isUndefined(err));
-              assert.notDeepEqual(json, rJson);
+            }, function (err2, rJson2) {
+              assert.ok(_.isUndefined(err2));
+              assert.notDeepEqual(json, rJson2);
 
-              assert.equal(rJson.project.name, 'json-refs');
+              assert.equal(rJson2.project.name, 'json-refs');
 
               done();
             });
@@ -655,7 +656,7 @@ describe('json-refs', function () {
 
       it('do not return error for invalid remote reference scheme', function (done) {
         var json = {
-          $ref: 'file://' + __dirname + '../package.json'
+          $ref: 'file://' + path.resolve(__dirname, '..', 'package.json')
         };
 
         jsonRefs.resolveRefs(json, function (err, rJson, metadata) {

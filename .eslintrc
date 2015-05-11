@@ -1,0 +1,33 @@
+# ESLint
+#
+#   Configuration: http://eslint.org/docs/user-guide/configuring
+#   Rules: http://eslint.org/docs/rules/
+
+---
+  env:
+    node: true
+
+  rules:
+    brace-style: [2, "1tbs"]
+    comma-style: [2, "last"]
+    curly: [2, "multi-line"]
+    default-case: 2
+    func-style: [2, "declaration"]
+    guard-for-in: 2
+    newline-after-var: 2
+    no-floating-decimal: 2
+    no-inner-declarations: [2, "both"]
+    no-multiple-empty-lines: 2
+    no-nested-ternary: 2
+    no-path-concat: 2
+    quotes: [2, "single", "avoid-escape"]
+    radix: 2
+    space-after-keywords: [2, "always"]
+    space-before-blocks: [2, "always"]
+    space-before-function-paren: [2, "always"]
+    space-in-brackets: [2, "never"]
+    space-in-parens: [2, "never"]
+    spaced-line-comment: [2, "always"]
+    strict: [2, "global"]
+    valid-jsdoc: [2, {"requireReturn": false, "prefer": {"return": "returns"}}]
+    wrap-iife: 2
