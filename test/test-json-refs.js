@@ -31,7 +31,7 @@ var assert = require('assert');
 var http = require('http');
 var path = require('path');
 var jsonRefs = require('../');
-var YAML = require('yamljs');
+var YAML = require('js-yaml');
 
 var ghProjectUrl = 'https://api.github.com/repos/whitlockjc/json-refs';
 
@@ -619,7 +619,7 @@ describe('json-refs', function () {
         };
 
         server = http.createServer(function (req, res) {
-          var body = YAML.stringify(yamlAsJson, 2);
+          var body = YAML.safeDump(yamlAsJson);
 
           res.writeHead(200, {
             'Content-Length': body.length,
@@ -640,7 +640,7 @@ describe('json-refs', function () {
                 assert.equal(ref, 'http://localhost:3000/');
                 assert.equal(res.text, content);
 
-                return YAML.parse(content);
+                return YAML.safeLoad(content);
               }
             }, function (err2, rJson2) {
               assert.ok(_.isUndefined(err2));

@@ -26,6 +26,7 @@
 
 var _ = require('lodash-compat');
 var browserify = require('browserify');
+var del = require('del');
 var eslint = require('gulp-eslint');
 var exposify = require('exposify');
 var gulp = require('gulp');
@@ -70,6 +71,13 @@ gulp.task('browserify', function () {
       .pipe(source('json-refs' + (isStandalone ? '-standalone' : '') + (!useDebug ? '-min' : '') + '.js'))
       .pipe(gulp.dest('browser/'));
   });
+});
+
+gulp.task('clean', function (done) {
+  del([
+    'bower_components',
+    'coverage'
+  ], done);
 });
 
 gulp.task('lint', function () {
