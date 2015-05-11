@@ -586,7 +586,8 @@ describe('json-refs', function () {
             assert.ok(_.isUndefined(rJson));
 
             assert.equal(401, err.status);
-            assert.equal(invalidRequestText, err.text);
+            assert.equal('Unauthorized', err.message);
+            assert.equal(invalidRequestText, err.response.res.text);
 
             // Make same request for the same reference but use prepareRequest to add authentication to the request
             jsonRefs.resolveRefs(json, {
