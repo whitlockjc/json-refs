@@ -40,6 +40,11 @@ var testHelpers = require('./test/helpers');
 var httpServer = testHelpers.createServer(require('http'));
 var runningAllTests = false;
 
+// Load promises polyfill if necessary
+if (typeof Promise === 'undefined') {
+  require('native-promise-only');
+}
+
 function displayCoverageReport (display) {
   if (display) {
     gulp.src([])
