@@ -3,7 +3,7 @@ sudo: false
 node_js:
   - "iojs"
   - "0.10"
-  - "0.11"
+  - "0.12"
 branches:
   only:
     - master
