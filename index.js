@@ -26,6 +26,11 @@
 
 'use strict';
 
+// Load promises polyfill if necessary
+if (typeof Promise === 'undefined') {
+  require('native-promise-only');
+}
+
 var _ = {
   cloneDeep: require('lodash-compat/lang/cloneDeep'),
   each: require('lodash-compat/collection/each'),
@@ -36,10 +41,10 @@ var _ = {
   isString: require('lodash-compat/lang/isString'),
   isUndefined: require('lodash-compat/lang/isUndefined'),
   keys: require('lodash-compat/object/keys'),
-  map: require('lodash-compat/collection/map')
+  map: require('lodash-compat/collection/map'),
+  size: require('lodash-compat/collection/size')
 };
-var async = require('async');
-var request = require('superagent');
+var pathLoader = require('path-loader');
 var traverse = require('traverse');
 
 var remoteCache = {};
@@ -89,48 +94,31 @@ var supportedSchemes = ['http', 'https'];
 function getRemoteJson (url, options, done) {
   var realUrl = url.split('#')[0];
   var json = remoteCache[realUrl];
-  var userErr;
-  var realRequest;
+  var allTasks;
 
   if (!_.isUndefined(json)) {
-    done(userErr, json);
+    done(undefined, json);
   } else {
-    realRequest = request.get(url)
-      .set('user-agent', 'whitlockjc/json-refs');
+    allTasks = pathLoader.load(realUrl, options);
 
-    if (!_.isUndefined(options.prepareRequest)) {
-      options.prepareRequest(realRequest, url);
-    }
-
-    // buffer() is only available in Node.js
-    if (_.isFunction(realRequest.buffer)) {
-      realRequest.buffer(true);
-    }
-
-    realRequest
-      .end(function (err, res) {
-        if (err) {
-          userErr = err;
-        } else if (res.error) {
-          userErr = res.error;
-        } else if (!_.isUndefined(options.processContent)) {
-          try {
-            json = options.processContent(res.text, url, res);
-          } catch (e) {
-            userErr = e;
-          }
-        } else {
-          try {
-            json = JSON.parse(res.text);
-          } catch (e) {
-            userErr = e;
-          }
-        }
-
-        remoteCache[realUrl] = json;
-
-        done(userErr, json);
+    if (options.processContent) {
+      allTasks = allTasks.then(function (content) {
+        return options.processContent(content, realUrl);
       });
+    } else {
+      allTasks = allTasks.then(JSON.parse);
+    }
+
+    allTasks.then(function (nJson) {
+      remoteCache[realUrl] = nJson;
+
+      return nJson;
+    })
+    .then(function (nJson) {
+      done(undefined, nJson);
+    }, function (err) {
+      done(err);
+    });
   }
 }
 
@@ -312,6 +300,7 @@ module.exports.resolveRefs = function resolveRefs (json, options, done) {
   var remoteRefs = {};
   var refs = findRefs(json);
   var metadata = {};
+  var allTasks;
   var cJsonT;
 
   function removeCircular (jsonT) {
@@ -360,7 +349,6 @@ module.exports.resolveRefs = function resolveRefs (json, options, done) {
   }
 
   if (Object.keys(refs).length > 0) {
-
     cJsonT = traverse(_.cloneDeep(json)); // Clone the input JSON to avoid altering it
 
     _.each(refs, function (ref, refPtr) {
@@ -371,37 +359,50 @@ module.exports.resolveRefs = function resolveRefs (json, options, done) {
       }
     });
 
-    async.map(_.keys(remoteRefs), function (refPtr, callback) {
-      var ref = remoteRefs[refPtr];
-      var scheme = ref.split(':')[0];
+    if (_.size(remoteRefs) > 0) {
+      allTasks = Promise.resolve();
 
-      // Do not process relative references or references to unsupported resources
-      if (ref.charAt(0) === '.' || _.indexOf(supportedSchemes, scheme) === -1) {
-        callback();
-      } else {
-        getRemoteJson(ref, options, function (err, remoteJson) {
-          if (err) {
-            callback(err);
-          } else {
-            resolveRefs(remoteJson, options, function (err2, resolvedJson) {
-              if (err2) {
-                callback(err2);
+      _.each(remoteRefs, function (ref, refPtr) {
+        var scheme = ref.split(':')[0];
+        var nextStep;
+
+        // Do not process relative references or references to unsupported resources
+        if (ref.charAt(0) === '.' || _.indexOf(supportedSchemes, scheme) === -1) {
+          nextStep = Promise.resolve();
+        } else {
+          nextStep = new Promise(function (resolve, reject) {
+            getRemoteJson(ref, options, function (err, remoteJson) {
+              if (err) {
+                reject(err);
               } else {
-                replaceReference(cJsonT, traverse(resolvedJson), ref, refPtr);
+                resolveRefs(remoteJson, options, function (err2, resolvedJson) {
+                  if (err2) {
+                    reject(err2);
+                  } else {
+                    replaceReference(cJsonT, traverse(resolvedJson), ref, refPtr);
 
-                callback();
+                    resolve();
+                  }
+                });
               }
             });
-          }
+          });
+        }
+
+        allTasks = allTasks.then(function () {
+          return nextStep;
         });
-      }
-    }, function (err) {
-      if (err) {
-        done(err);
-      } else {
-        done(undefined, removeCircular(cJsonT), metadata);
-      }
-    });
+      });
+
+      allTasks
+        .then(function () {
+          done(undefined, removeCircular(cJsonT), metadata);
+        }, function (err) {
+          done(err);
+        });
+    } else {
+      done(undefined, removeCircular(cJsonT), metadata);
+    }
   } else {
     done(undefined, json, metadata);
   }

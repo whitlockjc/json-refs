@@ -1,5 +1,9 @@
 ## Release Notes
 
+### v0.2.0 (2015-05012)
+
+* Replace file loading with [path-loader](https://github.com/whitlockjc/path-loader)
+
 ### v0.1.10 (2015-04-16)
 
 * Fixed an issue due to difference in superagent in browser vs. Node.js

@@ -28,12 +28,12 @@
 
 var _ = require('lodash-compat');
 var assert = require('assert');
-var http = require('http');
 var path = require('path');
 var jsonRefs = require('../');
 var YAML = require('js-yaml');
 
-var ghProjectUrl = 'https://api.github.com/repos/whitlockjc/json-refs';
+var projectJson = require('./browser/project.json');
+var projectJsonUrl = 'http://localhost:44444/project.json';
 
 describe('json-refs', function () {
   describe('#findRefs', function () {
@@ -64,11 +64,11 @@ describe('json-refs', function () {
       assert.deepEqual(jsonRefs.findRefs({
         $ref: 'http://json-schema.org/draft-04/schema',
         project: {
-          $ref: ghProjectUrl
+          $ref: projectJsonUrl
         }
       }), {
         '#/$ref': 'http://json-schema.org/draft-04/schema',
-        '#/project/$ref': ghProjectUrl
+        '#/project/$ref': projectJsonUrl
       });
     });
   });
@@ -207,15 +207,7 @@ describe('json-refs', function () {
     });
 
     describe('should return the appropriate response', function () {
-      var server;
-
       afterEach(function () {
-        if (server) {
-          server.close();
-
-          server = undefined;
-        }
-
         jsonRefs.clearCache();
       });
 
@@ -352,7 +344,7 @@ describe('json-refs', function () {
       //   https://github.com/substack/js-traverse/issues/42
       it('top-level reference (replaces whole document)', function (done) {
         var json = {
-          $ref: ghProjectUrl
+          $ref: projectJsonUrl
         };
         var cJson = _.cloneDeep(json);
 
@@ -363,7 +355,7 @@ describe('json-refs', function () {
           // Make sure the original JSON is untouched
           assert.deepEqual(json, cJson);
 
-          assert.equal(rJson.name, 'json-refs');
+          assert.equal(rJson.full_name, 'whitlockjc/json-refs');
 
           done();
         });
@@ -432,7 +424,7 @@ describe('json-refs', function () {
       it('simple remote reference', function (done) {
         var json = {
           project: {
-            $ref: ghProjectUrl
+            $ref: projectJsonUrl
           }
         };
         var cJson = _.cloneDeep(json);
@@ -445,8 +437,8 @@ describe('json-refs', function () {
           assert.deepEqual(json, cJson);
           assert.deepEqual({
             '#/project/$ref': {
-              ref: ghProjectUrl,
-              value: rJson.project
+              ref: projectJsonUrl,
+              value: projectJson
             }
           }, metadata);
 
@@ -459,37 +451,27 @@ describe('json-refs', function () {
       it('complex remote reference', function (done) {
         var json = {
           project: {
-            $ref: 'http://localhost:3000/'
+            $ref: 'http://localhost:44444/ref.json'
           }
         };
         var cJson = _.cloneDeep(json);
 
-        server = http.createServer(function (req, res) {
-          res.writeHead(200, {'Content-Type': 'application/json'});
-          res.end(JSON.stringify({
-            $ref: ghProjectUrl
-          }));
-        });
+        jsonRefs.resolveRefs(json, function (err, rJson) {
+          assert.ok(_.isUndefined(err));
+          assert.notDeepEqual(json, rJson);
 
-        server.listen(3000, function () {
-          jsonRefs.resolveRefs(json, function (err, rJson) {
-            assert.ok(_.isUndefined(err));
-            assert.notDeepEqual(json, rJson);
+          // Make sure the original JSON is untouched
+          assert.deepEqual(json, cJson);
 
-            // Make sure the original JSON is untouched
-            assert.deepEqual(json, cJson);
-
-            assert.equal(rJson.project.name, 'json-refs');
-
-            done();
-          });
+          assert.equal(rJson.project.full_name, 'whitlockjc/json-refs');
+          done();
         });
       });
 
       it('remote reference with hash', function (done) {
         var json = {
-          owner: {
-            $ref: ghProjectUrl + '#/owner/login'
+          name: {
+            $ref: projectJsonUrl + '#/name'
           }
         };
         var cJson = _.cloneDeep(json);
@@ -501,13 +483,13 @@ describe('json-refs', function () {
           // Make sure the original JSON is untouched
           assert.deepEqual(json, cJson);
           assert.deepEqual({
-            '#/owner/$ref': {
-              ref: ghProjectUrl + '#/owner/login',
-              value: rJson.owner
+            '#/name/$ref': {
+              ref: projectJsonUrl + '#/name',
+              value: rJson.name
             }
           }, metadata);
 
-          assert.equal(rJson.owner, 'whitlockjc');
+          assert.equal(rJson.name, 'json-refs');
 
           done();
         });
@@ -515,11 +497,11 @@ describe('json-refs', function () {
 
       it('multple remote references with hash', function (done) {
         var json = {
-          owner: {
-            $ref: ghProjectUrl + '#/owner/login'
+          fullName: {
+            $ref: projectJsonUrl + '#/full_name'
           },
           name: {
-            $ref: ghProjectUrl + '#/name'
+            $ref: projectJsonUrl + '#/name'
           }
         };
         var cJson = _.cloneDeep(json);
@@ -531,17 +513,17 @@ describe('json-refs', function () {
           // Make sure the original JSON is untouched
           assert.deepEqual(json, cJson);
           assert.deepEqual({
-            '#/owner/$ref': {
-              ref: ghProjectUrl + '#/owner/login',
-              value: rJson.owner
+            '#/fullName/$ref': {
+              ref: projectJsonUrl + '#/full_name',
+              value: rJson.fullName
             },
             '#/name/$ref': {
-              ref: ghProjectUrl + '#/name',
+              ref: projectJsonUrl + '#/name',
               value: rJson.name
             }
           }, metadata);
 
-          assert.equal(rJson.owner, 'whitlockjc');
+          assert.equal(rJson.fullName, 'whitlockjc/json-refs');
           assert.equal(rJson.name, 'json-refs');
 
           done();
@@ -551,60 +533,33 @@ describe('json-refs', function () {
       it('remote reference requiring prepareRequest usage (Issue 12)', function (done) {
         var json = {
           project: {
-            $ref: 'http://localhost:3000/'
+            $ref: 'http://localhost:44444/secure/project.json'
           }
         };
         var cJson = _.cloneDeep(json);
-        var invalidRequestText = JSON.stringify({
-          message: 'Unauthorized access'
-        });
 
-        server = http.createServer(function (req, res) {
-          var statusCode = 200;
-          var body;
+        // Make request for reference that requires authentication (Should fail)
+        jsonRefs.resolveRefs(json, function (err, rJson) {
+          assert.ok(!_.isUndefined(err));
+          assert.ok(_.isUndefined(rJson));
 
-          if (req.headers['x-api-key'] === 'Issue 12') {
-            body = JSON.stringify({
-              $ref: ghProjectUrl
-            });
-          } else {
-            body = invalidRequestText;
-            statusCode = 401;
-          }
+          assert.equal(401, err.status);
 
-          res.writeHead(statusCode, {
-            'Content-Length': body.length,
-            'Content-Type': 'application/json'
-          });
-          res.end(body);
-        });
+          // Make same request for the same reference but use prepareRequest to add authentication to the request
+          jsonRefs.resolveRefs(json, {
+            prepareRequest: function (req) {
+              req.auth('whitlockjc', 'json-refs');
+            }
+          }, function (err2, rJson2) {
+            assert.ok(_.isUndefined(err2));
+            assert.notDeepEqual(json, rJson2);
 
-        server.listen(3000, function () {
-          // Make request for reference that requires authentication (Should fail)
-          jsonRefs.resolveRefs(json, function (err, rJson) {
-            assert.ok(!_.isUndefined(err));
-            assert.ok(_.isUndefined(rJson));
+            // Make sure the original JSON is untouched
+            assert.deepEqual(json, cJson);
 
-            assert.equal(401, err.status);
-            assert.equal('Unauthorized', err.message);
-            assert.equal(invalidRequestText, err.response.res.text);
+            assert.equal(rJson2.project.name, 'json-refs');
 
-            // Make same request for the same reference but use prepareRequest to add authentication to the request
-            jsonRefs.resolveRefs(json, {
-              prepareRequest: function (req) {
-                req.set('X-API-Key', 'Issue 12');
-              }
-            }, function (err2, rJson2) {
-              assert.ok(_.isUndefined(err2));
-              assert.notDeepEqual(json, rJson2);
-
-              // Make sure the original JSON is untouched
-              assert.deepEqual(json, cJson);
-
-              assert.equal(rJson2.project.name, 'json-refs');
-
-              done();
-            });
+            done();
           });
         });
       });
@@ -612,45 +567,31 @@ describe('json-refs', function () {
       it('remote reference requiring processContent usage', function (done) {
         var json = {
           project: {
-            $ref: 'http://localhost:3000/'
+            $ref: 'http://localhost:44444/project.yaml'
           }
         };
-        var yamlAsJson = {
-          name: 'json-refs'
-        };
 
-        server = http.createServer(function (req, res) {
-          var body = YAML.safeDump(yamlAsJson);
+        // Make request for YAML reference (Should fail)
+        jsonRefs.resolveRefs(json, function (err, rJson) {
+          assert.ok(!_.isUndefined(err));
+          assert.ok(_.isUndefined(rJson));
 
-          res.writeHead(200, {
-            'Content-Length': body.length,
-            'Content-Type': 'application/yaml'
-          });
-          res.end(body);
-        });
+          // Make same request for the same reference but use processContent to parse the YAML
+          jsonRefs.resolveRefs(json, {
+            processContent: function (content, ref) {
+              assert.equal(ref, 'http://localhost:44444/project.yaml');
 
-        server.listen(3000, function () {
-          // Make request for YAML reference (Should fail)
-          jsonRefs.resolveRefs(json, function (err, rJson) {
-            assert.ok(!_.isUndefined(err));
-            assert.ok(_.isUndefined(rJson));
+              return YAML.safeLoad(content);
+            }
+          }, function (err2, rJson2) {
+            assert.ok(_.isUndefined(err2));
+            assert.notDeepEqual(json, rJson2);
 
-            // Make same request for the same reference but use processContent to parse the YAML
-            jsonRefs.resolveRefs(json, {
-              processContent: function (content, ref, res) {
-                assert.equal(ref, 'http://localhost:3000/');
-                assert.equal(res.text, content);
+            assert.deepEqual({
+              project: projectJson
+            }, rJson2);
 
-                return YAML.safeLoad(content);
-              }
-            }, function (err2, rJson2) {
-              assert.ok(_.isUndefined(err2));
-              assert.notDeepEqual(json, rJson2);
-
-              assert.equal(rJson2.project.name, 'json-refs');
-
-              done();
-            });
+            done();
           });
         });
       });
