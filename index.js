@@ -265,10 +265,9 @@ var pathFromPointer = module.exports.pathFromPointer = function pathFromPointer 
  * resolved, the returned document is cloned and returned fully resolved.  The original document is untouched.
  *
  * @param {object} json - The JSON  document having zero or more JSON References
- * @param {object} [options] - The options
- * @param {prepareRequestCallback} [options.prepareRequest] - The callback used to prepare a request
+ * @param {object} [options] - The options (All options are passed down to whitlockjc/path-loader)
  * @param {processContentCallback} [options.processContent] - The callback used to process a reference's content
- * @param {resultCallback} done - The result callback
+ * @param {resultCallback} [done] - The result callback
  *
  * @throws Error if the arguments are missing or invalid
  */
@@ -286,14 +285,12 @@ module.exports.resolveRefs = function resolveRefs (json, options, done) {
     throw new Error('options must be an object');
   } else if (_.isUndefined(done)) {
     throw new Error('done is required');
-  } else if (!_.isFunction(done)) {
+  } else if (!_.isUndefined(done) && !_.isFunction(done)) {
     throw new Error('done must be a function');
   }
 
-  // Validate the options
-  if (!_.isUndefined(options.prepareRequest) && !_.isFunction(options.prepareRequest)) {
-    throw new Error('options.prepareRequest must be a function');
-  } else if (!_.isUndefined(options.processContent) && !_.isFunction(options.processContent)) {
+  // Validate the options (This option does not apply to )
+  if (!_.isUndefined(options.processContent) && !_.isFunction(options.processContent)) {
     throw new Error('options.processContent must be a function');
   }
 
