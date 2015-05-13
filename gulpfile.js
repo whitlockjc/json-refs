@@ -117,11 +117,15 @@ gulp.task('lint', function () {
 
 gulp.task('test-node', function (cb) {
   function cleanUp () {
-    if (httpServer) {
+    try {
       httpServer.close();
-    }
 
-    cb();
+      cb();
+    } catch (err) {
+      if (err.message.indexOf('Not running') === -1) {
+        cb(err);
+      }
+    }
   }
 
   Promise.resolve()
@@ -166,8 +170,12 @@ gulp.task('test-browser', ['browserify'], function (cb) {
       basePath + 'test-browser.js'
     ]);
 
-    if (httpServer) {
+    try {
       httpServer.close();
+    } catch (err) {
+      if (err.message.indexOf('Not running') === -1) {
+        throw err;
+      }
     }
   }
 
