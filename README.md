@@ -137,7 +137,6 @@ Its keys are the location of the reference and it's values are as follows:
 reference was resolvable and it resolved to an explicit value.  If this property is not set, that means the reference
 was unresolvable.  A value of `undefined` means that the reference was resolvable to an actual value of `undefined` and
 is not indicative of an unresolvable reference.
-* `
 
 ##Usage
 
