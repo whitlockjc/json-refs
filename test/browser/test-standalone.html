@@ -37,13 +37,13 @@
       return fBound;
     };
   }
-
-  // Indicate standalone tests
-  bowerTests = false;
   </script>
   <script src="json-refs-standalone.js"></script>
   <script src="test-browser.js"></script>
   <script>
+  if (console && typeof console.log === 'function') {
+    console.log('Browser Tests (bower)');
+  }
   if (window.mochaPhantomJS) {
     mochaPhantomJS.run();
   } else {
