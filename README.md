@@ -53,7 +53,7 @@ var jsonRefs = require('json-refs');
 
 For the browser, `JsonRefs` is exported.
 
-## `findRefs (json)`
+### `findRefs (json)`
 
 **Arguments**
 
@@ -83,7 +83,7 @@ An `object` whose keys are JSON Pointers to where the JSON Reference's `$ref` no
 
 `true` if the argument is an is a JSON Pointer to a remote document and `false` otherwise.
 
-## `pathFromPointer (ptr)`
+### `pathFromPointer (ptr)`
 
 **Arguments**
 
@@ -99,7 +99,7 @@ A `string[]` of path segments for the JSON Pointer unless its a remote reference
 console.log(jsonRefs.pathFromPointer('#/owner/login')); // ['owner', 'login']
 ```
 
-## `pathToPointer (path)`
+### `pathToPointer (path)`
 
 **Arguments**
 
@@ -115,7 +115,7 @@ A `string` representing a JSON Pointer.
 console.log(jsonRefs.pathToPointer(['owner', 'login'])); // #/owner/login
 ```
 
-## `resolveRefs (json, options, done)`
+### `resolveRefs (json, options, done)`
 
 **Arguments**
 
