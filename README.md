@@ -217,8 +217,8 @@ jsonRefs.resolveRefs(json, function (err, rJson, metadata) {
 <html>
   <head>
     <title>Bower Example</title>
-    <script src="bower_components/lodash/lodash.js"></script>
-    <script src="bower_components/superagent/superagent.js"></script>
+    <script src="bower_components/lodash-compat/lodash.js"></script>
+    <script src="bower_components/path-loader/browser/path-loader.js"></script>
     <script src="bower_components/traverse/traverse.js"></script>
     <script src="bower_components/json-refs/browser/json-refs.js"></script>
   </head>
