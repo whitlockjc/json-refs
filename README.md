@@ -115,6 +115,14 @@ A `string` representing a JSON Pointer.
 console.log(jsonRefs.pathToPointer(['owner', 'login'])); // #/owner/login
 ```
 
+### `resolveRefs (ref, options, done)`
+
+Wrapper method for obtaining a single resolved reference. Equivalent to:
+
+```js
+resolveRefs ({$ref: ref}, options, done);
+```
+
 ### `resolveRefs (json, options, done)`
 
 **Arguments**
