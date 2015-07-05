@@ -131,7 +131,7 @@ resolution
 If there is an `Error`, the callback is called with the `Error` in the first argument and `undefined` in the second
 argument.  If there is no `Error`, the first argument is `undefined` and the second argument is an `object` whose value
 is the fully resolved document.  The third argument is an `object` whose value is the reference resolution metadata.
-Its keys are the location of the reference and it's values are as follows:
+Its keys are the location of the reference and its values are as follows:
 
 * `ref {string}`: The reference value as it existed in the original document
 * `[value] {*}`: The resolved value of the reference, if there is one.  If this property was set, this means that the
