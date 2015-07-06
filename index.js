@@ -325,16 +325,14 @@ module.exports.resolveRefs = function resolveRefs (json, options, done) {
     ref = ref.indexOf('#') === -1 ?
       '#' :
       ref.substring(ref.indexOf('#'));
+    missing = !from.has(pathFromPointer(ref));
+    value = from.get(pathFromPointer(ref));
     refPath = pathFromPointer(refPtr);
     parentPath = refPath.slice(0, refPath.length - 1);
 
     if (parentPath.length === 0) {
-      missing = !_.isUndefined(from.value);
-      value = from.value;
       to.value = value;
     } else {
-      missing = !from.has(pathFromPointer(ref));
-      value = from.get(pathFromPointer(ref));
       to.set(parentPath, value);
     }
 

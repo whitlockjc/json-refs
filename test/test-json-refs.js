@@ -361,6 +361,25 @@ describe('json-refs', function () {
         });
       });
 
+      it('top-level reference with hash (Issue 19)', function (done) {
+        var json = {
+          $ref: projectJsonUrl + '#/owner'
+        };
+        var cJson = _.cloneDeep(json);
+
+        jsonRefs.resolveRefs(json, function (err, rJson) {
+          assert.ok(_.isUndefined(err));
+          assert.notDeepEqual(json, rJson);
+
+          // Make sure the original JSON is untouched
+          assert.deepEqual(json, cJson);
+
+          assert.equal(rJson.login, 'whitlockjc');
+
+          done();
+        });
+      });
+
       it('circular reference', function (done) {
         var json = {
           id: 'Person',
