@@ -443,6 +443,6 @@ var resolveRefs = module.exports.resolveRefs = function resolveRefs (json, optio
   }
 };
 
-module.exports.resolveRef = function resolveRefs (ref, options, done) {
+module.exports.resolveRef = function resolveRef (ref, options, done) {
   resolveRefs({$ref: ref}, options, done);
 };
