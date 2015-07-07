@@ -113,7 +113,9 @@ describe('json-refs', function () {
         'http://json-schema.org/draft-04/schema': true,
         './some/relative.json': true,
         '../some/relative.json': true,
-        'file://some/path': true
+        'file://some/path': true,
+        'somefile.json': true,
+        '/some/path': true
       };
 
       _.each(tests, function (response, ptr) {
@@ -141,14 +143,16 @@ describe('json-refs', function () {
     it('should return valid path from the JSON Pointers', function () {
       var tests = {
         '#': [],
-        '#/': [''],
+        '#/': [],
         '#/some/path': ['some', 'path'],
         '#/~0whitlockjc': ['~whitlockjc'],
         '#/~1home/whitlockjc': ['/home', 'whitlockjc'],
         '#/~0~1home/whitlockjc': ['~/home', 'whitlockjc'],
         'http://json-schema.org/draft-04/schema#': 'http://json-schema.org/draft-04/schema#',
         './testing.json': './testing.json',
-        '../testing.json': '../testing.json'
+        '../testing.json': '../testing.json',
+        'testing.json': 'testing.json',
+        '/testing.json': '/testing.json'
       };
 
       _.each(tests, function (pathSegments, ptr) {

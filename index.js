@@ -42,6 +42,7 @@ var _ = {
   keys: require('lodash-compat/object/keys'),
   lastIndexOf: require('lodash-compat/array/lastIndexOf'),
   map: require('lodash-compat/collection/map'),
+  reduce: require('lodash-compat/collection/reduce'),
   size: require('lodash-compat/collection/size'),
   times: require('lodash-compat/utility/times')
 };
@@ -245,7 +246,7 @@ var isRemotePointer = module.exports.isRemotePointer = function isRemotePointer 
   }
 
   // We treat anything other than local, valid JSON Pointer values as remote
-  return ptr !== '' && _.indexOf(['#', '/'], ptr.charAt(0)) === -1;
+  return ptr !== '' && _.indexOf(['#'], ptr.charAt(0)) === -1;
 };
 
 /**
@@ -267,19 +268,19 @@ var pathFromPointer = module.exports.pathFromPointer = function pathFromPointer 
   }
 
   var path = [];
+  var rootPaths = ['', '#', '#/'];
 
   if (isRemotePointer(ptr)) {
     path = ptr;
   } else {
-    if (ptr.charAt(0) === '#' && ptr !== '#') {
-      path = _.map(ptr.substring(1).split('/'), function (part) {
-        return part.replace(/~0/g, '~').replace(/~1/g, '/');
-      });
+    if (_.indexOf(rootPaths, ptr) === -1 && ptr.charAt(0) === '#') {
+      path = _.reduce(ptr.substring(ptr.indexOf('/')).split('/'), function (parts, part) {
+        if (part !== '') {
+          parts.push(part.replace(/~0/g, '~').replace(/~1/g, '/'));
+        }
 
-      // '/' by itself corresponds to [''] otherwise, remove the first entry
-      if (path.length > 1) {
-        path.shift();
-      }
+        return parts;
+      }, []);
     }
   }
 

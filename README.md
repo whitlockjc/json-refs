@@ -121,9 +121,11 @@ console.log(jsonRefs.pathToPointer(['owner', 'login'])); // #/owner/login
 
 * `json {object}`: The JavaScript object containing zero or more JSON References
 * `[options] {object}`: The options
+* `[options.depth] {number}`: The depth to resolve circular references
 * `[options.location] {string}`: The location to resolve relative references
-* `[options.prepareRequest] {function}`: The callback used to prepare a request
-* `[options.processContent] {function}`: The callback used to process the remote request content
+* `[options.prepareRequest] {function}`: The callback used to prepare a request *(Passed to [path-loader][path-loader])*
+* `[options.processContent] {function}`: The callback used to process the remote request content *(Passed to
+[path-loader][path-loader])*
 * `done {function}`: An error-first callback to be called with the fully-resolved object and metadata for the reference
 resolution
 
@@ -141,6 +143,9 @@ was unresolvable.  A value of `undefined` means that the reference was resolvabl
 is not indicative of an unresolvable reference.
 
 ##Usage
+
+`options.prepareRequest` and `options.processContent` are passed directly to [path-loader][path-loader] and they are
+documented in greater detail there.  Just to save you a few clicks, below are examples of using both.
 
 **Note:** If you need to alter your request in any way, for example to add specific headers to the request or to add
 authentication to the request or any other situation in which the request might need to be altered, you will need to use
@@ -172,9 +177,9 @@ jsonRefs.resolveRefs(json, {
 });
 ```
 
-**Note:** If you need to pre-process the content of your remote requests, like to support data not explicitly supported
-by Superagent, you can use the `options.processContent` callback.  Here is a simple example that uses
-`options.processContent` to retrieve a YAML resource:
+**Note:** If you need to pre-process the content of your remote requests, like to support parse non-JSON, you can use
+the `options.processContent` callback.  Here is a simple example that uses `options.processContent` to retrieve a YAML
+resource:
 
 ```js
 var jsonRefs = require('json-resf');
@@ -273,3 +278,4 @@ jsonRefs.resolveRefs(json, function (err, rJson, metadata) {
 [npm]: https://www.npmjs.com/
 [json-reference-draft-spec]: http://tools.ietf.org/html/draft-pbryan-zyp-json-ref-03
 [json-pointer-spec]: http://tools.ietf.org/html/rfc6901
+[path-loader]: https://github.com/whitlockjc/path-loader
