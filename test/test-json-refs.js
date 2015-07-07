@@ -958,4 +958,29 @@ describe('json-refs', function () {
       });
     });
   });
+
+  describe('#resolveRef', function () {
+      it('simple remote reference', function (done) {
+        var json = {
+          $ref: projectJsonUrl
+        };
+        var ref = projectJsonUrl;
+
+        jsonRefs.resolveRef(ref, options, function (err, rJson, metadata) {
+          assert.ok(_.isUndefined(err));
+          assert.notDeepEqual(json, rJson);
+
+          assert.deepEqual({
+            '#/$ref': {
+              ref: projectJsonUrl,
+              value: projectJson
+            }
+          }, metadata);
+
+          assert.equal(rJson.name, 'json-refs');
+
+          done();
+        });
+      });
+  });
 });
