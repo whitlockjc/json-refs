@@ -302,7 +302,7 @@ var pathFromPointer = module.exports.pathFromPointer = function pathFromPointer 
  *
  * @throws Error if the arguments are missing or invalid
  */
-module.exports.resolveRefs = function resolveRefs (json, options, done) {
+var resolveRefs = module.exports.resolveRefs = function resolveRefs (json, options, done) {
   if (arguments.length < 3) {
     done = arguments[1];
     options = {};
@@ -472,4 +472,8 @@ module.exports.resolveRefs = function resolveRefs (json, options, done) {
   } else {
     done(undefined, json, metadata);
   }
+};
+
+module.exports.resolveRef = function resolveRef (ref, options, done) {
+  resolveRefs({$ref: ref}, options, done);
 };
