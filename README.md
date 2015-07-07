@@ -31,7 +31,7 @@ bower install json-refs --save
 
 The standalone binaries come in two flavors:
 
-* [json-refs-standalone.js](https://raw.github.com/whitlockjc/json-refs/master/browser/json-refs-standalone.js): _396kb_, full source source maps
+* [json-refs-standalone.js](https://raw.github.com/whitlockjc/json-refs/master/browser/json-refs-standalone.js): _404kb_, full source source maps
 * [json-refs-standalone-min.js](https://raw.github.com/whitlockjc/json-refs/master/browser/json-refs-standalone-min.js): _64kb_, minified, compressed
 and no sourcemap
 
@@ -129,6 +129,7 @@ resolveRefs ({$ref: ref}, options, done);
 
 * `json {object}`: The JavaScript object containing zero or more JSON References
 * `[options] {object}`: The options
+* `[options.location] {string}`: The location to resolve relative references
 * `[options.prepareRequest] {function}`: The callback used to prepare a request
 * `[options.processContent] {function}`: The callback used to process the remote request content
 * `done {function}`: An error-first callback to be called with the fully-resolved object and metadata for the reference
@@ -139,7 +140,7 @@ resolution
 If there is an `Error`, the callback is called with the `Error` in the first argument and `undefined` in the second
 argument.  If there is no `Error`, the first argument is `undefined` and the second argument is an `object` whose value
 is the fully resolved document.  The third argument is an `object` whose value is the reference resolution metadata.
-Its keys are the location of the reference and it's values are as follows:
+Its keys are the location of the reference and its values are as follows:
 
 * `ref {string}`: The reference value as it existed in the original document
 * `[value] {*}`: The resolved value of the reference, if there is one.  If this property was set, this means that the
@@ -153,7 +154,7 @@ is not indicative of an unresolvable reference.
 authentication to the request or any other situation in which the request might need to be altered, you will need to use
 the `options.prepareRequest` callback.  Here is a simple example that uses `options.prepareRequest` to make a secure
 request using an Basic Authentication _(The example is written for Node.js but the actual business logic in how
-`resolveRefs` is called sould be the same in the browser)_:
+`resolveRefs` is called should be the same in the browser)_:
 
 ```js
 var jsonRefs = require('json-refs');
@@ -179,7 +180,7 @@ jsonRefs.resolveRefs(json, {
 });
 ```
 
-**Note:** If you need to pre-process the content of your remote requets, like to support data not explicitly supported
+**Note:** If you need to pre-process the content of your remote requests, like to support data not explicitly supported
 by Superagent, you can use the `options.processContent` callback.  Here is a simple example that uses
 `options.processContent` to retrieve a YAML resource:
 
@@ -213,7 +214,7 @@ jsonRefs.resolveRefs(json, function (err, rJson, metadata) {
   if (err) throw err;
 
   console.log(JSON.stringify(rJson)); // {name: 'json-refs', owner: {/* GitHub Repository Owner Information */}}
-  console.log(JSON.stringify(metadata)); // {'#/owner/$ref': {ref: 'https://api.github.com/repos/whitlockjc/json-refs#/owner', value: {/*GitHub Repository Onwer Information */}}}
+  console.log(JSON.stringify(metadata)); // {'#/owner/$ref': {ref: 'https://api.github.com/repos/whitlockjc/json-refs#/owner', value: {/*GitHub Repository Owner Information */}}}
 });
 ```
 
@@ -225,8 +226,8 @@ jsonRefs.resolveRefs(json, function (err, rJson, metadata) {
 <html>
   <head>
     <title>Bower Example</title>
-    <script src="bower_components/lodash/lodash.js"></script>
-    <script src="bower_components/superagent/superagent.js"></script>
+    <script src="bower_components/lodash-compat/lodash.js"></script>
+    <script src="bower_components/path-loader/browser/path-loader.js"></script>
     <script src="bower_components/traverse/traverse.js"></script>
     <script src="bower_components/json-refs/browser/json-refs.js"></script>
   </head>
