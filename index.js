@@ -1,5 +1,3 @@
-/* exported findRefs, isJsonReference, isRemotePointer, pathFromPointer, pathToPointer, resolveRefs */
-
 /*
  * The MIT License (MIT)
  *
@@ -41,6 +39,7 @@ var _ = {
   isString: require('lodash-compat/lang/isString'),
   isUndefined: require('lodash-compat/lang/isUndefined'),
   keys: require('lodash-compat/object/keys'),
+  lastIndexOf: require('lodash-compat/array/lastIndexOf'),
   map: require('lodash-compat/collection/map'),
   size: require('lodash-compat/collection/size')
 };
@@ -48,7 +47,33 @@ var pathLoader = require('path-loader');
 var traverse = require('traverse');
 
 var remoteCache = {};
-var supportedSchemes = ['http', 'https'];
+var supportedSchemes = ['file', 'http', 'https'];
+
+function computeUrl (base, ref) {
+  var isRelative = ref.charAt(0) !== '#' && ref.indexOf(':') === -1;
+  var newLocation = (base || '').charAt(0) === '/' ? [''] : [];
+  var refSegments = ref.split('#')[0].split('/');
+
+  function segmentHandler (segment) {
+    if (segment === '..') {
+      newLocation.pop();
+    } else if (segment !== '.' && segment !== '') {
+      newLocation.push(segment);
+    }
+  }
+
+  // Normalize the base
+  _.each((base || '').split('#')[0].split('/'), segmentHandler);
+
+  if (isRelative) {
+    // Add reference segments
+    _.each(refSegments, segmentHandler);
+  } else {
+    newLocation = refSegments;
+  }
+
+  return newLocation.join('/');
+}
 
 /**
  * Callback used by all json-refs functions.
@@ -92,7 +117,7 @@ var supportedSchemes = ['http', 'https'];
  * @throws Error if there is a problem making the request or the content is not JSON
  */
 function getRemoteJson (url, options, done) {
-  var realUrl = url.split('#')[0];
+  var realUrl = computeUrl(options.location, url);
   var json = remoteCache[realUrl];
   var allTasks;
 
@@ -217,7 +242,8 @@ var isRemotePointer = module.exports.isRemotePointer = function isRemotePointer 
     throw new Error('ptr must be a string');
   }
 
-  return /^(([a-zA-Z0-9+.-]+):\/\/|\.{1,2}\/)/.test(ptr);
+  // We treat anything other than local, valid JSON Pointer values as remote
+  return ptr !== '' && _.indexOf(['#', '/'], ptr.charAt(0)) === -1;
 };
 
 /**
@@ -266,6 +292,7 @@ var pathFromPointer = module.exports.pathFromPointer = function pathFromPointer 
  *
  * @param {object} json - The JSON  document having zero or more JSON References
  * @param {object} [options] - The options (All options are passed down to whitlockjc/path-loader)
+ * @param {string} [options.location] - The location to which relative references should be resolved
  * @param {processContentCallback} [options.processContent] - The callback used to process a reference's content
  * @param {resultCallback} [done] - The result callback
  *
@@ -274,6 +301,8 @@ var pathFromPointer = module.exports.pathFromPointer = function pathFromPointer 
 module.exports.resolveRefs = function resolveRefs (json, options, done) {
   if (arguments.length < 3) {
     done = arguments[1];
+    options = {};
+  } else if (_.isUndefined(options)) {
     options = {};
   }
 
@@ -292,6 +321,8 @@ module.exports.resolveRefs = function resolveRefs (json, options, done) {
   // Validate the options (This option does not apply to )
   if (!_.isUndefined(options.processContent) && !_.isFunction(options.processContent)) {
     throw new Error('options.processContent must be a function');
+  } else if (!_.isUndefined(options.location) && !_.isString(options.location)) {
+    throw new Error('options.location must be a string');
   }
 
   var remoteRefs = {};
@@ -313,6 +344,7 @@ module.exports.resolveRefs = function resolveRefs (json, options, done) {
       }
     });
   }
+
   function replaceReference (to, from, ref, refPtr) {
     var refMetadata = {
       ref: ref
@@ -358,19 +390,27 @@ module.exports.resolveRefs = function resolveRefs (json, options, done) {
       allTasks = Promise.resolve();
 
       _.each(remoteRefs, function (ref, refPtr) {
-        var scheme = ref.split(':')[0];
+        var scheme = _.indexOf(ref, ':') === -1 ? undefined : ref.split(':')[0];
         var nextStep;
 
-        // Do not process relative references or references to unsupported resources
-        if (ref.charAt(0) === '.' || _.indexOf(supportedSchemes, scheme) === -1) {
+        // Do not process references to unsupported resources
+        if (_.indexOf(supportedSchemes, scheme) === -1 && !_.isUndefined(scheme)) {
           nextStep = Promise.resolve();
         } else {
           nextStep = new Promise(function (resolve, reject) {
             getRemoteJson(ref, options, function (err, remoteJson) {
+              var rOptions = _.cloneDeep(options);
+              var refBase = ref.split('#')[0];
+
+              // Remove the last path segment
+              refBase = refBase.substring(0, _.lastIndexOf(refBase, '/') + 1);
+
+              rOptions.location = computeUrl(options.location, refBase);
+
               if (err) {
                 reject(err);
               } else {
-                resolveRefs(remoteJson, options, function (err2, resolvedJson) {
+                resolveRefs(remoteJson, rOptions, function (err2, resolvedJson) {
                   if (err2) {
                     reject(err2);
                   } else {

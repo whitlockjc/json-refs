@@ -31,7 +31,7 @@ bower install json-refs --save
 
 The standalone binaries come in two flavors:
 
-* [json-refs-standalone.js](https://raw.github.com/whitlockjc/json-refs/master/browser/json-refs-standalone.js): _396kb_, full source source maps
+* [json-refs-standalone.js](https://raw.github.com/whitlockjc/json-refs/master/browser/json-refs-standalone.js): _404kb_, full source source maps
 * [json-refs-standalone-min.js](https://raw.github.com/whitlockjc/json-refs/master/browser/json-refs-standalone-min.js): _64kb_, minified, compressed
 and no sourcemap
 
@@ -121,6 +121,7 @@ console.log(jsonRefs.pathToPointer(['owner', 'login'])); // #/owner/login
 
 * `json {object}`: The JavaScript object containing zero or more JSON References
 * `[options] {object}`: The options
+* `[options.location] {string}`: The location to resolve relative references
 * `[options.prepareRequest] {function}`: The callback used to prepare a request
 * `[options.processContent] {function}`: The callback used to process the remote request content
 * `done {function}`: An error-first callback to be called with the fully-resolved object and metadata for the reference

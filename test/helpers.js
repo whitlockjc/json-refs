@@ -29,7 +29,9 @@ var connect = require('connect');
 var YAML = require('js-yaml');
 
 var app = connect();
+var nestedPersonJson = require('./browser/nested/project.json');
 var personJson = require('./browser/project.json');
+var personNestedJson = require('./browser/project-nested.json');
 var refJson = require('./browser/ref.json');
 
 app.use(function (req, res, next) {
@@ -58,30 +60,44 @@ app.use('/secure', function (req, res, next) {
 
 app.use(function (req, res) {
   switch (req.url) {
-    case '/ref.json':
-    case '/secure/ref.json':
-      res.setHeader('Content-Type', 'application/json');
-      res.statusCode = 200;
-      res.end(JSON.stringify(refJson));
+  case '/ref.json':
+  case '/secure/ref.json':
+    res.setHeader('Content-Type', 'application/json');
+    res.statusCode = 200;
+    res.end(JSON.stringify(refJson));
 
-      break;
-    case '/project.json':
-    case '/secure/project.json':
-      res.setHeader('Content-Type', 'application/json');
-      res.statusCode = 200;
-      res.end(JSON.stringify(personJson));
+    break;
+  case '/project.json':
+  case '/secure/project.json':
+    res.setHeader('Content-Type', 'application/json');
+    res.statusCode = 200;
+    res.end(JSON.stringify(personJson));
 
-      break;
-    case '/project.yaml':
-    case '/secure/project.yaml':
-      res.setHeader('Content-Type', 'application/x-yaml');
-      res.statusCode = 200;
-      res.end(YAML.safeDump(personJson));
+    break;
+  case '/project-nested.json':
+  case '/secure/project-nested.json':
+    res.setHeader('Content-Type', 'application/json');
+    res.statusCode = 200;
+    res.end(JSON.stringify(personNestedJson));
 
-      break;
-    default:
-      res.writeHead(404);
-      res.end();
+    break;
+  case '/nested/project.json':
+  case '/secure/nested/project.json':
+    res.setHeader('Content-Type', 'application/json');
+    res.statusCode = 200;
+    res.end(JSON.stringify(nestedPersonJson));
+
+    break;
+  case '/project.yaml':
+  case '/secure/project.yaml':
+    res.setHeader('Content-Type', 'application/x-yaml');
+    res.statusCode = 200;
+    res.end(YAML.safeDump(personJson));
+
+    break;
+  default:
+    res.writeHead(404);
+    res.end();
   }
 });
 

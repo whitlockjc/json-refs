@@ -32,6 +32,9 @@ var path = require('path');
 var jsonRefs = require('../');
 var YAML = require('js-yaml');
 
+var options = {
+  location: typeof window === 'undefined' ? __dirname : 'http://localhost:44444'
+};
 var projectJson = require('./browser/project.json');
 var projectJsonUrl = 'http://localhost:44444/project.json';
 
@@ -191,6 +194,7 @@ describe('json-refs', function () {
         'json is required': [],
         'json must be an object': ['wrongType'],
         'options must be an object': [{}, 'wrongType', function () {}],
+        'options.location must be a string': [{}, {location: 123}, function () {}],
         'options.prepareRequest must be a function': [{}, {prepareRequest: 'wrongType'}, function () {}],
         'options.processContent must be a function': [{}, {processContent: 'wrongType'}, function () {}],
         'done is required': [{}],
@@ -217,7 +221,7 @@ describe('json-refs', function () {
           url: 'https://github.com/whitlockjc/json-refs'
         };
 
-        jsonRefs.resolveRefs(json, function (err, rJson, metadata) {
+        jsonRefs.resolveRefs(json, options, function (err, rJson, metadata) {
           assert.ok(_.isUndefined(err));
           assert.deepEqual(json, rJson);
           assert.deepEqual({}, metadata);
@@ -247,7 +251,7 @@ describe('json-refs', function () {
         };
         var cJson = _.cloneDeep(json);
 
-        jsonRefs.resolveRefs(json, function (err, rJson, metadata) {
+        jsonRefs.resolveRefs(json, options, function (err, rJson, metadata) {
           assert.ok(_.isUndefined(err));
           assert.notDeepEqual(json, rJson);
           assert.deepEqual({
@@ -308,7 +312,7 @@ describe('json-refs', function () {
         };
         var cJson = _.cloneDeep(json);
 
-        jsonRefs.resolveRefs(json, function (err, rJson) {
+        jsonRefs.resolveRefs(json, options, function (err, rJson) {
           assert.ok(_.isUndefined(err));
           assert.notDeepEqual(json, rJson);
 
@@ -348,7 +352,7 @@ describe('json-refs', function () {
         };
         var cJson = _.cloneDeep(json);
 
-        jsonRefs.resolveRefs(json, function (err, rJson) {
+        jsonRefs.resolveRefs(json, options, function (err, rJson) {
           assert.ok(_.isUndefined(err));
           assert.notDeepEqual(json, rJson);
 
@@ -367,7 +371,7 @@ describe('json-refs', function () {
         };
         var cJson = _.cloneDeep(json);
 
-        jsonRefs.resolveRefs(json, function (err, rJson) {
+        jsonRefs.resolveRefs(json, options, function (err, rJson) {
           assert.ok(_.isUndefined(err));
           assert.notDeepEqual(json, rJson);
 
@@ -400,7 +404,7 @@ describe('json-refs', function () {
         };
         var cJson = _.cloneDeep(json);
 
-        jsonRefs.resolveRefs(json, function (err, rJson) {
+        jsonRefs.resolveRefs(json, options, function (err, rJson) {
           assert.ok(_.isUndefined(err));
           assert.notDeepEqual(json, rJson);
 
@@ -448,7 +452,7 @@ describe('json-refs', function () {
         };
         var cJson = _.cloneDeep(json);
 
-        jsonRefs.resolveRefs(json, function (err, rJson, metadata) {
+        jsonRefs.resolveRefs(json, options, function (err, rJson, metadata) {
           assert.ok(_.isUndefined(err));
           assert.notDeepEqual(json, rJson);
 
@@ -475,7 +479,7 @@ describe('json-refs', function () {
         };
         var cJson = _.cloneDeep(json);
 
-        jsonRefs.resolveRefs(json, function (err, rJson) {
+        jsonRefs.resolveRefs(json, options, function (err, rJson) {
           assert.ok(_.isUndefined(err));
           assert.notDeepEqual(json, rJson);
 
@@ -495,7 +499,7 @@ describe('json-refs', function () {
         };
         var cJson = _.cloneDeep(json);
 
-        jsonRefs.resolveRefs(json, function (err, rJson, metadata) {
+        jsonRefs.resolveRefs(json, options, function (err, rJson, metadata) {
           assert.ok(_.isUndefined(err));
           assert.notDeepEqual(json, rJson);
 
@@ -525,7 +529,7 @@ describe('json-refs', function () {
         };
         var cJson = _.cloneDeep(json);
 
-        jsonRefs.resolveRefs(json, function (err, rJson, metadata) {
+        jsonRefs.resolveRefs(json, options, function (err, rJson, metadata) {
           assert.ok(_.isUndefined(err));
           assert.notDeepEqual(json, rJson);
 
@@ -558,18 +562,20 @@ describe('json-refs', function () {
         var cJson = _.cloneDeep(json);
 
         // Make request for reference that requires authentication (Should fail)
-        jsonRefs.resolveRefs(json, function (err, rJson) {
+        jsonRefs.resolveRefs(json, options, function (err, rJson) {
+          var cOptions = _.cloneDeep(options);
+
           assert.ok(!_.isUndefined(err));
           assert.ok(_.isUndefined(rJson));
 
           assert.equal(401, err.status);
 
+          cOptions.prepareRequest = function (req) {
+            req.auth('whitlockjc', 'json-refs');
+          };
+
           // Make same request for the same reference but use prepareRequest to add authentication to the request
-          jsonRefs.resolveRefs(json, {
-            prepareRequest: function (req) {
-              req.auth('whitlockjc', 'json-refs');
-            }
-          }, function (err2, rJson2) {
+          jsonRefs.resolveRefs(json, cOptions, function (err2, rJson2) {
             assert.ok(_.isUndefined(err2));
             assert.notDeepEqual(json, rJson2);
 
@@ -591,18 +597,20 @@ describe('json-refs', function () {
         };
 
         // Make request for YAML reference (Should fail)
-        jsonRefs.resolveRefs(json, function (err, rJson) {
+        jsonRefs.resolveRefs(json, options, function (err, rJson) {
+          var cOptions = _.cloneDeep(options);
+
           assert.ok(!_.isUndefined(err));
           assert.ok(_.isUndefined(rJson));
 
-          // Make same request for the same reference but use processContent to parse the YAML
-          jsonRefs.resolveRefs(json, {
-            processContent: function (content, ref) {
-              assert.equal(ref, 'http://localhost:44444/project.yaml');
+          cOptions.processContent = function (content, ref) {
+            assert.equal(ref, 'http://localhost:44444/project.yaml');
 
-              return YAML.safeLoad(content);
-            }
-          }, function (err2, rJson2) {
+            return YAML.safeLoad(content);
+          };
+
+          // Make same request for the same reference but use processContent to parse the YAML
+          jsonRefs.resolveRefs(json, cOptions, function (err2, rJson2) {
             assert.ok(_.isUndefined(err2));
             assert.notDeepEqual(json, rJson2);
 
@@ -617,10 +625,10 @@ describe('json-refs', function () {
 
       it('do not return error for invalid remote reference scheme', function (done) {
         var json = {
-          $ref: 'file://' + path.resolve(__dirname, '..', 'package.json')
+          $ref: 'ssh://127.0.0.1:' + path.resolve(__dirname, '..', 'package.json')
         };
 
-        jsonRefs.resolveRefs(json, function (err, rJson, metadata) {
+        jsonRefs.resolveRefs(json, options, function (err, rJson, metadata) {
           assert.ok(_.isUndefined(err));
           assert.deepEqual(json, rJson);
           assert.deepEqual({}, metadata);
@@ -629,17 +637,47 @@ describe('json-refs', function () {
         });
       });
 
-      it('do not return error for unsupported remote references', function (done) {
-        var json = {
-          $ref: '../package.json'
-        };
+      describe('should resolve relative references', function () {
+        it('simple', function (done) {
+          var json = {
+            project: {
+              $ref: (typeof window === 'undefined' ? './browser' : '.') + '/project.json'
+            }
+          };
+          var cJson = _.cloneDeep(json);
 
-        jsonRefs.resolveRefs(json, function (err, rJson, metadata) {
-          assert.ok(_.isUndefined(err));
-          assert.deepEqual(json, rJson);
-          assert.deepEqual({}, metadata);
+          jsonRefs.resolveRefs(json, options, function (err, rJson) {
+            assert.ok(_.isUndefined(err));
+            assert.notDeepEqual(json, rJson);
 
-          return done();
+            // Make sure the original JSON is untouched
+            assert.deepEqual(json, cJson);
+
+            assert.equal(rJson.project.full_name, 'whitlockjc/json-refs');
+
+            done();
+          });
+        });
+
+        it('nested', function (done) {
+          var json = {
+            project: {
+              $ref: (typeof window === 'undefined' ? 'browser/' : '') + 'project-nested.json'
+            }
+          };
+          var cJson = _.cloneDeep(json);
+
+          jsonRefs.resolveRefs(json, options, function (err, rJson) {
+            assert.ok(_.isUndefined(err));
+            assert.notDeepEqual(json, rJson);
+
+            // Make sure the original JSON is untouched
+            assert.deepEqual(json, cJson);
+
+            assert.equal(rJson.project.full_name, 'whitlockjc/json-refs');
+
+            done();
+          });
         });
       });
     });
