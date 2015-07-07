@@ -384,34 +384,43 @@ describe('json-refs', function () {
         });
       });
 
-      it('circular reference', function (done) {
-        var json = {
-          id: 'Person',
-          properties: {
-            name: {
-              type: 'string'
-            },
-            age: {
-              type: 'number'
-            },
-            family: {
-              type: 'array',
-              items: {
+      describe('circular references', function () {
+        it('array', function (done) {
+          var json = {
+            a: [
+              {
                 $ref: '#'
-              }
-            }
-          }
-        };
-        var cJson = _.cloneDeep(json);
+              },
+              'x'
+            ]
+          };
+          var cJson = _.cloneDeep(json);
 
-        jsonRefs.resolveRefs(json, options, function (err, rJson) {
-          assert.ok(_.isUndefined(err));
-          assert.notDeepEqual(json, rJson);
+          jsonRefs.resolveRefs(json, options, function (err, rJson) {
+            assert.ok(_.isUndefined(err));
+            assert.notDeepEqual(json, rJson);
 
-          // Make sure the original JSON is untouched
-          assert.deepEqual(json, cJson);
+            // Make sure the original JSON is untouched
+            assert.deepEqual(json, cJson);
 
-          assert.deepEqual(rJson, {
+            assert.deepEqual(rJson, {
+              a: [
+                {
+                  a: [
+                    {},
+                    'x'
+                  ]
+                },
+                'x'
+              ]
+            });
+
+            done();
+          });
+        });
+
+        it('object', function (done) {
+          var json = {
             id: 'Person',
             properties: {
               name: {
@@ -423,24 +432,51 @@ describe('json-refs', function () {
               family: {
                 type: 'array',
                 items: {
-                  id: 'Person',
-                  properties: {
-                    name: {
-                      type: 'string'
-                    },
-                    age: {
-                      type: 'number'
-                    },
-                    family: {
-                      type: 'array'
+                  $ref: '#'
+                }
+              }
+            }
+          };
+          var cJson = _.cloneDeep(json);
+
+          jsonRefs.resolveRefs(json, options, function (err, rJson) {
+            assert.ok(_.isUndefined(err));
+            assert.notDeepEqual(json, rJson);
+
+            // Make sure the original JSON is untouched
+            assert.deepEqual(json, cJson);
+
+            assert.deepEqual(rJson, {
+              id: 'Person',
+              properties: {
+                name: {
+                  type: 'string'
+                },
+                age: {
+                  type: 'number'
+                },
+                family: {
+                  type: 'array',
+                  items: {
+                    id: 'Person',
+                    properties: {
+                      name: {
+                        type: 'string'
+                      },
+                      age: {
+                        type: 'number'
+                      },
+                      family: {
+                        type: 'array'
+                      }
                     }
                   }
                 }
               }
-            }
-          });
+            });
 
-          done();
+            done();
+          });
         });
       });
 
@@ -638,6 +674,35 @@ describe('json-refs', function () {
       });
 
       describe('should resolve relative references', function () {
+        it('no location', function (done) {
+          // We cannot test relative references without location due to our current test framework
+          if (typeof window !== 'undefined') {
+            return done();
+          }
+
+          var json = {
+            project: {
+              $ref: (typeof window === 'undefined' ? 'test/browser/' : '') + 'project.json'
+            }
+          };
+          var cJson = _.cloneDeep(json);
+          var cOptions = _.cloneDeep(options);
+
+          delete cOptions.location;
+
+          jsonRefs.resolveRefs(json, cOptions, function (err, rJson) {
+            assert.ok(_.isUndefined(err));
+            assert.notDeepEqual(json, rJson);
+
+            // Make sure the original JSON is untouched
+            assert.deepEqual(json, cJson);
+
+            assert.equal(rJson.project.full_name, 'whitlockjc/json-refs');
+
+            done();
+          });
+        });
+
         it('simple', function (done) {
           var json = {
             project: {

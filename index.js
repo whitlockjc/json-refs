@@ -338,7 +338,11 @@ module.exports.resolveRefs = function resolveRefs (json, options, done) {
         // Always traverse one depth after recognizing a circular dependency
         this.update(traverse(this.node).map(function () {
           if (this.circular) {
-            this.parent.remove();
+            if (_.isArray(this.node)) {
+              this.remove();
+            } else {
+              this.parent.remove();
+            }
           }
         }));
       }
