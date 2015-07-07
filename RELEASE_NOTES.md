@@ -1,5 +1,11 @@
 ## Release Notes
 
+### v0.3.0 (TBD)
+
+* Fix issue with Bower build as it had old dependency paths in it *(PR 15)*
+* Fix problem with references at the root of the document and having hashes *(Issue 19)*
+* Support relative references *(Issue 11)*
+
 ### v0.2.0 (2015-05012)
 
 * Replace file loading with [path-loader](https://github.com/whitlockjc/path-loader)
