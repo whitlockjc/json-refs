@@ -6,6 +6,7 @@
 * Fix issue with circular references not being detected in arrays *(Issue #20)*
 * Fix problem with references at the root of the document and having hashes *(Issue #19)*
 * Support relative references *(Issue 11)*
+* Support to specify a depth for `#resolveRefs` for circular references *(Issue #5)*
 
 ### v0.2.0 (2015-05012)
 

@@ -194,6 +194,8 @@ describe('json-refs', function () {
         'json is required': [],
         'json must be an object': ['wrongType'],
         'options must be an object': [{}, 'wrongType', function () {}],
+        'options.depth must be a number': [{}, {depth: true}, function () {}],
+        'options.depth must be greater or equal to zero': [{}, {depth: -1}, function () {}],
         'options.location must be a string': [{}, {location: 123}, function () {}],
         'options.prepareRequest must be a function': [{}, {prepareRequest: 'wrongType'}, function () {}],
         'options.processContent must be a function': [{}, {processContent: 'wrongType'}, function () {}],
@@ -467,10 +469,215 @@ describe('json-refs', function () {
                         type: 'number'
                       },
                       family: {
+                        items: {},
                         type: 'array'
                       }
                     }
                   }
+                }
+              }
+            });
+
+            done();
+          });
+        });
+      });
+
+      describe('circular reference depth', function () {
+        it('array', function (done) {
+          var json = {
+            a: [
+              {
+                $ref: '#'
+              },
+              'x'
+            ]
+          };
+          var cJson = _.cloneDeep(json);
+          var cOptions = _.cloneDeep(options);
+
+          cOptions.depth = 2;
+
+          jsonRefs.resolveRefs(json, cOptions, function (err, rJson) {
+            assert.ok(_.isUndefined(err));
+            assert.notDeepEqual(json, rJson);
+
+            // Make sure the original JSON is untouched
+            assert.deepEqual(json, cJson);
+
+            assert.deepEqual(rJson, {
+              a: [
+                {
+                  a: [
+                    {
+                      a: [
+                        {},
+                        'x'
+                      ]
+                    },
+                    'x'
+                  ]
+                },
+                'x'
+              ]
+            });
+
+            done();
+          });
+        });
+
+        it('array (zero depth)', function (done) {
+          var json = {
+            a: [
+              {
+                $ref: '#'
+              },
+              'x'
+            ]
+          };
+          var cJson = _.cloneDeep(json);
+          var cOptions = _.cloneDeep(options);
+
+          cOptions.depth = 0;
+
+          jsonRefs.resolveRefs(json, cOptions, function (err, rJson) {
+            assert.ok(_.isUndefined(err));
+            assert.notDeepEqual(json, rJson);
+
+            // Make sure the original JSON is untouched
+            assert.deepEqual(json, cJson);
+
+            assert.deepEqual(rJson, {
+              a: [
+                {},
+                'x'
+              ]
+            });
+
+            done();
+          });
+        });
+
+        it('object', function (done) {
+          var json = {
+            id: 'Person',
+            properties: {
+              name: {
+                type: 'string'
+              },
+              age: {
+                type: 'number'
+              },
+              family: {
+                type: 'array',
+                items: {
+                  $ref: '#'
+                }
+              }
+            }
+          };
+          var cJson = _.cloneDeep(json);
+          var cOptions = _.cloneDeep(options);
+
+          cOptions.depth = 2;
+
+          jsonRefs.resolveRefs(json, cOptions, function (err, rJson) {
+            assert.ok(_.isUndefined(err));
+            assert.notDeepEqual(json, rJson);
+
+            // Make sure the original JSON is untouched
+            assert.deepEqual(json, cJson);
+
+            assert.deepEqual(rJson, {
+              id: 'Person',
+              properties: {
+                name: {
+                  type: 'string'
+                },
+                age: {
+                  type: 'number'
+                },
+                family: {
+                  type: 'array',
+                  items: {
+                    id: 'Person',
+                    properties: {
+                      name: {
+                        type: 'string'
+                      },
+                      age: {
+                        type: 'number'
+                      },
+                      family: {
+                        type: 'array',
+                        items: {
+                          id: 'Person',
+                          properties: {
+                            name: {
+                              type: 'string'
+                            },
+                            age: {
+                              type: 'number'
+                            },
+                            family: {
+                              items: {},
+                              type: 'array'
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            });
+
+            done();
+          });
+        });
+
+        it('object (zero depth)', function (done) {
+          var json = {
+            id: 'Person',
+            properties: {
+              name: {
+                type: 'string'
+              },
+              age: {
+                type: 'number'
+              },
+              family: {
+                type: 'array',
+                items: {
+                  $ref: '#'
+                }
+              }
+            }
+          };
+          var cJson = _.cloneDeep(json);
+          var cOptions = _.cloneDeep(options);
+
+          cOptions.depth = 0;
+
+          jsonRefs.resolveRefs(json, cOptions, function (err, rJson) {
+            assert.ok(_.isUndefined(err));
+            assert.notDeepEqual(json, rJson);
+
+            // Make sure the original JSON is untouched
+            assert.deepEqual(json, cJson);
+
+            assert.deepEqual(rJson, {
+              id: 'Person',
+              properties: {
+                name: {
+                  type: 'string'
+                },
+                age: {
+                  type: 'number'
+                },
+                family: {
+                  type: 'array',
+                  items: {}
                 }
               }
             });

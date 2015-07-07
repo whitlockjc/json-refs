@@ -35,13 +35,15 @@ var _ = {
   indexOf: require('lodash-compat/array/indexOf'),
   isArray: require('lodash-compat/lang/isArray'),
   isFunction: require('lodash-compat/lang/isFunction'),
+  isNumber: require('lodash-compat/lang/isNumber'),
   isPlainObject: require('lodash-compat/lang/isPlainObject'),
   isString: require('lodash-compat/lang/isString'),
   isUndefined: require('lodash-compat/lang/isUndefined'),
   keys: require('lodash-compat/object/keys'),
   lastIndexOf: require('lodash-compat/array/lastIndexOf'),
   map: require('lodash-compat/collection/map'),
-  size: require('lodash-compat/collection/size')
+  size: require('lodash-compat/collection/size'),
+  times: require('lodash-compat/utility/times')
 };
 var pathLoader = require('path-loader');
 var traverse = require('traverse');
@@ -292,6 +294,7 @@ var pathFromPointer = module.exports.pathFromPointer = function pathFromPointer 
  *
  * @param {object} json - The JSON  document having zero or more JSON References
  * @param {object} [options] - The options (All options are passed down to whitlockjc/path-loader)
+ * @param {number} [options.depth] - The depth to resolve circular references
  * @param {string} [options.location] - The location to which relative references should be resolved
  * @param {processContentCallback} [options.processContent] - The callback used to process a reference's content
  * @param {resultCallback} [done] - The result callback
@@ -323,8 +326,13 @@ module.exports.resolveRefs = function resolveRefs (json, options, done) {
     throw new Error('options.processContent must be a function');
   } else if (!_.isUndefined(options.location) && !_.isString(options.location)) {
     throw new Error('options.location must be a string');
+  } else if (!_.isUndefined(options.depth) && !_.isNumber(options.depth)) {
+    throw new Error('options.depth must be a number');
+  } else if (!_.isUndefined(options.depth) && options.depth < 0) {
+    throw new Error('options.depth must be greater or equal to zero');
   }
 
+  var depth = _.isUndefined(options.depth) ? 1 : options.depth;
   var remoteRefs = {};
   var refs = findRefs(json);
   var metadata = {};
@@ -332,21 +340,39 @@ module.exports.resolveRefs = function resolveRefs (json, options, done) {
   var cJsonT;
 
   function removeCircular (jsonT) {
-    // Remove circular references
-    return jsonT.map(function () {
+    var circularPtrs = [];
+    var scrubbed = jsonT.map(function () {
+      var ptr = pathToPointer(this.path);
+
       if (this.circular) {
-        // Always traverse one depth after recognizing a circular dependency
-        this.update(traverse(this.node).map(function () {
-          if (this.circular) {
-            if (_.isArray(this.node)) {
-              this.remove();
-            } else {
-              this.parent.remove();
+        circularPtrs.push(ptr);
+
+        if (depth === 0) {
+          this.update({});
+        } else {
+          this.update(traverse(this.node).map(function () {
+            if (this.circular) {
+              this.parent.update({});
             }
-          }
-        }));
+          }));
+        }
       }
     });
+
+    // Replace scrubbed circulars based on depth
+    _.each(circularPtrs, function (ptr) {
+      var depthPath = [];
+      var path = pathFromPointer(ptr);
+      var value = traverse(scrubbed).get(path);
+
+      _.times(depth, function () {
+        depthPath.push.apply(depthPath, path);
+
+        traverse(scrubbed).set(depthPath, _.cloneDeep(value));
+      });
+    });
+
+    return scrubbed;
   }
 
   function replaceReference (to, from, ref, refPtr) {
