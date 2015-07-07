@@ -23,7 +23,7 @@
   ],
   "dependencies": {
     "traverse": "~0.6.7",
-    "lodash-compat": "~3.8.0",
+    "lodash-compat": "~3.10.0",
     "path-loader": "~0.0.2"
   },
   "devDependencies": {
