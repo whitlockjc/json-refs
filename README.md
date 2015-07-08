@@ -137,12 +137,18 @@ is the fully resolved document.  The third argument is an `object` whose value i
 Its keys are the location of the reference and its values are as follows:
 
 * `ref {string}`: The reference value as it existed in the original document
+* `[err] {*}`: The error whenever there was an issue resolving a remote reference
 * `[value] {*}`: The resolved value of the reference, if there is one.  If this property was set, this means that the
 reference was resolvable and it resolved to an explicit value.  If this property is not set, that means the reference
 was unresolvable.  A value of `undefined` means that the reference was resolvable to an actual value of `undefined` and
 is not indicative of an unresolvable reference.
 
 ##Usage
+
+**Note** Unresolvable references do not stop reference resolution and will never cause an `Error` to be sent to the
+callback.  You will need to look into the `metadata` argument, documented above, to identify missing references.  In
+the event that an `Error` occurred while resolving the reference, typical for failed remote references, the metadata
+entry will have the original `Error` produced.
 
 `options.prepareRequest` and `options.processContent` are passed directly to [path-loader][path-loader] and they are
 documented in greater detail there.  Just to save you a few clicks, below are examples of using both.

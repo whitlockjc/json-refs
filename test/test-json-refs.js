@@ -691,6 +691,39 @@ describe('json-refs', function () {
         });
       });
 
+      it('missing remote reference', function (done) {
+        var ref = 'relative-nonexistent-path';
+        var json = {
+          project: {
+            $ref: ref
+          }
+        };
+        var cJson = _.cloneDeep(json);
+        var refPtr = '#/project/$ref';
+
+        jsonRefs.resolveRefs(json, options, function (err, rJson, metadata) {
+          var details = metadata[refPtr];
+
+          assert.ok(_.isUndefined(err));
+          assert.notDeepEqual(json, rJson);
+
+          // Make sure the original JSON is untouched
+          assert.deepEqual(json, cJson);
+
+          assert.deepEqual([refPtr], Object.keys(metadata));
+          assert.equal(details.ref, ref);
+          assert.ok(!_.has(details, 'value'));
+          assert.ok(_.has(details, 'err'));
+
+
+          assert.deepEqual({
+            project: undefined
+          }, rJson);
+
+          done();
+        });
+      });
+
       it('simple remote reference', function (done) {
         var json = {
           project: {
@@ -809,13 +842,15 @@ describe('json-refs', function () {
         var cJson = _.cloneDeep(json);
 
         // Make request for reference that requires authentication (Should fail)
-        jsonRefs.resolveRefs(json, options, function (err, rJson) {
+        jsonRefs.resolveRefs(json, options, function (err, rJson, metadata) {
           var cOptions = _.cloneDeep(options);
 
-          assert.ok(!_.isUndefined(err));
-          assert.ok(_.isUndefined(rJson));
+          assert.ok(_.isUndefined(err));
+          assert.deepEqual({
+            project: undefined
+          }, rJson);
 
-          assert.equal(401, err.status);
+          assert.equal(401, metadata['#/project/$ref'].err.status);
 
           cOptions.prepareRequest = function (req) {
             req.auth('whitlockjc', 'json-refs');
@@ -844,11 +879,14 @@ describe('json-refs', function () {
         };
 
         // Make request for YAML reference (Should fail)
-        jsonRefs.resolveRefs(json, options, function (err, rJson) {
+        jsonRefs.resolveRefs(json, options, function (err, rJson, metadata) {
           var cOptions = _.cloneDeep(options);
 
-          assert.ok(!_.isUndefined(err));
-          assert.ok(_.isUndefined(rJson));
+          assert.ok(_.isUndefined(err));
+          assert.deepEqual({
+            project: undefined
+          }, rJson);
+          assert.ok(_.has(metadata['#/project/$ref'], 'err'));
 
           cOptions.processContent = function (content, ref) {
             assert.equal(ref, 'http://localhost:44444/project.yaml');

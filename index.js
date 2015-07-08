@@ -34,6 +34,7 @@ var _ = {
   each: require('lodash-compat/collection/each'),
   indexOf: require('lodash-compat/array/indexOf'),
   isArray: require('lodash-compat/lang/isArray'),
+  isError: require('lodash-compat/lang/isError'),
   isFunction: require('lodash-compat/lang/isFunction'),
   isNumber: require('lodash-compat/lang/isNumber'),
   isPlainObject: require('lodash-compat/lang/isPlainObject'),
@@ -377,19 +378,28 @@ module.exports.resolveRefs = function resolveRefs (json, options, done) {
   }
 
   function replaceReference (to, from, ref, refPtr) {
+    var isError = _.isError(from);
+    var missing = false;
     var refMetadata = {
       ref: ref
     };
-    var missing = false;
     var parentPath;
     var refPath;
     var value;
 
-    ref = ref.indexOf('#') === -1 ?
-      '#' :
-      ref.substring(ref.indexOf('#'));
-    missing = !from.has(pathFromPointer(ref));
-    value = from.get(pathFromPointer(ref));
+    if (isError) {
+      missing = true;
+      value = undefined;
+
+      refMetadata.err = from;
+    } else {
+      ref = ref.indexOf('#') === -1 ?
+        '#' :
+        ref.substring(ref.indexOf('#'));
+      missing = !from.has(pathFromPointer(ref));
+      value = from.get(pathFromPointer(ref));
+    }
+
     refPath = pathFromPointer(refPtr);
     parentPath = refPath.slice(0, refPath.length - 1);
 
@@ -439,7 +449,9 @@ module.exports.resolveRefs = function resolveRefs (json, options, done) {
               rOptions.location = computeUrl(options.location, refBase);
 
               if (err) {
-                reject(err);
+                replaceReference(cJsonT, err, ref, refPtr);
+
+                resolve();
               } else {
                 resolveRefs(remoteJson, rOptions, function (err2, resolvedJson) {
                   if (err2) {

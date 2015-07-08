@@ -1,5 +1,9 @@
 ## Release Notes
 
+### v0.3.1 (2015-07-08)
+
+* Errors resolving remote references no longer bubble up errors and instead show up in metadata as unresolved
+
 ### v0.3.0 (2015-07-08)
 
 * Fix issue with Bower build as it had old dependency paths in it *(PR #15)*
