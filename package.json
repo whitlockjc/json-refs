@@ -1,6 +1,6 @@
 {
   "name": "json-refs",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Various utilities for JSON References (http://tools.ietf.org/html/draft-pbryan-zyp-json-ref-03).",
   "main": "index.js",
   "scripts": {
