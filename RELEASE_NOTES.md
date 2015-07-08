@@ -1,6 +1,6 @@
 ## Release Notes
 
-### v0.3.0 (TBD)
+### v0.3.0 (2015-07-08)
 
 * Fix issue with Bower build as it had old dependency paths in it *(PR #15)*
 * Fix issue with circular references not being detected in arrays *(Issue #20)*
@@ -8,7 +8,7 @@
 * Support relative references *(Issue 11)*
 * Support to specify a depth for `#resolveRefs` for circular references *(Issue #5)*
 
-### v0.2.0 (2015-05012)
+### v0.2.0 (2015-05-12)
 
 * Replace file loading with [path-loader](https://github.com/whitlockjc/path-loader)
 
