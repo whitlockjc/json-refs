@@ -148,7 +148,8 @@ is not indicative of an unresolvable reference.
 **Note** Unresolvable references do not stop reference resolution and will never cause an `Error` to be sent to the
 callback.  You will need to look into the `metadata` argument, documented above, to identify missing references.  In
 the event that an `Error` occurred while resolving the reference, typical for failed remote references, the metadata
-entry will have the original `Error` produced.
+entry will have the original `Error` produced.  Also, unresolveable references leave the original JSON Reference in
+tact.
 
 `options.prepareRequest` and `options.processContent` are passed directly to [path-loader][path-loader] and they are
 documented in greater detail there.  Just to save you a few clicks, below are examples of using both.

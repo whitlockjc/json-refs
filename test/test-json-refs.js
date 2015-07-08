@@ -290,7 +290,9 @@ describe('json-refs', function () {
               },
               organization: undefined
             },
-            fake: undefined,
+            fake: {
+              $ref: '#/unresolvable'
+            },
             undefined: undefined
           });
 
@@ -705,7 +707,7 @@ describe('json-refs', function () {
           var details = metadata[refPtr];
 
           assert.ok(_.isUndefined(err));
-          assert.notDeepEqual(json, rJson);
+          assert.deepEqual(json, rJson);
 
           // Make sure the original JSON is untouched
           assert.deepEqual(json, cJson);
@@ -714,11 +716,6 @@ describe('json-refs', function () {
           assert.equal(details.ref, ref);
           assert.ok(!_.has(details, 'value'));
           assert.ok(_.has(details, 'err'));
-
-
-          assert.deepEqual({
-            project: undefined
-          }, rJson);
 
           done();
         });
@@ -846,9 +843,7 @@ describe('json-refs', function () {
           var cOptions = _.cloneDeep(options);
 
           assert.ok(_.isUndefined(err));
-          assert.deepEqual({
-            project: undefined
-          }, rJson);
+          assert.deepEqual(json, rJson);
 
           assert.equal(401, metadata['#/project/$ref'].err.status);
 
@@ -883,9 +878,7 @@ describe('json-refs', function () {
           var cOptions = _.cloneDeep(options);
 
           assert.ok(_.isUndefined(err));
-          assert.deepEqual({
-            project: undefined
-          }, rJson);
+          assert.deepEqual(json, rJson);
           assert.ok(_.has(metadata['#/project/$ref'], 'err'));
 
           cOptions.processContent = function (content, ref) {

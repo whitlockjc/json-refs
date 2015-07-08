@@ -403,13 +403,13 @@ module.exports.resolveRefs = function resolveRefs (json, options, done) {
     refPath = pathFromPointer(refPtr);
     parentPath = refPath.slice(0, refPath.length - 1);
 
-    if (parentPath.length === 0) {
-      to.value = value;
-    } else {
-      to.set(parentPath, value);
-    }
-
     if (!missing) {
+      if (parentPath.length === 0) {
+        to.value = value;
+      } else {
+        to.set(parentPath, value);
+      }
+
       refMetadata.value = value;
     }
 

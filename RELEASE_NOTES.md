@@ -1,5 +1,9 @@
 ## Release Notes
 
+### v0.3.2 (2015-07-08)
+
+* Unresolved references leave the original reference in the document so as not to break JSON Schema validation
+
 ### v0.3.1 (2015-07-08)
 
 * Errors resolving remote references no longer bubble up errors and instead show up in metadata as unresolved
