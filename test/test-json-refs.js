@@ -26,7 +26,7 @@
 
 'use strict';
 
-var _ = require('lodash-compat');
+var _ = require('../lib/utils');
 var assert = require('assert');
 var path = require('path');
 var jsonRefs = require('../');
@@ -705,6 +705,7 @@ describe('json-refs', function () {
 
         jsonRefs.resolveRefs(json, options, function (err, rJson, metadata) {
           var details = metadata[refPtr];
+          var detailsKeys = Object.keys(details);
 
           assert.ok(_.isUndefined(err));
           assert.deepEqual(json, rJson);
@@ -714,8 +715,8 @@ describe('json-refs', function () {
 
           assert.deepEqual([refPtr], Object.keys(metadata));
           assert.equal(details.ref, ref);
-          assert.ok(!_.has(details, 'value'));
-          assert.ok(_.has(details, 'err'));
+          assert.ok(detailsKeys.indexOf('value') === -1);
+          assert.ok(detailsKeys.indexOf('err') > -1);
 
           done();
         });
@@ -879,7 +880,7 @@ describe('json-refs', function () {
 
           assert.ok(_.isUndefined(err));
           assert.deepEqual(json, rJson);
-          assert.ok(_.has(metadata['#/project/$ref'], 'err'));
+          assert.ok(Object.keys(metadata['#/project/$ref']).indexOf('err') > -1);
 
           cOptions.processContent = function (content, ref) {
             assert.equal(ref, 'http://localhost:44444/project.yaml');

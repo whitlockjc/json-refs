@@ -29,24 +29,7 @@ if (typeof Promise === 'undefined') {
   require('native-promise-only');
 }
 
-var _ = {
-  cloneDeep: require('lodash-compat/lang/cloneDeep'),
-  each: require('lodash-compat/collection/each'),
-  indexOf: require('lodash-compat/array/indexOf'),
-  isArray: require('lodash-compat/lang/isArray'),
-  isError: require('lodash-compat/lang/isError'),
-  isFunction: require('lodash-compat/lang/isFunction'),
-  isNumber: require('lodash-compat/lang/isNumber'),
-  isPlainObject: require('lodash-compat/lang/isPlainObject'),
-  isString: require('lodash-compat/lang/isString'),
-  isUndefined: require('lodash-compat/lang/isUndefined'),
-  keys: require('lodash-compat/object/keys'),
-  lastIndexOf: require('lodash-compat/array/lastIndexOf'),
-  map: require('lodash-compat/collection/map'),
-  reduce: require('lodash-compat/collection/reduce'),
-  size: require('lodash-compat/collection/size'),
-  times: require('lodash-compat/utility/times')
-};
+var _ = require('./lib/utils');
 var pathLoader = require('path-loader');
 var traverse = require('traverse');
 
@@ -193,7 +176,7 @@ var pathToPointer = module.exports.pathToPointer = function pathToPointer (path)
   var ptr = '#';
 
   if (path.length > 0) {
-    ptr += '/' + _.map(path, function (part) {
+    ptr += '/' + path.map(function (part) {
       return part.replace(/~/g, '~0').replace(/\//g, '~1');
     }).join('/');
   }
@@ -247,7 +230,7 @@ var isRemotePointer = module.exports.isRemotePointer = function isRemotePointer 
   }
 
   // We treat anything other than local, valid JSON Pointer values as remote
-  return ptr !== '' && _.indexOf(['#'], ptr.charAt(0)) === -1;
+  return ptr !== '' && ptr.charAt(0) !== '#';
 };
 
 /**
@@ -274,8 +257,8 @@ var pathFromPointer = module.exports.pathFromPointer = function pathFromPointer 
   if (isRemotePointer(ptr)) {
     path = ptr;
   } else {
-    if (_.indexOf(rootPaths, ptr) === -1 && ptr.charAt(0) === '#') {
-      path = _.reduce(ptr.substring(ptr.indexOf('/')).split('/'), function (parts, part) {
+    if (rootPaths.indexOf(ptr) === -1 && ptr.charAt(0) === '#') {
+      path = ptr.substring(ptr.indexOf('/')).split('/').reduce(function (parts, part) {
         if (part !== '') {
           parts.push(part.replace(/~0/g, '~').replace(/~1/g, '/'));
         }
@@ -366,19 +349,19 @@ module.exports.resolveRefs = function resolveRefs (json, options, done) {
       var depthPath = [];
       var path = pathFromPointer(ptr);
       var value = traverse(scrubbed).get(path);
+      var i;
 
-      _.times(depth, function () {
+      for (i = 0; i < depth; i++) {
         depthPath.push.apply(depthPath, path);
 
         traverse(scrubbed).set(depthPath, _.cloneDeep(value));
-      });
+      }
     });
 
     return scrubbed;
   }
 
   function replaceReference (to, from, ref, refPtr) {
-    var isError = _.isError(from);
     var missing = false;
     var refMetadata = {
       ref: ref
@@ -387,7 +370,7 @@ module.exports.resolveRefs = function resolveRefs (json, options, done) {
     var refPath;
     var value;
 
-    if (isError) {
+    if (_.isError(from)) {
       missing = true;
       value = undefined;
 
@@ -427,15 +410,15 @@ module.exports.resolveRefs = function resolveRefs (json, options, done) {
       }
     });
 
-    if (_.size(remoteRefs) > 0) {
+    if (Object.keys(remoteRefs).length > 0) {
       allTasks = Promise.resolve();
 
       _.each(remoteRefs, function (ref, refPtr) {
-        var scheme = _.indexOf(ref, ':') === -1 ? undefined : ref.split(':')[0];
+        var scheme = ref.indexOf(':') === -1 ? undefined : ref.split(':')[0];
         var nextStep;
 
         // Do not process references to unsupported resources
-        if (_.indexOf(supportedSchemes, scheme) === -1 && !_.isUndefined(scheme)) {
+        if (supportedSchemes.indexOf(scheme) === -1 && !_.isUndefined(scheme)) {
           nextStep = Promise.resolve();
         } else {
           nextStep = new Promise(function (resolve, reject) {
@@ -444,7 +427,7 @@ module.exports.resolveRefs = function resolveRefs (json, options, done) {
               var refBase = ref.split('#')[0];
 
               // Remove the last path segment
-              refBase = refBase.substring(0, _.lastIndexOf(refBase, '/') + 1);
+              refBase = refBase.substring(0, refBase.lastIndexOf('/') + 1);
 
               rOptions.location = computeUrl(options.location, refBase);
 

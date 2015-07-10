@@ -31,8 +31,8 @@ bower install json-refs --save
 
 The standalone binaries come in two flavors:
 
-* [json-refs-standalone.js](https://raw.github.com/whitlockjc/json-refs/master/browser/json-refs-standalone.js): _412kb_, full source source maps
-* [json-refs-standalone-min.js](https://raw.github.com/whitlockjc/json-refs/master/browser/json-refs-standalone-min.js): _68kb_, minified, compressed
+* [json-refs-standalone.js](https://raw.github.com/whitlockjc/json-refs/master/browser/json-refs-standalone.js): _180kb_, full source source maps
+* [json-refs-standalone-min.js](https://raw.github.com/whitlockjc/json-refs/master/browser/json-refs-standalone-min.js): _32kb_, minified, compressed
 and no sourcemap
 
 ### Node.js
@@ -230,7 +230,6 @@ jsonRefs.resolveRefs(json, function (err, rJson, metadata) {
 <html>
   <head>
     <title>Bower Example</title>
-    <script src="bower_components/lodash-compat/lodash.js"></script>
     <script src="bower_components/path-loader/browser/path-loader.js"></script>
     <script src="bower_components/traverse/traverse.js"></script>
     <script src="bower_components/json-refs/browser/json-refs.js"></script>

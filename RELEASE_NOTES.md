@@ -1,5 +1,9 @@
 ## Release Notes
 
+### v0.3.3 (TBD)
+
+* Rewrote using ES5 which removed the need for `lodash-compat`
+
 ### v0.3.2 (2015-07-08)
 
 * Unresolved references leave the original reference in the document so as not to break JSON Schema validation

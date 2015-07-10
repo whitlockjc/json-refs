@@ -67,7 +67,6 @@ gulp.task('browserify', function (cb) {
       if (!isStandalone) {
         // Expose Bower modules so they can be required
         exposify.config = {
-          'lodash-compat': '_',
           'path-loader': 'PathLoader',
           'traverse': 'traverse'
         };
