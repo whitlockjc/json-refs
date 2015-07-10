@@ -2,6 +2,7 @@
 
 ### v0.3.3 (TBD)
 
+* Circular references are now identified in metadata _(Issue #22)_
 * Rewrote using ES5 which removed the need for `lodash-compat`
 
 ### v0.3.2 (2015-07-08)

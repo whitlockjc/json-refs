@@ -325,12 +325,15 @@ module.exports.resolveRefs = function resolveRefs (json, options, done) {
   var cJsonT;
 
   function removeCircular (jsonT) {
+
     var circularPtrs = [];
     var scrubbed = jsonT.map(function () {
       var ptr = pathToPointer(this.path);
 
       if (this.circular) {
         circularPtrs.push(ptr);
+
+        metadata[ptr + '/$ref'].circular = true;
 
         if (depth === 0) {
           this.update({});

@@ -404,7 +404,7 @@ describe('json-refs', function () {
           };
           var cJson = _.cloneDeep(json);
 
-          jsonRefs.resolveRefs(json, options, function (err, rJson) {
+          jsonRefs.resolveRefs(json, options, function (err, rJson, metadata) {
             assert.ok(_.isUndefined(err));
             assert.notDeepEqual(json, rJson);
 
@@ -423,11 +423,53 @@ describe('json-refs', function () {
               ]
             });
 
+            assert.ok(metadata['#/a/0/$ref'].circular);
+
             done();
           });
         });
 
-        it('object', function (done) {
+        it('object (allOf)', function (done) {
+          var json = {
+            definitions: {
+              Cat: {
+                allOf: [
+                  {
+                    $ref: '#/definitions/Cat'
+                  }
+                ]
+              }
+            }
+          };
+          var cJson = _.cloneDeep(json);
+          var cOptions = _.cloneDeep(options);
+
+          cOptions.depth = 0;
+
+          jsonRefs.resolveRefs(json, cOptions, function (err, rJson, metadata) {
+            assert.ok(_.isUndefined(err));
+            assert.notDeepEqual(json, rJson);
+
+            // Make sure the original JSON is untouched
+            assert.deepEqual(json, cJson);
+
+            assert.deepEqual(rJson, {
+              definitions: {
+                Cat: {
+                  allOf: [
+                    {}
+                  ]
+                }
+              }
+            });
+
+            assert.ok(metadata['#/definitions/Cat/allOf/0/$ref'].circular);
+
+            done();
+          });
+        });
+
+        it('object (properties)', function (done) {
           var json = {
             id: 'Person',
             properties: {
@@ -447,7 +489,7 @@ describe('json-refs', function () {
           };
           var cJson = _.cloneDeep(json);
 
-          jsonRefs.resolveRefs(json, options, function (err, rJson) {
+          jsonRefs.resolveRefs(json, options, function (err, rJson, metadata) {
             assert.ok(_.isUndefined(err));
             assert.notDeepEqual(json, rJson);
 
@@ -483,6 +525,8 @@ describe('json-refs', function () {
                 }
               }
             });
+
+            assert.ok(metadata['#/properties/family/items/$ref'].circular);
 
             done();
           });
