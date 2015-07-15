@@ -639,142 +639,144 @@ describe('json-refs', function () {
       });
 
       describe('circular reference depth', function () {
-        it('array', function (done) {
-          var json = {
-            a: [
-              {
-                $ref: '#'
-              },
-              'x'
-            ]
-          };
-          var cJson = _.cloneDeep(json);
-          var cOptions = _.cloneDeep(options);
-
-          cOptions.depth = 2;
-
-          jsonRefs.resolveRefs(json, cOptions)
-            .then(function (results) {
-              assert.notDeepEqual(json, results.resolved);
-
-              // Make sure the original JSON is untouched
-              assert.deepEqual(json, cJson);
-
-              assert.deepEqual(results.resolved, {
-                a: [
-                  {
-                    a: [
-                      {
-                        a: [
-                          {},
-                          'x'
-                        ]
-                      },
-                      'x'
-                    ]
-                  },
-                  'x'
-                ]
-              });
-            })
-            .then(done, done);
-        });
-
-        it('array (zero depth)', function (done) {
-          var json = {
-            a: [
-              {
-                $ref: '#'
-              },
-              'x'
-            ]
-          };
-          var cJson = _.cloneDeep(json);
-          var cOptions = _.cloneDeep(options);
-
-          cOptions.depth = 0;
-
-          jsonRefs.resolveRefs(json, cOptions)
-            .then(function (results) {
-              assert.notDeepEqual(json, results.resolved);
-
-              // Make sure the original JSON is untouched
-              assert.deepEqual(json, cJson);
-
-              assert.deepEqual(results.resolved, {
-                a: [
-                  {},
-                  'x'
-                ]
-              });
-            })
-            .then(done, done);
-        });
-
-        it('object', function (done) {
-          var json = {
-            id: 'Person',
-            properties: {
-              name: {
-                type: 'string'
-              },
-              age: {
-                type: 'number'
-              },
-              family: {
-                type: 'array',
-                items: {
+        describe('local', function () {
+          it('array', function (done) {
+            var json = {
+              a: [
+                {
                   $ref: '#'
+                },
+                'x'
+              ]
+            };
+            var cJson = _.cloneDeep(json);
+            var cOptions = _.cloneDeep(options);
+
+            cOptions.depth = 2;
+
+            jsonRefs.resolveRefs(json, cOptions)
+              .then(function (results) {
+                assert.notDeepEqual(json, results.resolved);
+
+                // Make sure the original JSON is untouched
+                assert.deepEqual(json, cJson);
+
+                assert.deepEqual(results.resolved, {
+                  a: [
+                    {
+                      a: [
+                        {
+                          a: [
+                            {},
+                            'x'
+                          ]
+                        },
+                        'x'
+                      ]
+                    },
+                    'x'
+                  ]
+                });
+              })
+              .then(done, done);
+          });
+
+          it('array (zero depth)', function (done) {
+            var json = {
+              a: [
+                {
+                  $ref: '#'
+                },
+                'x'
+              ]
+            };
+            var cJson = _.cloneDeep(json);
+            var cOptions = _.cloneDeep(options);
+
+            cOptions.depth = 0;
+
+            jsonRefs.resolveRefs(json, cOptions)
+              .then(function (results) {
+                assert.notDeepEqual(json, results.resolved);
+
+                // Make sure the original JSON is untouched
+                assert.deepEqual(json, cJson);
+
+                assert.deepEqual(results.resolved, {
+                  a: [
+                    {},
+                    'x'
+                  ]
+                });
+              })
+              .then(done, done);
+          });
+
+          it('object', function (done) {
+            var json = {
+              id: 'Person',
+              properties: {
+                name: {
+                  type: 'string'
+                },
+                age: {
+                  type: 'number'
+                },
+                family: {
+                  type: 'array',
+                  items: {
+                    $ref: '#'
+                  }
                 }
               }
-            }
-          };
-          var cJson = _.cloneDeep(json);
-          var cOptions = _.cloneDeep(options);
+            };
+            var cJson = _.cloneDeep(json);
+            var cOptions = _.cloneDeep(options);
 
-          cOptions.depth = 2;
+            cOptions.depth = 2;
 
-          jsonRefs.resolveRefs(json, cOptions)
-            .then(function (results) {
-              assert.notDeepEqual(json, results.resolved);
+            jsonRefs.resolveRefs(json, cOptions)
+              .then(function (results) {
+                assert.notDeepEqual(json, results.resolved);
 
-              // Make sure the original JSON is untouched
-              assert.deepEqual(json, cJson);
+                // Make sure the original JSON is untouched
+                assert.deepEqual(json, cJson);
 
-              assert.deepEqual(results.resolved, {
-                id: 'Person',
-                properties: {
-                  name: {
-                    type: 'string'
-                  },
-                  age: {
-                    type: 'number'
-                  },
-                  family: {
-                    type: 'array',
-                    items: {
-                      id: 'Person',
-                      properties: {
-                        name: {
-                          type: 'string'
-                        },
-                        age: {
-                          type: 'number'
-                        },
-                        family: {
-                          type: 'array',
-                          items: {
-                            id: 'Person',
-                            properties: {
-                              name: {
-                                type: 'string'
-                              },
-                              age: {
-                                type: 'number'
-                              },
-                              family: {
-                                items: {},
-                                type: 'array'
+                assert.deepEqual(results.resolved, {
+                  id: 'Person',
+                  properties: {
+                    name: {
+                      type: 'string'
+                    },
+                    age: {
+                      type: 'number'
+                    },
+                    family: {
+                      type: 'array',
+                      items: {
+                        id: 'Person',
+                        properties: {
+                          name: {
+                            type: 'string'
+                          },
+                          age: {
+                            type: 'number'
+                          },
+                          family: {
+                            type: 'array',
+                            items: {
+                              id: 'Person',
+                              properties: {
+                                name: {
+                                  type: 'string'
+                                },
+                                age: {
+                                  type: 'number'
+                                },
+                                family: {
+                                  items: {},
+                                  type: 'array'
+                                }
                               }
                             }
                           }
@@ -782,88 +784,132 @@ describe('json-refs', function () {
                       }
                     }
                   }
-                }
-              });
-            })
-            .then(done, done);
-        });
+                });
+              })
+              .then(done, done);
+          });
 
-        it('object (zero depth)', function (done) {
-          var json = {
-            id: 'Person',
-            properties: {
-              name: {
-                type: 'string'
-              },
-              age: {
-                type: 'number'
-              },
-              family: {
-                type: 'array',
-                items: {
-                  $ref: '#'
-                }
-              }
-            }
-          };
-          var cJson = _.cloneDeep(json);
-          var cOptions = _.cloneDeep(options);
-
-          cOptions.depth = 0;
-
-          jsonRefs.resolveRefs(json, cOptions)
-            .then(function (results) {
-              assert.notDeepEqual(json, results.resolved);
-
-              // Make sure the original JSON is untouched
-              assert.deepEqual(json, cJson);
-
-              assert.deepEqual(results.resolved, {
-                id: 'Person',
-                properties: {
-                  name: {
-                    type: 'string'
-                  },
-                  age: {
-                    type: 'number'
-                  },
-                  family: {
-                    type: 'array',
-                    items: {}
+          it('object (zero depth)', function (done) {
+            var json = {
+              id: 'Person',
+              properties: {
+                name: {
+                  type: 'string'
+                },
+                age: {
+                  type: 'number'
+                },
+                family: {
+                  type: 'array',
+                  items: {
+                    $ref: '#'
                   }
                 }
-              });
-            })
-            .then(done, done);
-        });
+              }
+            };
+            var cJson = _.cloneDeep(json);
+            var cOptions = _.cloneDeep(options);
 
-        it('root', function (done) {
-          var json = {
-            $ref: '#'
-          };
-          var cJson = _.cloneDeep(json);
-          var cOptions = _.cloneDeep(options);
+            cOptions.depth = 0;
 
-          // Even though we set the depth to 3, root references to self will never nest
-          cOptions.depth = 3;
+            jsonRefs.resolveRefs(json, cOptions)
+              .then(function (results) {
+                assert.notDeepEqual(json, results.resolved);
 
-          jsonRefs.resolveRefs(json, options)
-            .then(function (results) {
-              assert.notDeepEqual(json, results.resolved);
+                // Make sure the original JSON is untouched
+                assert.deepEqual(json, cJson);
 
-              // Make sure the original JSON is untouched
-              assert.deepEqual(json, cJson);
+                assert.deepEqual(results.resolved, {
+                  id: 'Person',
+                  properties: {
+                    name: {
+                      type: 'string'
+                    },
+                    age: {
+                      type: 'number'
+                    },
+                    family: {
+                      type: 'array',
+                      items: {}
+                    }
+                  }
+                });
+              })
+              .then(done, done);
+          });
 
-              assert.deepEqual(results.metadata, {
-                '#/$ref': {
-                  circular: true,
-                  ref: '#',
-                  value: {}
-                }
-              });
-              assert.deepEqual(results.resolved, {});
-            })
-            .then(done, done);
+          it('self (root)', function (done) {
+            var json = {
+              $ref: '#'
+            };
+            var cJson = _.cloneDeep(json);
+            var cOptions = _.cloneDeep(options);
+
+            // Even though we set the depth to 3, root references to self will never nest
+            cOptions.depth = 3;
+
+            jsonRefs.resolveRefs(json, cOptions)
+              .then(function (results) {
+                assert.notDeepEqual(json, results.resolved);
+
+                // Make sure the original JSON is untouched
+                assert.deepEqual(json, cJson);
+
+                assert.deepEqual(results.metadata, {
+                  '#/$ref': {
+                    circular: true,
+                    ref: '#',
+                    value: {}
+                  }
+                });
+                assert.deepEqual(results.resolved, {});
+              })
+              .then(done, done);
+          });
+
+          it('self (child)', function (done) {
+            var json = {
+              child: {
+                $ref: '#'
+              }
+            };
+            var cJson = _.cloneDeep(json);
+            var cOptions = _.cloneDeep(options);
+
+            cOptions.depth = 3;
+
+            jsonRefs.resolveRefs(json, cOptions)
+              .then(function (results) {
+                assert.notDeepEqual(json, results.resolved);
+
+                // Make sure the original JSON is untouched
+                assert.deepEqual(json, cJson);
+
+                assert.deepEqual(results.metadata, {
+                  '#/child/$ref': {
+                    circular: true,
+                    ref: '#',
+                    value: {
+                      child: {
+                        child: {
+                          child: {}
+                        }
+                      }
+                    }
+                  }
+                });
+                assert.deepEqual(results.resolved, {
+                  child: {
+                    child: {
+                      child: {
+                        child: {}
+                      }
+                    }
+                  }
+                });
+              })
+              .then(done, done);
+          });
         });
       });
 

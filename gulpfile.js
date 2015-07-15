@@ -134,7 +134,8 @@ gulp.task('test-node', function (cb) {
     .then(function () {
       return new Promise(function (resolve, reject) {
         gulp.src([
-            'index.js'
+            'index.js',
+            'lib/**/*.js'
           ])
           .pipe(istanbul({includeUntested: true}))
           .pipe(istanbul.hookRequire()) // Force `require` to return covered files
