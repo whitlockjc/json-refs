@@ -3,6 +3,7 @@
 ### TBD
 
 * `#resolveRefs` now supports callbacks, as always, and promises  _(Always returns a promise even if callbacks are used)_
+* Fixed a few scenarios where local self references to root didn't work right
 
 ### v0.3.3 (TBD)
 

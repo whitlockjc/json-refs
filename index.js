@@ -311,6 +311,8 @@ function realResolveRefs (json, options, metadata) {
 
         traverse(scrubbed).set(depthPath, _.cloneDeep(value));
       }
+
+      metadata[ptr + '/$ref'].value = traverse(scrubbed).get(path);
     });
 
     return scrubbed;
@@ -343,6 +345,13 @@ function realResolveRefs (json, options, metadata) {
 
     if (!missing) {
       if (parentPath.length === 0) {
+        // Self references are special
+        if (to.value === value) {
+          value = {};
+
+          refMetadata.circular = true;
+        }
+
         to.value = value;
       } else {
         to.set(parentPath, value);
