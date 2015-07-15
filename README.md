@@ -126,10 +126,16 @@ console.log(jsonRefs.pathToPointer(['owner', 'login'])); // #/owner/login
 * `[options.prepareRequest] {function}`: The callback used to prepare a request *(Passed to [path-loader][path-loader])*
 * `[options.processContent] {function}`: The callback used to process the remote request content *(Passed to
 [path-loader][path-loader])*
-* `done {function}`: An error-first callback to be called with the fully-resolved object and metadata for the reference
-resolution
+* `done [function]`: An error-first callback to be called with the fully-resolved object and metadata for the reference
+resolution *(Not required if using promises)*
 
 **Response**
+
+`resolveRefs` returns a `Promise` always, even if you use the error-first callbacks.  That being said, when using
+promises, due to promises only allowing one resolved object we have to treat the responses different.  Below are the
+differences:
+
+*(Callbacks)*
 
 If there is an `Error`, the callback is called with the `Error` in the first argument and `undefined` in the second
 argument.  If there is no `Error`, the first argument is `undefined` and the second argument is an `object` whose value
@@ -142,6 +148,15 @@ Its keys are the location of the reference and its values are as follows:
 reference was resolvable and it resolved to an explicit value.  If this property is not set, that means the reference
 was unresolvable.  A value of `undefined` means that the reference was resolvable to an actual value of `undefined` and
 is not indicative of an unresolvable reference.
+
+*(Promises)*
+
+The `resolve` value is an object with the following keys:
+
+* `resolved`: The same as callback argument 1
+* `metadata`: The same as callback argument 2
+
+Of course, the `reject` value is the same as callback argument 0.
 
 ##Usage
 
@@ -168,6 +183,8 @@ var json = {
     $ref: 'https://api.github.com/repos/whitlockjc/json-refs#/owner'
   }
 };
+
+// Uses promises
 jsonRefs.resolveRefs(json, {
   prepareRequest: function (req) {
     // Add the 'Basic Authentication' credentials
@@ -176,12 +193,13 @@ jsonRefs.resolveRefs(json, {
     // Add the 'X-API-Key' header for an API Key based authentication
     // req.set('X-API-Key', 'MY_API_KEY');
   }
-}, function (err, rJson, metadata) {
-  if (err) throw err;
-
-  console.log(JSON.stringify(rJson)); // {name: 'json-refs', owner: {/* GitHub Repository Owner Information */}}
-  console.log(JSON.stringify(metadata)); // {'#/owner/$ref': {ref: 'https://api.github.com/repos/whitlockjc/json-refs#/owner', value: {/*GitHub Repository Onwer Information */}}}
-});
+})
+  .then(function (results) {
+    console.log(JSON.stringify(results.resolved)); // {name: 'json-refs', owner: {/* GitHub Repository Owner Information */}}
+    console.log(JSON.stringify(results.metadata)); // {'#/owner/$ref': {ref: 'https://api.github.com/repos/whitlockjc/json-refs#/owner', value: {/*GitHub Repository Onwer Information */}}}
+  }, function (err) {
+    console.error(err.stack);
+  });
 ```
 
 **Note:** If you need to pre-process the content of your remote requests, like to support parse non-JSON, you can use
@@ -192,6 +210,7 @@ resource:
 var jsonRefs = require('json-resf');
 var YAML = require('yamljs');
 
+// Uses callbacks
 jsonRefs.resolveRefs({
   $ref: 'http://somehost/somefile.yaml'
 }, {

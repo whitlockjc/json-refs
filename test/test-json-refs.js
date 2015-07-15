@@ -193,26 +193,80 @@ describe('json-refs', function () {
   });
 
   describe('#resolveRefs', function () {
-    it('should throw an Error when passed the wrong arguments', function () {
-      var errors = {
+    describe('should throw an Error when passed the wrong arguments', function () {
+      var scenarios = {
         'json is required': [],
         'json must be an object': ['wrongType'],
-        'options must be an object': [{}, 'wrongType', function () {}],
-        'options.depth must be a number': [{}, {depth: true}, function () {}],
-        'options.depth must be greater or equal to zero': [{}, {depth: -1}, function () {}],
-        'options.location must be a string': [{}, {location: 123}, function () {}],
-        'options.prepareRequest must be a function': [{}, {prepareRequest: 'wrongType'}, function () {}],
-        'options.processContent must be a function': [{}, {processContent: 'wrongType'}, function () {}],
-        'done is required': [{}],
-        'done must be a function': [{}, 'wrongType']
+        'options must be an object': [{}, 'wrongType'],
+        'options.depth must be a number': [{}, {depth: true}],
+        'options.depth must be greater or equal to zero': [{}, {depth: -1}],
+        'options.location must be a string': [{}, {location: 123}],
+        'options.prepareRequest must be a function': [{}, {prepareRequest: 'wrongType'}],
+        'options.processContent must be a function': [{}, {processContent: 'wrongType'}],
+        'done must be a function': [{}, {}, 'wrongType']
       };
 
-      _.each(errors, function (args, message) {
-        try {
-          jsonRefs.resolveRefs.apply(undefined, args);
-        } catch (err) {
-          assert.equal(message, err.message);
-        }
+      it('callbacks', function (done) {
+        var allTests = Promise.resolve();
+        var scenarioKeys = Object.keys(scenarios);
+
+        // We cannot test the first or last scenarios with callbacks
+        _.each(scenarioKeys, function (scenario, index) {
+          var args = scenarios[scenario];
+
+          if (index === 0 || index === scenarioKeys.length - 1) {
+            return;
+          }
+
+          allTests = allTests
+            .then(function () {
+              return new Promise(function (resolve, reject) {
+                var cArgs = args.concat(function (err) {
+                  if (!_.isError(err)) {
+                    reject(new Error('JsonRefs#resolveRefs should had failed (' + scenario + ')'));
+                  } else {
+                    try {
+                      assert.equal(err.message, scenario);
+
+                      resolve();
+                    } catch (err2) {
+                      reject(err2);
+                    }
+                  }
+                });
+
+                jsonRefs.resolveRefs.apply(jsonRefs, cArgs);
+              }).catch(done);
+            });
+        });
+
+        allTests.then(done, done);
+      });
+
+      it('promises', function (done) {
+        var allTests = Promise.resolve();
+
+        _.each(scenarios, function (args, scenario) {
+          allTests = allTests
+            .then(function () {
+              return new Promise(function (resolve, reject) {
+                jsonRefs.resolveRefs.apply(undefined, args)
+                  .then(function () {
+                    reject(new Error('JsonRefs#resolveRefs should had failed (' + scenario + ')'));
+                  }, function (err) {
+                    try {
+                      assert.equal(err.message, scenario);
+
+                      resolve();
+                    } catch (err2) {
+                      reject(err2);
+                    }
+                  });
+              });
+            });
+        });
+
+        allTests.then(done, done);
       });
     });
 
@@ -227,13 +281,11 @@ describe('json-refs', function () {
           url: 'https://github.com/whitlockjc/json-refs'
         };
 
-        jsonRefs.resolveRefs(json, options, function (err, rJson, metadata) {
-          assert.ok(_.isUndefined(err));
-          assert.deepEqual(json, rJson);
-          assert.deepEqual({}, metadata);
-
-          return done();
-        });
+        jsonRefs.resolveRefs(json, options)
+          .then(function (results) {
+            assert.deepEqual(json, results.resolved);
+            assert.deepEqual({}, results.metadata);
+          }).then(done, done);
       });
 
       it('simple reference', function (done) {
@@ -257,47 +309,46 @@ describe('json-refs', function () {
         };
         var cJson = _.cloneDeep(json);
 
-        jsonRefs.resolveRefs(json, options, function (err, rJson, metadata) {
-          assert.ok(_.isUndefined(err));
-          assert.notDeepEqual(json, rJson);
-          assert.deepEqual({
-            '#/project/maintainer/$ref': {
-              ref: '#/person',
-              value: {
-                name: 'Jeremy'
+        jsonRefs.resolveRefs(json, options)
+          .then(function (results) {
+            assert.notDeepEqual(json, results.resolved);
+            assert.deepEqual({
+              '#/project/maintainer/$ref': {
+                ref: '#/person',
+                value: {
+                  name: 'Jeremy'
+                }
+              },
+              '#/fake/$ref': {
+                ref: '#/unresolvable'
+              },
+              '#/undefined/$ref': {
+                ref: '#/project/organization',
+                value: undefined
               }
-            },
-            '#/fake/$ref': {
-              ref: '#/unresolvable'
-            },
-            '#/undefined/$ref': {
-              ref: '#/project/organization',
-              value: undefined
-            }
-          }, metadata);
+            }, results.metadata);
 
-          // Make sure the original JSON is untouched
-          assert.deepEqual(json, cJson);
+            // Make sure the original JSON is untouched
+            assert.deepEqual(json, cJson);
 
-          assert.deepEqual(rJson, {
-            person: {
-              name: 'Jeremy'
-            },
-            project: {
-              name: 'json-refs',
-              maintainer: {
+            assert.deepEqual(results.resolved, {
+              person: {
                 name: 'Jeremy'
               },
-              organization: undefined
-            },
-            fake: {
-              $ref: '#/unresolvable'
-            },
-            undefined: undefined
-          });
-
-          done();
-        });
+              project: {
+                name: 'json-refs',
+                maintainer: {
+                  name: 'Jeremy'
+              },
+                organization: undefined
+              },
+              fake: {
+                $ref: '#/unresolvable'
+              },
+              undefined: undefined
+            });
+          })
+          .then(done, done);
       });
 
       it('complex reference', function (done) {
@@ -320,36 +371,35 @@ describe('json-refs', function () {
         };
         var cJson = _.cloneDeep(json);
 
-        jsonRefs.resolveRefs(json, options, function (err, rJson) {
-          assert.ok(_.isUndefined(err));
-          assert.notDeepEqual(json, rJson);
+        jsonRefs.resolveRefs(json, options)
+          .then(function (results) {
+            assert.notDeepEqual(json, results.resolved);
 
-          // Make sure the original JSON is untouched
-          assert.deepEqual(json, cJson);
+            // Make sure the original JSON is untouched
+            assert.deepEqual(json, cJson);
 
-          assert.deepEqual(rJson, {
-            A: {
-              a: 'a',
-              b: {
+            assert.deepEqual(results.resolved, {
+              A: {
+                a: 'a',
+                b: {
+                  b: 'b',
+                  c: {
+                    c: 'c'
+                  }
+                }
+              },
+              B: {
                 b: 'b',
                 c: {
                   c: 'c'
                 }
-              }
-            },
-            B: {
-              b: 'b',
-              c: {
+              },
+              C: {
                 c: 'c'
               }
-            },
-            C: {
-              c: 'c'
-            }
-          });
-
-          done();
-        });
+            });
+          })
+          .then(done, done);
       });
 
       // Here only to show that we special case the inability for traverse to replace the root node:
@@ -360,17 +410,16 @@ describe('json-refs', function () {
         };
         var cJson = _.cloneDeep(json);
 
-        jsonRefs.resolveRefs(json, options, function (err, rJson) {
-          assert.ok(_.isUndefined(err));
-          assert.notDeepEqual(json, rJson);
+        jsonRefs.resolveRefs(json, options)
+          .then(function (results) {
+            assert.notDeepEqual(json, results.resolved);
 
-          // Make sure the original JSON is untouched
-          assert.deepEqual(json, cJson);
+            // Make sure the original JSON is untouched
+            assert.deepEqual(json, cJson);
 
-          assert.equal(rJson.full_name, 'whitlockjc/json-refs');
-
-          done();
-        });
+            assert.equal(results.resolved.full_name, 'whitlockjc/json-refs');
+          })
+          .then(done, done);
       });
 
       it('top-level reference with hash (Issue 19)', function (done) {
@@ -379,17 +428,16 @@ describe('json-refs', function () {
         };
         var cJson = _.cloneDeep(json);
 
-        jsonRefs.resolveRefs(json, options, function (err, rJson) {
-          assert.ok(_.isUndefined(err));
-          assert.notDeepEqual(json, rJson);
+        jsonRefs.resolveRefs(json, options)
+          .then(function (results) {
+            assert.notDeepEqual(json, results.resolved);
 
-          // Make sure the original JSON is untouched
-          assert.deepEqual(json, cJson);
+            // Make sure the original JSON is untouched
+            assert.deepEqual(json, cJson);
 
-          assert.equal(rJson.login, 'whitlockjc');
-
-          done();
-        });
+            assert.equal(results.resolved.login, 'whitlockjc');
+          })
+          .then(done, done);
       });
 
       describe('circular references', function () {
@@ -404,29 +452,28 @@ describe('json-refs', function () {
           };
           var cJson = _.cloneDeep(json);
 
-          jsonRefs.resolveRefs(json, options, function (err, rJson, metadata) {
-            assert.ok(_.isUndefined(err));
-            assert.notDeepEqual(json, rJson);
+          jsonRefs.resolveRefs(json, options)
+            .then(function (results) {
+              assert.notDeepEqual(json, results.resolved);
 
-            // Make sure the original JSON is untouched
-            assert.deepEqual(json, cJson);
+              // Make sure the original JSON is untouched
+              assert.deepEqual(json, cJson);
 
-            assert.deepEqual(rJson, {
-              a: [
-                {
-                  a: [
-                    {},
-                    'x'
-                  ]
+              assert.deepEqual(results.resolved, {
+                a: [
+                  {
+                    a: [
+                      {},
+                      'x'
+                    ]
                 },
-                'x'
-              ]
-            });
+                  'x'
+                ]
+              });
 
-            assert.ok(metadata['#/a/0/$ref'].circular);
-
-            done();
-          });
+              assert.ok(results.metadata['#/a/0/$ref'].circular);
+            })
+            .then(done, done);
         });
 
         it('object (allOf)', function (done) {
@@ -446,27 +493,26 @@ describe('json-refs', function () {
 
           cOptions.depth = 0;
 
-          jsonRefs.resolveRefs(json, cOptions, function (err, rJson, metadata) {
-            assert.ok(_.isUndefined(err));
-            assert.notDeepEqual(json, rJson);
+          jsonRefs.resolveRefs(json, cOptions)
+            .then(function (results) {
+              assert.notDeepEqual(json, results.resolved);
 
-            // Make sure the original JSON is untouched
-            assert.deepEqual(json, cJson);
+              // Make sure the original JSON is untouched
+              assert.deepEqual(json, cJson);
 
-            assert.deepEqual(rJson, {
-              definitions: {
-                Cat: {
-                  allOf: [
-                    {}
-                  ]
+              assert.deepEqual(results.resolved, {
+                definitions: {
+                  Cat: {
+                    allOf: [
+                      {}
+                    ]
+                  }
                 }
-              }
-            });
+              });
 
-            assert.ok(metadata['#/definitions/Cat/allOf/0/$ref'].circular);
-
-            done();
-          });
+              assert.ok(results.metadata['#/definitions/Cat/allOf/0/$ref'].circular);
+            })
+            .then(done, done);
         });
 
         it('object (properties)', function (done) {
@@ -489,47 +535,46 @@ describe('json-refs', function () {
           };
           var cJson = _.cloneDeep(json);
 
-          jsonRefs.resolveRefs(json, options, function (err, rJson, metadata) {
-            assert.ok(_.isUndefined(err));
-            assert.notDeepEqual(json, rJson);
+          jsonRefs.resolveRefs(json, options)
+            .then(function (results) {
+              assert.notDeepEqual(json, results.resolved);
 
-            // Make sure the original JSON is untouched
-            assert.deepEqual(json, cJson);
+              // Make sure the original JSON is untouched
+              assert.deepEqual(json, cJson);
 
-            assert.deepEqual(rJson, {
-              id: 'Person',
-              properties: {
-                name: {
-                  type: 'string'
-                },
-                age: {
-                  type: 'number'
-                },
-                family: {
-                  type: 'array',
-                  items: {
-                    id: 'Person',
-                    properties: {
-                      name: {
-                        type: 'string'
-                      },
-                      age: {
-                        type: 'number'
-                      },
-                      family: {
-                        items: {},
-                        type: 'array'
+              assert.deepEqual(results.resolved, {
+                id: 'Person',
+                properties: {
+                  name: {
+                    type: 'string'
+                  },
+                  age: {
+                    type: 'number'
+                  },
+                  family: {
+                    type: 'array',
+                    items: {
+                      id: 'Person',
+                      properties: {
+                        name: {
+                          type: 'string'
+                        },
+                        age: {
+                          type: 'number'
+                        },
+                        family: {
+                          items: {},
+                          type: 'array'
+                        }
                       }
                     }
                   }
                 }
-              }
-            });
+              });
 
-            assert.ok(metadata['#/properties/family/items/$ref'].circular);
-
-            done();
-          });
+              assert.ok(results.metadata['#/properties/family/items/$ref'].circular);
+            })
+            .then(done, done);
         });
       });
 
@@ -548,32 +593,31 @@ describe('json-refs', function () {
 
           cOptions.depth = 2;
 
-          jsonRefs.resolveRefs(json, cOptions, function (err, rJson) {
-            assert.ok(_.isUndefined(err));
-            assert.notDeepEqual(json, rJson);
+          jsonRefs.resolveRefs(json, cOptions)
+            .then(function (results) {
+              assert.notDeepEqual(json, results.resolved);
 
-            // Make sure the original JSON is untouched
-            assert.deepEqual(json, cJson);
+              // Make sure the original JSON is untouched
+              assert.deepEqual(json, cJson);
 
-            assert.deepEqual(rJson, {
-              a: [
-                {
-                  a: [
-                    {
-                      a: [
-                        {},
-                        'x'
-                      ]
-                    },
-                    'x'
-                  ]
-                },
-                'x'
-              ]
-            });
-
-            done();
-          });
+              assert.deepEqual(results.resolved, {
+                a: [
+                  {
+                    a: [
+                      {
+                        a: [
+                          {},
+                          'x'
+                        ]
+                      },
+                      'x'
+                    ]
+                  },
+                  'x'
+                ]
+              });
+            })
+            .then(done, done);
         });
 
         it('array (zero depth)', function (done) {
@@ -590,22 +634,21 @@ describe('json-refs', function () {
 
           cOptions.depth = 0;
 
-          jsonRefs.resolveRefs(json, cOptions, function (err, rJson) {
-            assert.ok(_.isUndefined(err));
-            assert.notDeepEqual(json, rJson);
+          jsonRefs.resolveRefs(json, cOptions)
+            .then(function (results) {
+              assert.notDeepEqual(json, results.resolved);
 
-            // Make sure the original JSON is untouched
-            assert.deepEqual(json, cJson);
+              // Make sure the original JSON is untouched
+              assert.deepEqual(json, cJson);
 
-            assert.deepEqual(rJson, {
-              a: [
-                {},
-                'x'
-              ]
-            });
-
-            done();
-          });
+              assert.deepEqual(results.resolved, {
+                a: [
+                  {},
+                  'x'
+                ]
+              });
+            })
+            .then(done, done);
         });
 
         it('object', function (done) {
@@ -631,47 +674,48 @@ describe('json-refs', function () {
 
           cOptions.depth = 2;
 
-          jsonRefs.resolveRefs(json, cOptions, function (err, rJson) {
-            assert.ok(_.isUndefined(err));
-            assert.notDeepEqual(json, rJson);
+          jsonRefs.resolveRefs(json, cOptions)
+            .then(function (results) {
+              assert.notDeepEqual(json, results.resolved);
 
-            // Make sure the original JSON is untouched
-            assert.deepEqual(json, cJson);
+              // Make sure the original JSON is untouched
+              assert.deepEqual(json, cJson);
 
-            assert.deepEqual(rJson, {
-              id: 'Person',
-              properties: {
-                name: {
-                  type: 'string'
-                },
-                age: {
-                  type: 'number'
-                },
-                family: {
-                  type: 'array',
-                  items: {
-                    id: 'Person',
-                    properties: {
-                      name: {
-                        type: 'string'
-                      },
-                      age: {
-                        type: 'number'
-                      },
-                      family: {
-                        type: 'array',
-                        items: {
-                          id: 'Person',
-                          properties: {
-                            name: {
-                              type: 'string'
-                            },
-                            age: {
-                              type: 'number'
-                            },
-                            family: {
-                              items: {},
-                              type: 'array'
+              assert.deepEqual(results.resolved, {
+                id: 'Person',
+                properties: {
+                  name: {
+                    type: 'string'
+                  },
+                  age: {
+                    type: 'number'
+                  },
+                  family: {
+                    type: 'array',
+                    items: {
+                      id: 'Person',
+                      properties: {
+                        name: {
+                          type: 'string'
+                        },
+                        age: {
+                          type: 'number'
+                        },
+                        family: {
+                          type: 'array',
+                          items: {
+                            id: 'Person',
+                            properties: {
+                              name: {
+                                type: 'string'
+                              },
+                              age: {
+                                type: 'number'
+                              },
+                              family: {
+                                items: {},
+                                type: 'array'
+                              }
                             }
                           }
                         }
@@ -679,11 +723,9 @@ describe('json-refs', function () {
                     }
                   }
                 }
-              }
-            });
-
-            done();
-          });
+              });
+            })
+            .then(done, done);
         });
 
         it('object (zero depth)', function (done) {
@@ -709,31 +751,30 @@ describe('json-refs', function () {
 
           cOptions.depth = 0;
 
-          jsonRefs.resolveRefs(json, cOptions, function (err, rJson) {
-            assert.ok(_.isUndefined(err));
-            assert.notDeepEqual(json, rJson);
+          jsonRefs.resolveRefs(json, cOptions)
+            .then(function (results) {
+              assert.notDeepEqual(json, results.resolved);
 
-            // Make sure the original JSON is untouched
-            assert.deepEqual(json, cJson);
+              // Make sure the original JSON is untouched
+              assert.deepEqual(json, cJson);
 
-            assert.deepEqual(rJson, {
-              id: 'Person',
-              properties: {
-                name: {
-                  type: 'string'
-                },
-                age: {
-                  type: 'number'
-                },
-                family: {
-                  type: 'array',
-                  items: {}
+              assert.deepEqual(results.resolved, {
+                id: 'Person',
+                properties: {
+                  name: {
+                    type: 'string'
+                  },
+                  age: {
+                    type: 'number'
+                  },
+                  family: {
+                    type: 'array',
+                    items: {}
+                  }
                 }
-              }
-            });
-
-            done();
-          });
+              });
+            })
+            .then(done, done);
         });
       });
 
@@ -747,23 +788,22 @@ describe('json-refs', function () {
         var cJson = _.cloneDeep(json);
         var refPtr = '#/project/$ref';
 
-        jsonRefs.resolveRefs(json, options, function (err, rJson, metadata) {
-          var details = metadata[refPtr];
-          var detailsKeys = Object.keys(details);
+        jsonRefs.resolveRefs(json, options)
+          .then(function (results) {
+            var details = results.metadata[refPtr];
+            var detailsKeys = Object.keys(details);
 
-          assert.ok(_.isUndefined(err));
-          assert.deepEqual(json, rJson);
+            assert.deepEqual(json, results.resolved);
 
-          // Make sure the original JSON is untouched
-          assert.deepEqual(json, cJson);
+            // Make sure the original JSON is untouched
+            assert.deepEqual(json, cJson);
 
-          assert.deepEqual([refPtr], Object.keys(metadata));
-          assert.equal(details.ref, ref);
-          assert.ok(detailsKeys.indexOf('value') === -1);
-          assert.ok(detailsKeys.indexOf('err') > -1);
-
-          done();
-        });
+            assert.deepEqual([refPtr], Object.keys(results.metadata));
+            assert.equal(details.ref, ref);
+            assert.ok(detailsKeys.indexOf('value') === -1);
+            assert.ok(detailsKeys.indexOf('err') > -1);
+          })
+          .then(done, done);
       });
 
       it('simple remote reference', function (done) {
@@ -774,23 +814,22 @@ describe('json-refs', function () {
         };
         var cJson = _.cloneDeep(json);
 
-        jsonRefs.resolveRefs(json, options, function (err, rJson, metadata) {
-          assert.ok(_.isUndefined(err));
-          assert.notDeepEqual(json, rJson);
+        jsonRefs.resolveRefs(json, options)
+          .then(function (results) {
+            assert.notDeepEqual(json, results.resolved);
 
-          // Make sure the original JSON is untouched
-          assert.deepEqual(json, cJson);
-          assert.deepEqual({
-            '#/project/$ref': {
-              ref: projectJsonUrl,
-              value: projectJson
-            }
-          }, metadata);
+            // Make sure the original JSON is untouched
+            assert.deepEqual(json, cJson);
+            assert.deepEqual({
+              '#/project/$ref': {
+                ref: projectJsonUrl,
+                value: projectJson
+              }
+            }, results.metadata);
 
-          assert.equal(rJson.project.name, 'json-refs');
-
-          done();
-        });
+            assert.equal(results.resolved.project.name, 'json-refs');
+          })
+          .then(done, done);
       });
 
       it('complex remote reference', function (done) {
@@ -801,16 +840,16 @@ describe('json-refs', function () {
         };
         var cJson = _.cloneDeep(json);
 
-        jsonRefs.resolveRefs(json, options, function (err, rJson) {
-          assert.ok(_.isUndefined(err));
-          assert.notDeepEqual(json, rJson);
+        jsonRefs.resolveRefs(json, options)
+          .then(function (results) {
+            assert.notDeepEqual(json, results.resolved);
 
-          // Make sure the original JSON is untouched
-          assert.deepEqual(json, cJson);
+            // Make sure the original JSON is untouched
+            assert.deepEqual(json, cJson);
 
-          assert.equal(rJson.project.full_name, 'whitlockjc/json-refs');
-          done();
-        });
+            assert.equal(results.resolved.project.full_name, 'whitlockjc/json-refs');
+          })
+          .then(done, done);
       });
 
       it('remote reference with hash', function (done) {
@@ -821,23 +860,22 @@ describe('json-refs', function () {
         };
         var cJson = _.cloneDeep(json);
 
-        jsonRefs.resolveRefs(json, options, function (err, rJson, metadata) {
-          assert.ok(_.isUndefined(err));
-          assert.notDeepEqual(json, rJson);
+        jsonRefs.resolveRefs(json, options)
+          .then(function (results) {
+            assert.notDeepEqual(json, results.resolved);
 
-          // Make sure the original JSON is untouched
-          assert.deepEqual(json, cJson);
-          assert.deepEqual({
-            '#/name/$ref': {
-              ref: projectJsonUrl + '#/name',
-              value: rJson.name
-            }
-          }, metadata);
+            // Make sure the original JSON is untouched
+            assert.deepEqual(json, cJson);
+            assert.deepEqual({
+              '#/name/$ref': {
+                ref: projectJsonUrl + '#/name',
+                value: results.resolved.name
+              }
+            }, results.metadata);
 
-          assert.equal(rJson.name, 'json-refs');
-
-          done();
-        });
+            assert.equal(results.resolved.name, 'json-refs');
+          })
+          .then(done, done);
       });
 
       it('multple remote references with hash', function (done) {
@@ -851,28 +889,61 @@ describe('json-refs', function () {
         };
         var cJson = _.cloneDeep(json);
 
-        jsonRefs.resolveRefs(json, options, function (err, rJson, metadata) {
-          assert.ok(_.isUndefined(err));
-          assert.notDeepEqual(json, rJson);
+        jsonRefs.resolveRefs(json, options)
+          .then(function (results) {
+            assert.notDeepEqual(json, results.resolved);
 
-          // Make sure the original JSON is untouched
-          assert.deepEqual(json, cJson);
-          assert.deepEqual({
-            '#/fullName/$ref': {
-              ref: projectJsonUrl + '#/full_name',
-              value: rJson.fullName
-            },
-            '#/name/$ref': {
-              ref: projectJsonUrl + '#/name',
-              value: rJson.name
-            }
-          }, metadata);
+            // Make sure the original JSON is untouched
+            assert.deepEqual(json, cJson);
+            assert.deepEqual({
+              '#/fullName/$ref': {
+                ref: projectJsonUrl + '#/full_name',
+                value: results.resolved.fullName
+              },
+              '#/name/$ref': {
+                ref: projectJsonUrl + '#/name',
+                value: results.resolved.name
+              }
+            }, results.metadata);
 
-          assert.equal(rJson.fullName, 'whitlockjc/json-refs');
-          assert.equal(rJson.name, 'json-refs');
+            assert.equal(results.resolved.fullName, 'whitlockjc/json-refs');
+            assert.equal(results.resolved.name, 'json-refs');
+          })
+          .then(done, done);
+      });
 
-          done();
-        });
+      it('remote reference requiring processContent usage', function (done) {
+        var json = {
+          project: {
+            $ref: 'http://localhost:44444/project.yaml'
+          }
+        };
+
+        // Make request for YAML reference (Should fail)
+        jsonRefs.resolveRefs(json, options)
+          .then(function (results) {
+            var cOptions = _.cloneDeep(options);
+
+            assert.deepEqual(json, results.resolved);
+            assert.ok(Object.keys(results.metadata['#/project/$ref']).indexOf('err') > -1);
+
+            cOptions.processContent = function (content, ref) {
+              assert.equal(ref, 'http://localhost:44444/project.yaml');
+
+              return YAML.safeLoad(content);
+            };
+
+            // Make same request for the same reference but use processContent to parse the YAML
+            return jsonRefs.resolveRefs(json, cOptions)
+              .then(function (results2) {
+                assert.notDeepEqual(json, results2.resolved);
+
+                assert.deepEqual({
+                  project: projectJson
+                }, results2.resolved);
+              });
+          })
+          .then(done, done);
       });
 
       it('remote reference requiring prepareRequest usage (Issue 12)', function (done) {
@@ -884,66 +955,30 @@ describe('json-refs', function () {
         var cJson = _.cloneDeep(json);
 
         // Make request for reference that requires authentication (Should fail)
-        jsonRefs.resolveRefs(json, options, function (err, rJson, metadata) {
-          var cOptions = _.cloneDeep(options);
+        jsonRefs.resolveRefs(json, options)
+          .then(function (results) {
+            var cOptions = _.cloneDeep(options);
 
-          assert.ok(_.isUndefined(err));
-          assert.deepEqual(json, rJson);
+            assert.deepEqual(json, results.resolved);
 
-          assert.equal(401, metadata['#/project/$ref'].err.status);
+            assert.equal(401, results.metadata['#/project/$ref'].err.status);
 
-          cOptions.prepareRequest = function (req) {
-            req.auth('whitlockjc', 'json-refs');
-          };
+            cOptions.prepareRequest = function (req) {
+              req.auth('whitlockjc', 'json-refs');
+            };
 
-          // Make same request for the same reference but use prepareRequest to add authentication to the request
-          jsonRefs.resolveRefs(json, cOptions, function (err2, rJson2) {
-            assert.ok(_.isUndefined(err2));
-            assert.notDeepEqual(json, rJson2);
+            // Make same request for the same reference but use prepareRequest to add authentication to the request
+            return jsonRefs.resolveRefs(json, cOptions)
+              .then(function (results2) {
+                assert.notDeepEqual(json, results2.resolved);
 
-            // Make sure the original JSON is untouched
-            assert.deepEqual(json, cJson);
+                // Make sure the original JSON is untouched
+                assert.deepEqual(json, cJson);
 
-            assert.equal(rJson2.project.name, 'json-refs');
-
-            done();
-          });
-        });
-      });
-
-      it('remote reference requiring processContent usage', function (done) {
-        var json = {
-          project: {
-            $ref: 'http://localhost:44444/project.yaml'
-          }
-        };
-
-        // Make request for YAML reference (Should fail)
-        jsonRefs.resolveRefs(json, options, function (err, rJson, metadata) {
-          var cOptions = _.cloneDeep(options);
-
-          assert.ok(_.isUndefined(err));
-          assert.deepEqual(json, rJson);
-          assert.ok(Object.keys(metadata['#/project/$ref']).indexOf('err') > -1);
-
-          cOptions.processContent = function (content, ref) {
-            assert.equal(ref, 'http://localhost:44444/project.yaml');
-
-            return YAML.safeLoad(content);
-          };
-
-          // Make same request for the same reference but use processContent to parse the YAML
-          jsonRefs.resolveRefs(json, cOptions, function (err2, rJson2) {
-            assert.ok(_.isUndefined(err2));
-            assert.notDeepEqual(json, rJson2);
-
-            assert.deepEqual({
-              project: projectJson
-            }, rJson2);
-
-            done();
-          });
-        });
+                assert.equal(results2.resolved.project.name, 'json-refs');
+              });
+          })
+          .then(done, done);
       });
 
       it('do not return error for invalid remote reference scheme', function (done) {
@@ -951,22 +986,16 @@ describe('json-refs', function () {
           $ref: 'ssh://127.0.0.1:' + path.resolve(__dirname, '..', 'package.json')
         };
 
-        jsonRefs.resolveRefs(json, options, function (err, rJson, metadata) {
-          assert.ok(_.isUndefined(err));
-          assert.deepEqual(json, rJson);
-          assert.deepEqual({}, metadata);
-
-          return done();
-        });
+        jsonRefs.resolveRefs(json, options)
+          .then(function (results) {
+            assert.deepEqual(json, results.resolved);
+            assert.deepEqual({}, results.metadata);
+          })
+          .then(done, done);
       });
 
       describe('should resolve relative references', function () {
         it('no location', function (done) {
-          // We cannot test relative references without location due to our current test framework
-          if (typeof window !== 'undefined') {
-            return done();
-          }
-
           var json = {
             project: {
               $ref: (typeof window === 'undefined' ? 'test/browser/' : '') + 'project.json'
@@ -974,20 +1003,26 @@ describe('json-refs', function () {
           };
           var cJson = _.cloneDeep(json);
           var cOptions = _.cloneDeep(options);
+          var test;
 
           delete cOptions.location;
 
-          jsonRefs.resolveRefs(json, cOptions, function (err, rJson) {
-            assert.ok(_.isUndefined(err));
-            assert.notDeepEqual(json, rJson);
+          // We cannot test relative references without location due to our current test framework
+          if (typeof window !== 'undefined') {
+            test = Promise.resolve();
+          } else {
+            test = jsonRefs.resolveRefs(json, cOptions)
+              .then(function (results) {
+                assert.notDeepEqual(json, results.resolved);
 
-            // Make sure the original JSON is untouched
-            assert.deepEqual(json, cJson);
+                // Make sure the original JSON is untouched
+                assert.deepEqual(json, cJson);
 
-            assert.equal(rJson.project.full_name, 'whitlockjc/json-refs');
+                assert.equal(results.resolved.project.full_name, 'whitlockjc/json-refs');
+              });
+          }
 
-            done();
-          });
+          test.then(done, done);
         });
 
         it('simple', function (done) {
@@ -998,17 +1033,16 @@ describe('json-refs', function () {
           };
           var cJson = _.cloneDeep(json);
 
-          jsonRefs.resolveRefs(json, options, function (err, rJson) {
-            assert.ok(_.isUndefined(err));
-            assert.notDeepEqual(json, rJson);
+          jsonRefs.resolveRefs(json, options)
+            .then(function (results) {
+              assert.notDeepEqual(json, results.resolved);
 
-            // Make sure the original JSON is untouched
-            assert.deepEqual(json, cJson);
+              // Make sure the original JSON is untouched
+              assert.deepEqual(json, cJson);
 
-            assert.equal(rJson.project.full_name, 'whitlockjc/json-refs');
-
-            done();
-          });
+              assert.equal(results.resolved.project.full_name, 'whitlockjc/json-refs');
+            })
+            .then(done, done);
         });
 
         it('nested', function (done) {
@@ -1019,17 +1053,16 @@ describe('json-refs', function () {
           };
           var cJson = _.cloneDeep(json);
 
-          jsonRefs.resolveRefs(json, options, function (err, rJson) {
-            assert.ok(_.isUndefined(err));
-            assert.notDeepEqual(json, rJson);
+          jsonRefs.resolveRefs(json, options)
+            .then(function (results) {
+              assert.notDeepEqual(json, results.resolved);
 
-            // Make sure the original JSON is untouched
-            assert.deepEqual(json, cJson);
+              // Make sure the original JSON is untouched
+              assert.deepEqual(json, cJson);
 
-            assert.equal(rJson.project.full_name, 'whitlockjc/json-refs');
-
-            done();
-          });
+              assert.equal(results.resolved.project.full_name, 'whitlockjc/json-refs');
+            })
+            .then(done, done);
         });
       });
     });

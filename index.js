@@ -36,32 +36,6 @@ var traverse = require('traverse');
 var remoteCache = {};
 var supportedSchemes = ['file', 'http', 'https'];
 
-function computeUrl (base, ref) {
-  var isRelative = ref.charAt(0) !== '#' && ref.indexOf(':') === -1;
-  var newLocation = (base || '').charAt(0) === '/' ? [''] : [];
-  var refSegments = ref.split('#')[0].split('/');
-
-  function segmentHandler (segment) {
-    if (segment === '..') {
-      newLocation.pop();
-    } else if (segment !== '.' && segment !== '') {
-      newLocation.push(segment);
-    }
-  }
-
-  // Normalize the base
-  _.each((base || '').split('#')[0].split('/'), segmentHandler);
-
-  if (isRelative) {
-    // Add reference segments
-    _.each(refSegments, segmentHandler);
-  } else {
-    newLocation = refSegments;
-  }
-
-  return newLocation.join('/');
-}
-
 /**
  * Callback used by all json-refs functions.
  *
@@ -99,39 +73,38 @@ function computeUrl (base, ref) {
  *
  * @param {string} url - The URL to retrieve
  * @param {object} options - The options passed to resolveRefs
- * @param {resultCallback} done - The result callback
  *
  * @throws Error if there is a problem making the request or the content is not JSON
+ *
+ * @returns {Promise} The promise
  */
-function getRemoteJson (url, options, done) {
-  var realUrl = computeUrl(options.location, url);
-  var json = remoteCache[realUrl];
-  var allTasks;
+function getRemoteJson (url, options) {
+  var json = remoteCache[url];
+  var allTasks = Promise.resolve();
 
   if (!_.isUndefined(json)) {
-    done(undefined, json);
+    allTasks = allTasks.then(function () {
+      return json;
+    });
   } else {
-    allTasks = pathLoader.load(realUrl, options);
+    allTasks = pathLoader.load(url, options);
 
     if (options.processContent) {
       allTasks = allTasks.then(function (content) {
-        return options.processContent(content, realUrl);
+        return options.processContent(content, url);
       });
     } else {
       allTasks = allTasks.then(JSON.parse);
     }
 
     allTasks.then(function (nJson) {
-      remoteCache[realUrl] = nJson;
+      remoteCache[url] = nJson;
 
       return nJson;
-    })
-    .then(function (nJson) {
-      done(undefined, nJson);
-    }, function (err) {
-      done(err);
     });
   }
+
+  return allTasks;
 }
 
 /* Exported Functions */
@@ -271,63 +244,42 @@ var pathFromPointer = module.exports.pathFromPointer = function pathFromPointer 
   return path;
 };
 
-/**
- * Takes a JSON document, resolves all JSON References and returns a fully resolved equivalent.
- *
- * If the document has no JSON References, the passed in document is returned untouched.  If there are references to be
- * resolved, the returned document is cloned and returned fully resolved.  The original document is untouched.
- *
- * @param {object} json - The JSON  document having zero or more JSON References
- * @param {object} [options] - The options (All options are passed down to whitlockjc/path-loader)
- * @param {number} [options.depth] - The depth to resolve circular references
- * @param {string} [options.location] - The location to which relative references should be resolved
- * @param {processContentCallback} [options.processContent] - The callback used to process a reference's content
- * @param {resultCallback} [done] - The result callback
- *
- * @throws Error if the arguments are missing or invalid
- */
-module.exports.resolveRefs = function resolveRefs (json, options, done) {
-  if (arguments.length < 3) {
-    done = arguments[1];
-    options = {};
-  } else if (_.isUndefined(options)) {
-    options = {};
-  }
-
-  if (_.isUndefined(json)) {
-    throw new Error('json is required');
-  } else if (!_.isPlainObject(json)) {
-    throw new Error('json must be an object');
-  } else if (!_.isPlainObject(options)) {
-    throw new Error('options must be an object');
-  } else if (_.isUndefined(done)) {
-    throw new Error('done is required');
-  } else if (!_.isUndefined(done) && !_.isFunction(done)) {
-    throw new Error('done must be a function');
-  }
-
-  // Validate the options (This option does not apply to )
-  if (!_.isUndefined(options.processContent) && !_.isFunction(options.processContent)) {
-    throw new Error('options.processContent must be a function');
-  } else if (!_.isUndefined(options.location) && !_.isString(options.location)) {
-    throw new Error('options.location must be a string');
-  } else if (!_.isUndefined(options.depth) && !_.isNumber(options.depth)) {
-    throw new Error('options.depth must be a number');
-  } else if (!_.isUndefined(options.depth) && options.depth < 0) {
-    throw new Error('options.depth must be greater or equal to zero');
-  }
-
+function realResolveRefs (json, options, metadata) {
   var depth = _.isUndefined(options.depth) ? 1 : options.depth;
+  var jsonT = traverse(json);
   var remoteRefs = {};
   var refs = findRefs(json);
-  var metadata = {};
-  var allTasks;
-  var cJsonT;
+  var allTasks = Promise.resolve();
 
-  function removeCircular (jsonT) {
+  function computeUrl (base, ref) {
+    var isRelative = ref.charAt(0) !== '#' && ref.indexOf(':') === -1;
+    var newLocation = (base || '').charAt(0) === '/' ? [''] : [];
+    var refSegments = ref.split('#')[0].split('/');
 
+    function segmentHandler (segment) {
+      if (segment === '..') {
+        newLocation.pop();
+      } else if (segment !== '.' && segment !== '') {
+        newLocation.push(segment);
+      }
+    }
+
+    // Normalize the base
+    _.each((base || '').split('#')[0].split('/'), segmentHandler);
+
+    if (isRelative) {
+      // Add reference segments
+      _.each(refSegments, segmentHandler);
+    } else {
+      newLocation = refSegments;
+    }
+
+    return newLocation.join('/');
+  }
+
+  function removeCircular (rJsonT) {
     var circularPtrs = [];
-    var scrubbed = jsonT.map(function () {
+    var scrubbed = rJsonT.map(function () {
       var ptr = pathToPointer(this.path);
 
       if (this.circular) {
@@ -403,13 +355,11 @@ module.exports.resolveRefs = function resolveRefs (json, options, done) {
   }
 
   if (Object.keys(refs).length > 0) {
-    cJsonT = traverse(_.cloneDeep(json)); // Clone the input JSON to avoid altering it
-
     _.each(refs, function (ref, refPtr) {
       if (isRemotePointer(ref)) {
         remoteRefs[refPtr] = ref;
       } else {
-        replaceReference(cJsonT, cJsonT, ref, refPtr);
+        replaceReference(jsonT, jsonT, ref, refPtr);
       }
     });
 
@@ -417,6 +367,7 @@ module.exports.resolveRefs = function resolveRefs (json, options, done) {
       allTasks = Promise.resolve();
 
       _.each(remoteRefs, function (ref, refPtr) {
+        var remoteUrl = computeUrl(options.location, ref);
         var scheme = ref.indexOf(':') === -1 ? undefined : ref.split(':')[0];
         var nextStep;
 
@@ -424,32 +375,32 @@ module.exports.resolveRefs = function resolveRefs (json, options, done) {
         if (supportedSchemes.indexOf(scheme) === -1 && !_.isUndefined(scheme)) {
           nextStep = Promise.resolve();
         } else {
-          nextStep = new Promise(function (resolve, reject) {
-            getRemoteJson(ref, options, function (err, remoteJson) {
-              var rOptions = _.cloneDeep(options);
-              var refBase = ref.split('#')[0];
+          nextStep = new Promise(function (resolve) {
+            getRemoteJson(remoteUrl, options)
+              .then(function (remoteJson) {
+                var rOptions = _.cloneDeep(options);
+                var refBase = ref.split('#')[0];
 
-              // Remove the last path segment
-              refBase = refBase.substring(0, refBase.lastIndexOf('/') + 1);
+                // Remove the last path segment
+                refBase = refBase.substring(0, refBase.lastIndexOf('/') + 1);
 
-              rOptions.location = computeUrl(options.location, refBase);
+                rOptions.location = computeUrl(options.location, refBase);
 
-              if (err) {
-                replaceReference(cJsonT, err, ref, refPtr);
-
-                resolve();
-              } else {
-                resolveRefs(remoteJson, rOptions, function (err2, resolvedJson) {
-                  if (err2) {
-                    reject(err2);
-                  } else {
-                    replaceReference(cJsonT, traverse(resolvedJson), ref, refPtr);
+                realResolveRefs(remoteJson, rOptions, metadata)
+                  .then(function (results) {
+                    replaceReference(jsonT, traverse(results.resolved), ref, refPtr);
 
                     resolve();
-                  }
-                });
-              }
-            });
+                  }, function (err) {
+                    replaceReference(jsonT, err, ref, refPtr);
+
+                    resolve();
+                  });
+              }, function (err) {
+                replaceReference(jsonT, err, ref, refPtr);
+
+                resolve();
+              });
           });
         }
 
@@ -458,16 +409,107 @@ module.exports.resolveRefs = function resolveRefs (json, options, done) {
         });
       });
 
-      allTasks
+      allTasks = allTasks
         .then(function () {
-          done(undefined, removeCircular(cJsonT), metadata);
+          return {
+            metadata: metadata,
+            resolved: removeCircular(jsonT)
+          };
         }, function (err) {
-          done(err);
+          return Promise.reject(err);
         });
     } else {
-      done(undefined, removeCircular(cJsonT), metadata);
+      allTasks = allTasks
+        .then(function () {
+          return {
+            metadata: metadata,
+            resolved: removeCircular(jsonT)
+          };
+        });
     }
   } else {
-    done(undefined, json, metadata);
+    allTasks = allTasks
+      .then(function () {
+        return {
+          metadata: metadata,
+          resolved: removeCircular(jsonT)
+        };
+      });
   }
+
+  return allTasks;
+}
+
+/**
+ * Takes a JSON document, resolves all JSON References and returns a fully resolved equivalent.
+ *
+ * If the document has no JSON References, the passed in document is returned untouched.  If there are references to be
+ * resolved, the returned document is cloned and returned fully resolved.  The original document is untouched.
+ *
+ * @param {object} json - The JSON  document having zero or more JSON References
+ * @param {object} [options] - The options (All options are passed down to whitlockjc/path-loader)
+ * @param {number} [options.depth] - The depth to resolve circular references
+ * @param {string} [options.location] - The location to which relative references should be resolved
+ * @param {processContentCallback} [options.processContent] - The callback used to process a reference's content
+ * @param {resultCallback} [done] - The result callback
+ *
+ * @throws Error if the arguments are missing or invalid
+ *
+ * @returns {Promise} The promise
+ */
+module.exports.resolveRefs = function resolveRefs (json, options, done) {
+  var allTasks = Promise.resolve();
+
+  if (arguments.length === 2) {
+    if (_.isFunction(options)) {
+      done = options;
+      options = {};
+    }
+  }
+
+  if (_.isUndefined(options)) {
+    options = {};
+  }
+
+  allTasks = allTasks.then(function () {
+    if (_.isUndefined(json)) {
+      throw new Error('json is required');
+    } else if (!_.isPlainObject(json)) {
+      throw new Error('json must be an object');
+    } else if (!_.isPlainObject(options)) {
+      throw new Error('options must be an object');
+    } else if (!_.isUndefined(done) && !_.isFunction(done)) {
+      throw new Error('done must be a function');
+    }
+
+    // Validate the options (This option does not apply to )
+    if (!_.isUndefined(options.processContent) && !_.isFunction(options.processContent)) {
+      throw new Error('options.processContent must be a function');
+    } else if (!_.isUndefined(options.prepareRequest) && !_.isFunction(options.prepareRequest)) {
+      throw new Error('options.prepareRequest must be a function');
+    } else if (!_.isUndefined(options.location) && !_.isString(options.location)) {
+      throw new Error('options.location must be a string');
+    } else if (!_.isUndefined(options.depth) && !_.isNumber(options.depth)) {
+      throw new Error('options.depth must be a number');
+    } else if (!_.isUndefined(options.depth) && options.depth < 0) {
+      throw new Error('options.depth must be greater or equal to zero');
+    }
+  });
+
+  allTasks = allTasks
+    .then(function () {
+      return realResolveRefs(traverse(json).clone(), traverse(options).clone(), {});
+    });
+
+  // Use the callback if provided and it is a function
+  if (!_.isUndefined(done) && _.isFunction(done)) {
+    allTasks = allTasks
+      .then(function (results) {
+        done(undefined, results.resolved, results.metadata);
+      }, function (err) {
+        done(err);
+      });
+  }
+
+  return allTasks;
 };

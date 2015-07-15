@@ -1,5 +1,9 @@
 ## Release Notes
 
+### TBD
+
+* `#resolveRefs` now supports callbacks, as always, and promises  _(Always returns a promise even if callbacks are used)_
+
 ### v0.3.3 (TBD)
 
 * Circular references are now identified in metadata _(Issue #22)_
