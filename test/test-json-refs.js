@@ -1,4 +1,4 @@
-/* global afterEach, describe, it */
+/* global afterEach, describe, it, window */
 
 /*
  * The MIT License (MIT)
@@ -33,10 +33,12 @@ var jsonRefs = require('../');
 var YAML = require('js-yaml');
 
 var options = {
-  location: typeof window === 'undefined' ? __dirname : 'http://localhost:44444'
+  location: typeof window === 'undefined' ? path.join(__dirname, 'browser') : (window.location.origin + '/base')
 };
+var projectCircularChildJson = require('./browser/project-circular-child.json');
+var projectCircularRootJson = require('./browser/project-circular-root.json');
 var projectJson = require('./browser/project.json');
-var projectJsonUrl = 'http://localhost:44444/project.json';
+var remoteRefBase = typeof window === 'undefined' ? 'browser/' : '';
 
 describe('json-refs', function () {
   describe('#findRefs', function () {
@@ -67,11 +69,11 @@ describe('json-refs', function () {
       assert.deepEqual(jsonRefs.findRefs({
         $ref: 'http://json-schema.org/draft-04/schema',
         project: {
-          $ref: projectJsonUrl
+          $ref: remoteRefBase + 'project.json'
         }
       }), {
         '#/$ref': 'http://json-schema.org/draft-04/schema',
-        '#/project/$ref': projectJsonUrl
+        '#/project/$ref': remoteRefBase + 'project.json'
       });
     });
   });
@@ -275,173 +277,8 @@ describe('json-refs', function () {
         jsonRefs.clearCache();
       });
 
-      it('no references', function (done) {
-        var json = {
-          name: 'json-refs',
-          url: 'https://github.com/whitlockjc/json-refs'
-        };
-
-        jsonRefs.resolveRefs(json, options)
-          .then(function (results) {
-            assert.deepEqual(json, results.resolved);
-            assert.deepEqual({}, results.metadata);
-          }).then(done, done);
-      });
-
-      it('simple reference', function (done) {
-        var json = {
-          person: {
-            name: 'Jeremy'
-          },
-          project: {
-            name: 'json-refs',
-            maintainer: {
-              $ref: '#/person'
-            },
-            organization: undefined
-          },
-          fake: {
-            $ref: '#/unresolvable'
-          },
-          undefined: {
-            $ref: '#/project/organization'
-          }
-        };
-        var cJson = _.cloneDeep(json);
-
-        jsonRefs.resolveRefs(json, options)
-          .then(function (results) {
-            assert.notDeepEqual(json, results.resolved);
-            assert.deepEqual({
-              '#/project/maintainer/$ref': {
-                ref: '#/person',
-                value: {
-                  name: 'Jeremy'
-                }
-              },
-              '#/fake/$ref': {
-                ref: '#/unresolvable'
-              },
-              '#/undefined/$ref': {
-                ref: '#/project/organization',
-                value: undefined
-              }
-            }, results.metadata);
-
-            // Make sure the original JSON is untouched
-            assert.deepEqual(json, cJson);
-
-            assert.deepEqual(results.resolved, {
-              person: {
-                name: 'Jeremy'
-              },
-              project: {
-                name: 'json-refs',
-                maintainer: {
-                  name: 'Jeremy'
-              },
-                organization: undefined
-              },
-              fake: {
-                $ref: '#/unresolvable'
-              },
-              undefined: undefined
-            });
-          })
-          .then(done, done);
-      });
-
-      it('complex reference', function (done) {
-        var json = {
-          A: {
-            a: 'a',
-            b: {
-              $ref: '#/B'
-            }
-          },
-          B: {
-            b: 'b',
-            c: {
-              $ref: '#/C'
-            }
-          },
-          C: {
-            c: 'c'
-          }
-        };
-        var cJson = _.cloneDeep(json);
-
-        jsonRefs.resolveRefs(json, options)
-          .then(function (results) {
-            assert.notDeepEqual(json, results.resolved);
-
-            // Make sure the original JSON is untouched
-            assert.deepEqual(json, cJson);
-
-            assert.deepEqual(results.resolved, {
-              A: {
-                a: 'a',
-                b: {
-                  b: 'b',
-                  c: {
-                    c: 'c'
-                  }
-                }
-              },
-              B: {
-                b: 'b',
-                c: {
-                  c: 'c'
-                }
-              },
-              C: {
-                c: 'c'
-              }
-            });
-          })
-          .then(done, done);
-      });
-
-      // Here only to show that we special case the inability for traverse to replace the root node:
-      //   https://github.com/substack/js-traverse/issues/42
-      it('top-level reference (replaces whole document)', function (done) {
-        var json = {
-          $ref: projectJsonUrl
-        };
-        var cJson = _.cloneDeep(json);
-
-        jsonRefs.resolveRefs(json, options)
-          .then(function (results) {
-            assert.notDeepEqual(json, results.resolved);
-
-            // Make sure the original JSON is untouched
-            assert.deepEqual(json, cJson);
-
-            assert.equal(results.resolved.full_name, 'whitlockjc/json-refs');
-          })
-          .then(done, done);
-      });
-
-      it('top-level reference with hash (Issue 19)', function (done) {
-        var json = {
-          $ref: projectJsonUrl + '#/owner'
-        };
-        var cJson = _.cloneDeep(json);
-
-        jsonRefs.resolveRefs(json, options)
-          .then(function (results) {
-            assert.notDeepEqual(json, results.resolved);
-
-            // Make sure the original JSON is untouched
-            assert.deepEqual(json, cJson);
-
-            assert.equal(results.resolved.login, 'whitlockjc');
-          })
-          .then(done, done);
-      });
-
-      describe('circular references', function () {
-        describe('local', function () {
+      describe('local', function () {
+        describe('circular references', function () {
           it('array', function (done) {
             var json = {
               a: [
@@ -472,7 +309,7 @@ describe('json-refs', function () {
                   ]
                 });
 
-                assert.ok(results.metadata['#/a/0/$ref'].circular);
+                assert.ok(results.metadata['#/a/0'].circular);
               })
               .then(done, done);
           });
@@ -511,7 +348,7 @@ describe('json-refs', function () {
                   }
                 });
 
-                assert.ok(results.metadata['#/definitions/Cat/allOf/0/$ref'].circular);
+                assert.ok(results.metadata['#/definitions/Cat/allOf/0'].circular);
               })
               .then(done, done);
           });
@@ -573,32 +410,7 @@ describe('json-refs', function () {
                   }
                 });
 
-                assert.ok(results.metadata['#/properties/family/items/$ref'].circular);
-              })
-              .then(done, done);
-          });
-
-          it('self (root)', function (done) {
-            var json = {
-              $ref: '#'
-            };
-            var cJson = _.cloneDeep(json);
-
-            jsonRefs.resolveRefs(json, options)
-              .then(function (results) {
-                assert.notDeepEqual(json, results.resolved);
-
-                // Make sure the original JSON is untouched
-                assert.deepEqual(json, cJson);
-
-                assert.deepEqual(results.metadata, {
-                  '#/$ref': {
-                    circular: true,
-                    ref: '#',
-                    value: {}
-                  }
-                });
-                assert.deepEqual(results.resolved, {});
+                assert.ok(results.metadata['#/properties/family/items'].circular);
               })
               .then(done, done);
           });
@@ -619,12 +431,9 @@ describe('json-refs', function () {
                 assert.deepEqual(json, cJson);
 
                 assert.deepEqual(results.metadata, {
-                  '#/child/$ref': {
+                  '#/child': {
                     circular: true,
-                    ref: '#',
-                    value: {
-                      child: {}
-                    }
+                    ref: '#'
                   }
                 });
                 assert.deepEqual(results.resolved, {
@@ -635,11 +444,33 @@ describe('json-refs', function () {
               })
               .then(done, done);
           });
-        });
-      });
 
-      describe('circular reference depth', function () {
-        describe('local', function () {
+          it('self (root)', function (done) {
+            var json = {
+              $ref: '#'
+            };
+            var cJson = _.cloneDeep(json);
+
+            jsonRefs.resolveRefs(json, options)
+              .then(function (results) {
+                assert.notDeepEqual(json, results.resolved);
+
+                // Make sure the original JSON is untouched
+                assert.deepEqual(json, cJson);
+
+                assert.deepEqual(results.metadata, {
+                  '#': {
+                    circular: true,
+                    ref: '#'
+                  }
+                });
+                assert.deepEqual(results.resolved, {});
+              })
+              .then(done, done);
+          });
+        });
+
+        describe('circular reference depth', function () {
           it('array', function (done) {
             var json = {
               a: [
@@ -856,10 +687,9 @@ describe('json-refs', function () {
                 assert.deepEqual(json, cJson);
 
                 assert.deepEqual(results.metadata, {
-                  '#/$ref': {
+                  '#': {
                     circular: true,
-                    ref: '#',
-                    value: {}
+                    ref: '#'
                   }
                 });
                 assert.deepEqual(results.resolved, {});
@@ -886,16 +716,9 @@ describe('json-refs', function () {
                 assert.deepEqual(json, cJson);
 
                 assert.deepEqual(results.metadata, {
-                  '#/child/$ref': {
+                  '#/child': {
                     circular: true,
-                    ref: '#',
-                    value: {
-                      child: {
-                        child: {
-                          child: {}
-                        }
-                      }
-                    }
+                    ref: '#'
                   }
                 });
                 assert.deepEqual(results.resolved, {
@@ -911,279 +734,531 @@ describe('json-refs', function () {
               .then(done, done);
           });
         });
-      });
 
-      it('missing remote reference', function (done) {
-        var ref = 'relative-nonexistent-path';
-        var json = {
-          project: {
-            $ref: ref
-          }
-        };
-        var cJson = _.cloneDeep(json);
-        var refPtr = '#/project/$ref';
-
-        jsonRefs.resolveRefs(json, options)
-          .then(function (results) {
-            var details = results.metadata[refPtr];
-            var detailsKeys = Object.keys(details);
-
-            assert.deepEqual(json, results.resolved);
-
-            // Make sure the original JSON is untouched
-            assert.deepEqual(json, cJson);
-
-            assert.deepEqual([refPtr], Object.keys(results.metadata));
-            assert.equal(details.ref, ref);
-            assert.ok(detailsKeys.indexOf('value') === -1);
-            assert.ok(detailsKeys.indexOf('err') > -1);
-          })
-          .then(done, done);
-      });
-
-      it('simple remote reference', function (done) {
-        var json = {
-          project: {
-            $ref: projectJsonUrl
-          }
-        };
-        var cJson = _.cloneDeep(json);
-
-        jsonRefs.resolveRefs(json, options)
-          .then(function (results) {
-            assert.notDeepEqual(json, results.resolved);
-
-            // Make sure the original JSON is untouched
-            assert.deepEqual(json, cJson);
-            assert.deepEqual({
-              '#/project/$ref': {
-                ref: projectJsonUrl,
-                value: projectJson
-              }
-            }, results.metadata);
-
-            assert.equal(results.resolved.project.name, 'json-refs');
-          })
-          .then(done, done);
-      });
-
-      it('complex remote reference', function (done) {
-        var json = {
-          project: {
-            $ref: 'http://localhost:44444/ref.json'
-          }
-        };
-        var cJson = _.cloneDeep(json);
-
-        jsonRefs.resolveRefs(json, options)
-          .then(function (results) {
-            assert.notDeepEqual(json, results.resolved);
-
-            // Make sure the original JSON is untouched
-            assert.deepEqual(json, cJson);
-
-            assert.equal(results.resolved.project.full_name, 'whitlockjc/json-refs');
-          })
-          .then(done, done);
-      });
-
-      it('remote reference with hash', function (done) {
-        var json = {
-          name: {
-            $ref: projectJsonUrl + '#/name'
-          }
-        };
-        var cJson = _.cloneDeep(json);
-
-        jsonRefs.resolveRefs(json, options)
-          .then(function (results) {
-            assert.notDeepEqual(json, results.resolved);
-
-            // Make sure the original JSON is untouched
-            assert.deepEqual(json, cJson);
-            assert.deepEqual({
-              '#/name/$ref': {
-                ref: projectJsonUrl + '#/name',
-                value: results.resolved.name
-              }
-            }, results.metadata);
-
-            assert.equal(results.resolved.name, 'json-refs');
-          })
-          .then(done, done);
-      });
-
-      it('multple remote references with hash', function (done) {
-        var json = {
-          fullName: {
-            $ref: projectJsonUrl + '#/full_name'
-          },
-          name: {
-            $ref: projectJsonUrl + '#/name'
-          }
-        };
-        var cJson = _.cloneDeep(json);
-
-        jsonRefs.resolveRefs(json, options)
-          .then(function (results) {
-            assert.notDeepEqual(json, results.resolved);
-
-            // Make sure the original JSON is untouched
-            assert.deepEqual(json, cJson);
-            assert.deepEqual({
-              '#/fullName/$ref': {
-                ref: projectJsonUrl + '#/full_name',
-                value: results.resolved.fullName
-              },
-              '#/name/$ref': {
-                ref: projectJsonUrl + '#/name',
-                value: results.resolved.name
-              }
-            }, results.metadata);
-
-            assert.equal(results.resolved.fullName, 'whitlockjc/json-refs');
-            assert.equal(results.resolved.name, 'json-refs');
-          })
-          .then(done, done);
-      });
-
-      it('remote reference requiring processContent usage', function (done) {
-        var json = {
-          project: {
-            $ref: 'http://localhost:44444/project.yaml'
-          }
-        };
-
-        // Make request for YAML reference (Should fail)
-        jsonRefs.resolveRefs(json, options)
-          .then(function (results) {
-            var cOptions = _.cloneDeep(options);
-
-            assert.deepEqual(json, results.resolved);
-            assert.ok(Object.keys(results.metadata['#/project/$ref']).indexOf('err') > -1);
-
-            cOptions.processContent = function (content, ref) {
-              assert.equal(ref, 'http://localhost:44444/project.yaml');
-
-              return YAML.safeLoad(content);
-            };
-
-            // Make same request for the same reference but use processContent to parse the YAML
-            return jsonRefs.resolveRefs(json, cOptions)
-              .then(function (results2) {
-                assert.notDeepEqual(json, results2.resolved);
-
-                assert.deepEqual({
-                  project: projectJson
-                }, results2.resolved);
-              });
-          })
-          .then(done, done);
-      });
-
-      it('remote reference requiring prepareRequest usage (Issue 12)', function (done) {
-        var json = {
-          project: {
-            $ref: 'http://localhost:44444/secure/project.json'
-          }
-        };
-        var cJson = _.cloneDeep(json);
-
-        // Make request for reference that requires authentication (Should fail)
-        jsonRefs.resolveRefs(json, options)
-          .then(function (results) {
-            var cOptions = _.cloneDeep(options);
-
-            assert.deepEqual(json, results.resolved);
-
-            assert.equal(401, results.metadata['#/project/$ref'].err.status);
-
-            cOptions.prepareRequest = function (req) {
-              req.auth('whitlockjc', 'json-refs');
-            };
-
-            // Make same request for the same reference but use prepareRequest to add authentication to the request
-            return jsonRefs.resolveRefs(json, cOptions)
-              .then(function (results2) {
-                assert.notDeepEqual(json, results2.resolved);
-
-                // Make sure the original JSON is untouched
-                assert.deepEqual(json, cJson);
-
-                assert.equal(results2.resolved.project.name, 'json-refs');
-              });
-          })
-          .then(done, done);
-      });
-
-      it('do not return error for invalid remote reference scheme', function (done) {
-        var json = {
-          $ref: 'ssh://127.0.0.1:' + path.resolve(__dirname, '..', 'package.json')
-        };
-
-        jsonRefs.resolveRefs(json, options)
-          .then(function (results) {
-            assert.deepEqual(json, results.resolved);
-            assert.deepEqual({}, results.metadata);
-          })
-          .then(done, done);
-      });
-
-      describe('should resolve relative references', function () {
-        it('no location', function (done) {
+        it('missing reference (child)', function (done) {
           var json = {
+            child: {
+              $ref: '#/missing'
+            }
+          };
+
+          jsonRefs.resolveRefs(json, options)
+            .then(function (results) {
+              assert.deepEqual(json, json);
+              assert.deepEqual(results.metadata, {
+                '#/child': {
+                  ref: '#/missing',
+                  missing: true
+                }
+              });
+            }).then(done, done);
+        });
+
+        it('missing reference (root)', function (done) {
+          var json = {
+            $ref: '#/missing'
+          };
+
+          jsonRefs.resolveRefs(json, options)
+            .then(function (results) {
+              assert.deepEqual(json, json);
+              assert.deepEqual(results.metadata, {
+                '#': {
+                  ref: '#/missing',
+                  missing: true
+                }
+              });
+            }).then(done, done);
+        });
+
+        it('multiple references', function (done) {
+          var json = {
+            location: {
+              remote: 'project.json'
+            },
             project: {
-              $ref: (typeof window === 'undefined' ? 'test/browser/' : '') + 'project.json'
+              $ref: 'project.json'
+            },
+            owner: {
+              $ref: '#/project/owner'
+            },
+            name: {
+              $ref: '#/project/name'
+            },
+            detailsLocation: {
+              $ref: '#/location/remote'
             }
           };
           var cJson = _.cloneDeep(json);
-          var cOptions = _.cloneDeep(options);
-          var test;
 
-          delete cOptions.location;
+          jsonRefs.resolveRefs(json, options)
+            .then(function (results) {
+              assert.notDeepEqual(json, results.resolved);
 
-          // We cannot test relative references without location due to our current test framework
-          if (typeof window !== 'undefined') {
-            test = Promise.resolve();
-          } else {
-            test = jsonRefs.resolveRefs(json, cOptions)
+              // Make sure the original JSON is untouched
+              assert.deepEqual(json, cJson);
+
+              assert.deepEqual(results.resolved, {
+                location: json.location,
+                project: projectJson,
+                owner: projectJson.owner,
+                name: projectJson.name,
+                detailsLocation: json.location.remote
+              });
+
+              assert.deepEqual(results.metadata, {
+                '#/project': {
+                  ref: json.project.$ref
+                },
+                '#/owner': {
+                  ref: json.owner.$ref
+                },
+                '#/name': {
+                  ref: json.name.$ref
+                },
+                '#/detailsLocation': {
+                  ref: json.detailsLocation.$ref
+                }
+              });
+            })
+            .then(done, done);
+        });
+
+        it('no references', function (done) {
+          var json = {
+            name: 'json-refs',
+            url: 'https://github.com/whitlockjc/json-refs'
+          };
+
+          jsonRefs.resolveRefs(json, options)
+            .then(function (results) {
+              assert.deepEqual(json, results.resolved);
+              assert.deepEqual({}, results.metadata);
+            }).then(done, done);
+        });
+
+        it('reference', function (done) {
+          var json = {
+            person: {
+              name: 'Jeremy'
+            },
+            project: {
+              name: 'json-refs',
+              maintainer: {
+                $ref: '#/person'
+              }
+            }
+          };
+          var cJson = _.cloneDeep(json);
+
+          jsonRefs.resolveRefs(json, options)
+            .then(function (results) {
+              assert.notDeepEqual(json, results.resolved);
+              assert.deepEqual({
+                '#/project/maintainer': {
+                  ref: '#/person'
+                }
+              }, results.metadata);
+
+              // Make sure the original JSON is untouched
+              assert.deepEqual(json, cJson);
+
+              assert.deepEqual(results.resolved, {
+                person: {
+                  name: 'Jeremy'
+                },
+                project: {
+                  name: 'json-refs',
+                  maintainer: {
+                    name: 'Jeremy'
+                  }
+                }
+              });
+            })
+            .then(done, done);
+        });
+
+        it('reference to undefined', function (done) {
+          var json = {
+            name: undefined,
+            undefined: {
+              $ref: '#/name'
+            }
+          };
+
+          jsonRefs.resolveRefs(json, options)
+            .then(function (results) {
+              assert.deepEqual(results.resolved, {
+                name: undefined,
+                undefined: undefined
+              });
+              assert.deepEqual(results.metadata, {
+                '#/undefined': {
+                  ref: '#/name'
+                }
+              });
+            }).then(done, done);
+        });
+      });
+
+      describe('remote', function () {
+        describe('circular references', function () {
+          it('ancestor (child)', function (done) {
+            var json = {
+              child: {
+                $ref: 'nested/project-circular-ancestor-child.json'
+              }
+            };
+            var cJson = _.cloneDeep(json);
+
+            jsonRefs.resolveRefs(json, options)
               .then(function (results) {
                 assert.notDeepEqual(json, results.resolved);
 
                 // Make sure the original JSON is untouched
                 assert.deepEqual(json, cJson);
 
-                assert.equal(results.resolved.project.full_name, 'whitlockjc/json-refs');
-              });
-          }
+                assert.deepEqual(results.metadata, {
+                  '#/child': {
+                    ref: json.child.$ref
+                  },
+                  '#/child/child': {
+                    ref: 'project-circular-child-descendant.json'
+                  },
+                  '#/child/child/child': {
+                    circular: true,
+                    ref: 'nested/project-circular-ancestor-child.json'
+                  }
+                });
+                assert.deepEqual(results.resolved, {
+                  child: {
+                    child: {
+                      child: {
+                        child: {
+                          child: {
+                            child: {}
+                          }
+                        }
+                      }
+                    }
+                  }
+                });
+              })
+              .then(done, done);
+          });
 
-          test.then(done, done);
+          it('ancestor (root)', function (done) {
+            var json = {
+              $ref: 'nested/project-circular-ancestor-root.json'
+            };
+            var cJson = _.cloneDeep(json);
+
+            jsonRefs.resolveRefs(json, options)
+              .then(function (results) {
+                assert.notDeepEqual(json, results.resolved);
+
+                // Make sure the original JSON is untouched
+                assert.deepEqual(json, cJson);
+
+                assert.deepEqual(results.metadata, {
+                  '#': {
+                    circular: true,
+                    ref: 'nested/project-circular-ancestor-root.json'
+                  }
+                });
+                assert.deepEqual(results.resolved, {});
+              })
+              .then(done, done);
+          });
+
+          it('nested self (child)', function (done) {
+            var json = {
+              child: {
+                $ref: 'nested/project-circular-child.json'
+              }
+            };
+            var cJson = _.cloneDeep(json);
+
+            jsonRefs.resolveRefs(json, options)
+              .then(function (results) {
+                assert.notDeepEqual(json, results.resolved);
+
+                // Make sure the original JSON is untouched
+                assert.deepEqual(json, cJson);
+
+                assert.deepEqual(results.metadata, {
+                  '#/child': {
+                    ref: 'nested/project-circular-child.json'
+                  },
+                  '#/child/child': {
+                    circular: true,
+                    ref: 'nested/project-circular-child.json'
+                  }
+                });
+                assert.deepEqual(results.resolved, {
+                  child: {
+                    child: {
+                      child: {
+                        child: {}
+                      }
+                    }
+                  }
+                });
+              })
+              .then(done, done);
+          });
+
+          it('nested self (root)', function (done) {
+            var json = {
+              $ref: 'nested/project-circular-root.json'
+            };
+            var cJson = _.cloneDeep(json);
+
+            jsonRefs.resolveRefs(json, options)
+              .then(function (results) {
+                assert.notDeepEqual(json, results.resolved);
+
+                // Make sure the original JSON is untouched
+                assert.deepEqual(json, cJson);
+
+                assert.deepEqual(results.metadata, {
+                  '#': {
+                    circular: true,
+                    ref: 'nested/project-circular-root.json'
+                  }
+                });
+                assert.deepEqual(results.resolved, {});
+              })
+              .then(done, done);
+          });
+
+          it('self (child)', function (done) {
+            var json = projectCircularChildJson;
+            var cJson = _.cloneDeep(json);
+
+            jsonRefs.resolveRefs(json, options)
+              .then(function (results) {
+                assert.notDeepEqual(json, results.resolved);
+
+                // Make sure the original JSON is untouched
+                assert.deepEqual(json, cJson);
+
+                assert.deepEqual(results.metadata, {
+                  '#/child': {
+                    ref: json.child.$ref
+                  },
+                  '#/child/child': {
+                    circular: true,
+                    ref: projectCircularChildJson.child.$ref
+                  }
+                });
+                assert.deepEqual(results.resolved, {
+                  child: {
+                    child: {
+                      child: {
+                        child: {}
+                      }
+                    }
+                  }
+                });
+              })
+              .then(done, done);
+          });
+
+          it('self (root)', function (done) {
+            var json = projectCircularRootJson;
+            var cJson = _.cloneDeep(json);
+
+            jsonRefs.resolveRefs(json, options)
+              .then(function (results) {
+                assert.notDeepEqual(json, results.resolved);
+
+                // Make sure the original JSON is untouched
+                assert.deepEqual(json, cJson);
+
+                assert.deepEqual(results.metadata, {
+                  '#': {
+                    circular: true,
+                    ref: projectCircularRootJson.$ref
+                  }
+                });
+                assert.deepEqual(results.resolved, {});
+              })
+              .then(done, done);
+          });
         });
 
-        it('simple', function (done) {
+        it('invalid remote reference scheme', function (done) {
           var json = {
-            project: {
-              $ref: (typeof window === 'undefined' ? './browser' : '.') + '/project.json'
-            }
+            $ref: 'ssh://127.0.0.1:' + path.resolve(__dirname, '..', 'package.json')
           };
-          var cJson = _.cloneDeep(json);
 
           jsonRefs.resolveRefs(json, options)
             .then(function (results) {
-              assert.notDeepEqual(json, results.resolved);
+              var ref = '#';
+              var refDetails = results.metadata[ref];
 
-              // Make sure the original JSON is untouched
-              assert.deepEqual(json, cJson);
+              assert.deepEqual(json, results.resolved);
 
-              assert.equal(results.resolved.project.full_name, 'whitlockjc/json-refs');
+              assert.equal(refDetails.ref, json.$ref);
+              assert.ok(Object.keys(refDetails).indexOf('err') > -1);
             })
             .then(done, done);
         });
 
-        it('nested', function (done) {
+        it('local deferred', function (done) {
           var json = {
             project: {
-              $ref: (typeof window === 'undefined' ? 'browser/' : '') + 'project-nested.json'
+              $ref: 'project.json'
+            },
+            owner: {
+              $ref: '#/project/owner'
+            }
+          };
+
+          jsonRefs.resolveRefs(json, options)
+            .then(function (results) {
+              assert.deepEqual(results.resolved, {
+                project: projectJson,
+                owner: projectJson.owner
+              });
+              assert.deepEqual(results.metadata, {
+                '#/project': {
+                  ref: json.project.$ref
+                },
+                '#/owner': {
+                  ref: json.owner.$ref
+                }
+              });
+            }).then(done, done);
+        });
+
+        it('missing reference (child)', function (done) {
+          var ref = 'relative-nonexistent-path';
+          var json = {
+            child: {
+              $ref: ref
+            }
+          };
+          var cJson = _.cloneDeep(json);
+          var refPtr = '#/child';
+
+          jsonRefs.resolveRefs(json, options)
+            .then(function (results) {
+              var details = results.metadata[refPtr];
+              var detailsKeys = Object.keys(details);
+
+              assert.deepEqual(json, results.resolved);
+
+              // Make sure the original JSON is untouched
+              assert.deepEqual(json, cJson);
+
+              assert.deepEqual([refPtr], Object.keys(results.metadata));
+              assert.equal(details.ref, ref);
+              assert.ok(details.missing);
+              assert.ok(detailsKeys.indexOf('err') > -1);
+            })
+            .then(done, done);
+        });
+
+        it('missing reference (root)', function (done) {
+          var ref = 'relative-nonexistent-path';
+          var json = {
+            $ref: ref
+          };
+          var cJson = _.cloneDeep(json);
+          var refPtr = '#';
+
+          jsonRefs.resolveRefs(json, options)
+            .then(function (results) {
+              var details = results.metadata[refPtr];
+              var detailsKeys = Object.keys(details);
+
+              assert.deepEqual(json, results.resolved);
+
+              // Make sure the original JSON is untouched
+              assert.deepEqual(json, cJson);
+
+              assert.deepEqual([refPtr], Object.keys(results.metadata));
+              assert.equal(details.ref, ref);
+              assert.ok(details.missing);
+              assert.ok(detailsKeys.indexOf('err') > -1);
+            })
+            .then(done, done);
+        });
+
+        it('multiple references', function (done) {
+          var json = {
+            project: {
+              $ref: 'project.json'
+            },
+            nestedProject: {
+              $ref: 'nested/project.json'
+            }
+          };
+          var cJson = _.cloneDeep(json);
+
+          jsonRefs.resolveRefs(json, options)
+            .then(function (results) {
+              assert.notDeepEqual(json, results.resolved);
+
+              // Make sure the original JSON is untouched
+              assert.deepEqual(json, cJson);
+              assert.deepEqual({
+                '#/project': {
+                  ref: 'project.json'
+                },
+                '#/nestedProject': {
+                  ref: 'nested/project.json'
+                }
+              }, results.metadata);
+
+              assert.deepEqual(results.resolved, {
+                project: projectJson,
+                nestedProject: projectJson
+              });
+            })
+            .then(done, done);
+        });
+
+        it('multple references with hash', function (done) {
+          var json = {
+            fullName: {
+              $ref: 'project.json#/full_name'
+            },
+            name: {
+              $ref: 'project.json#/name'
+            }
+          };
+          var cJson = _.cloneDeep(json);
+
+          jsonRefs.resolveRefs(json, options)
+            .then(function (results) {
+              assert.notDeepEqual(json, results.resolved);
+
+              // Make sure the original JSON is untouched
+              assert.deepEqual(json, cJson);
+              assert.deepEqual({
+                '#/fullName': {
+                  ref: 'project.json#/full_name'
+                },
+                '#/name': {
+                  ref: 'project.json#/name'
+                }
+              }, results.metadata);
+
+              assert.deepEqual(results.resolved, {
+                fullName: projectJson.full_name,
+                name: projectJson.name
+              });
+            })
+            .then(done, done);
+        });
+
+        it('reference (child)', function (done) {
+          var json = {
+            project: {
+              $ref: 'project.json'
             }
           };
           var cJson = _.cloneDeep(json);
@@ -1195,7 +1270,152 @@ describe('json-refs', function () {
               // Make sure the original JSON is untouched
               assert.deepEqual(json, cJson);
 
-              assert.equal(results.resolved.project.full_name, 'whitlockjc/json-refs');
+              assert.deepEqual(results.resolved, {
+                project: projectJson
+              });
+            })
+            .then(done, done);
+        });
+
+        // Here only to show that we special case the inability for traverse to replace the root node:
+        //   https://github.com/substack/js-traverse/issues/42
+        it('reference (root)', function (done) {
+          var json = {
+            $ref: 'project.json'
+          };
+          var cJson = _.cloneDeep(json);
+
+          jsonRefs.resolveRefs(json, options)
+            .then(function (results) {
+              assert.notDeepEqual(json, results.resolved);
+
+              // Make sure the original JSON is untouched
+              assert.deepEqual(json, cJson);
+
+              assert.deepEqual(results.resolved, projectJson);
+            })
+            .then(done, done);
+        });
+
+        it('reference requiring processContent usage', function (done) {
+          var json = {
+            project: {
+              $ref: 'http://localhost:44444/project.yaml'
+            }
+          };
+
+          // Make request for YAML reference (Should fail)
+          jsonRefs.resolveRefs(json, options)
+            .then(function (results) {
+              var cOptions = _.cloneDeep(options);
+
+              assert.deepEqual(json, results.resolved);
+              assert.ok(Object.keys(results.metadata['#/project']).indexOf('err') > -1);
+
+              cOptions.processContent = function (content, ref) {
+                assert.equal(ref, 'http://localhost:44444/project.yaml');
+
+                return YAML.safeLoad(content);
+              };
+
+              // Make same request for the same reference but use processContent to parse the YAML
+              return jsonRefs.resolveRefs(json, cOptions)
+                .then(function (results2) {
+                  assert.notDeepEqual(json, results2.resolved);
+
+                  assert.deepEqual({
+                    project: projectJson
+                  }, results2.resolved);
+                });
+            })
+            .then(done, done);
+        });
+
+        it('reference requiring prepareRequest usage', function (done) {
+          var json = {
+            project: {
+              $ref: 'http://localhost:44444/secure/project.json'
+            }
+          };
+          var cJson = _.cloneDeep(json);
+
+          // Make request for reference that requires authentication (Should fail)
+          jsonRefs.resolveRefs(json, options)
+            .then(function (results) {
+              var cOptions = _.cloneDeep(options);
+
+              assert.deepEqual(json, results.resolved);
+
+              assert.equal(401, results.metadata['#/project'].err.status);
+
+              cOptions.prepareRequest = function (req) {
+                req.auth('whitlockjc', 'json-refs');
+              };
+
+              // Make same request for the same reference but use prepareRequest to add authentication to the request
+              return jsonRefs.resolveRefs(json, cOptions)
+                .then(function (results2) {
+                  assert.notDeepEqual(json, results2.resolved);
+
+                  // Make sure the original JSON is untouched
+                  assert.deepEqual(json, cJson);
+
+                  assert.deepEqual(results2.resolved, {
+                    project: projectJson
+                  });
+                });
+            })
+            .then(done, done);
+        });
+
+        it('reference with hash (child)', function (done) {
+          var json = {
+            owner: {
+              $ref: 'project.json#/owner'
+            }
+          };
+          var cJson = _.cloneDeep(json);
+
+          jsonRefs.resolveRefs(json, options)
+            .then(function (results) {
+              assert.notDeepEqual(json, results.resolved);
+
+              // Make sure the original JSON is untouched
+              assert.deepEqual(json, cJson);
+
+              assert.deepEqual(results.resolved, {
+                owner: projectJson.owner
+              });
+            })
+            .then(done, done);
+        });
+
+        it('support relative references with no location', function (done) {
+          var json = {
+            project: {
+              $ref: (typeof window === 'undefined' ? 'test/browser/' : 'base/') + 'project.json'
+            }
+          };
+          var cJson = _.cloneDeep(json);
+          var cOptions = _.cloneDeep(options);
+
+          delete cOptions.location;
+
+          jsonRefs.resolveRefs(json, cOptions)
+            .then(function (results) {
+              assert.notDeepEqual(json, results.resolved);
+
+              // Make sure the original JSON is untouched
+              assert.deepEqual(json, cJson);
+
+              assert.deepEqual(results.resolved, {
+                project: projectJson
+              });
+              assert.deepEqual(results.metadata, {
+                '#/project': {
+                  ref: json.project.$ref
+                }
+              });
             })
             .then(done, done);
         });

@@ -2,6 +2,10 @@
 
 ### TBD
 
+* `#resolveRefs` now collapses all reference pointers so that the metadata key is now the reference to the local document instead of where its `$ref` was
+* `#resolveRefs` now defers local reference resolution until after remote references are resolved _(Issue #26)_
+* `#resolveRefs` now handles recursive relative references gracefully _(Issue #24)_
+* `#resolveRefs` now records metadata for remote references _(Issue #25)_
 * `#resolveRefs` now supports callbacks, as always, and promises  _(Always returns a promise even if callbacks are used)_
 * Fixed a few scenarios where local self references to root didn't work right
 

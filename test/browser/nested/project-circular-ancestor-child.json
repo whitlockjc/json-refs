@@ -1,0 +1,5 @@
+{
+  "child": {
+    "$ref": "../project-circular-child-descendant.json"
+  }
+}

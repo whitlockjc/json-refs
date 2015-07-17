@@ -31,8 +31,9 @@ var exposify = require('exposify');
 var fs = require('fs');
 var gulp = require('gulp');
 var istanbul = require('gulp-istanbul');
+var KarmaServer = require('karma').Server;
 var mocha = require('gulp-mocha');
-var mochaPhantomJS = require('gulp-mocha-phantomjs');
+var path = require('path');
 var runSequence = require('run-sequence');
 var source = require('vinyl-source-stream');
 var testHelpers = require('./test/helpers');
@@ -179,6 +180,14 @@ gulp.task('test-browser', ['browserify'], function (cb) {
     }
   }
 
+  function finisher (err) {
+    cleanUp();
+
+    displayCoverageReport(runningAllTests);
+
+    return err;
+  }
+
   Promise.resolve()
     .then(cleanUp)
     .then(function () {
@@ -212,33 +221,33 @@ gulp.task('test-browser', ['browserify'], function (cb) {
     })
     .then(function () {
       return new Promise(function (resolve, reject) {
-        gulp
-          .src([
-            basePath + 'test-bower.html',
-            basePath + 'test-standalone.html'
-          ])
-          .pipe(mochaPhantomJS({
-            phantomjs: {
-              localToRemoteUrlAccessEnabled: true,
-              webSecurityEnabled: false,
-              ignoreResourceErrors: true
-            },
-            timeout: 5000
-          }))
-          .on('error', function (err) {
-            cleanUp();
-            displayCoverageReport(runningAllTests);
-
+        new KarmaServer({
+          configFile: path.join(__dirname, 'test/browser/karma-bower.conf.js'),
+          singleRun: true
+        }, function (err) {
+          if (err) {
             reject(err);
-          })
-          .on('finish', function () {
-            cleanUp();
-            displayCoverageReport(runningAllTests);
-
+          } else {
             resolve();
-          });
+          }
+        }).start();
       });
     })
+    .then(function () {
+      return new Promise(function (resolve, reject) {
+        new KarmaServer({
+          configFile: path.join(__dirname, 'test/browser/karma-standalone.conf.js'),
+          singleRun: true
+        }, function (err) {
+          if (err) {
+            reject(err);
+          } else {
+            resolve();
+          }
+        }).start();
+      });
+    })
+    .then(finisher, finisher)
     .then(cb, cb);
 });
 

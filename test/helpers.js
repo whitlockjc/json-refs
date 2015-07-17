@@ -29,10 +29,34 @@ var connect = require('connect');
 var YAML = require('js-yaml');
 
 var app = connect();
-var nestedPersonJson = require('./browser/nested/project.json');
-var personJson = require('./browser/project.json');
-var personNestedJson = require('./browser/project-nested.json');
+var nestedProjectCircularChildJson = require('./browser/nested/project-circular-child.json');
+var nestedProjectCircularRootJson = require('./browser/nested/project-circular-root.json');
+var nestedProjectJson = require('./browser/nested/project.json');
+var projectCircularAncestorChildJson = require('./browser/nested/project-circular-ancestor-child.json');
+var projectCircularAncestorRootJson = require('./browser/nested/project-circular-ancestor-root.json');
+var projectCircularChildDescendantJson = require('./browser/project-circular-child-descendant.json');
+var projectCircularChildJson = require('./browser/project-circular-child.json');
+var projectCircularRootJson = require('./browser/project-circular-root.json');
+var projectCircularRootDescendantJson = require('./browser/project-circular-root-descendant.json');
+var projectJson = require('./browser/project.json');
+var projectNestedJson = require('./browser/project-nested.json');
 var refJson = require('./browser/ref.json');
+
+var responses = {
+  '/nested/project-circular-ancestor-child.json': projectCircularAncestorChildJson,
+  '/nested/project-circular-ancestor-root.json': projectCircularAncestorRootJson,
+  '/nested/project-circular-child.json': nestedProjectCircularChildJson,
+  '/nested/project-circular-root.json': nestedProjectCircularRootJson,
+  '/nested/project.json': nestedProjectJson,
+  '/project-circular-child-descendant.json': projectCircularChildDescendantJson,
+  '/project-circular-child.json': projectCircularChildJson,
+  '/project-circular-root.json': projectCircularRootJson,
+  '/project-nested.json': projectNestedJson,
+  '/project.circular-root-descendant.json': projectCircularRootDescendantJson,
+  '/project.json': projectJson,
+  '/project.yaml': projectJson,
+  '/ref.json': refJson
+};
 
 app.use(function (req, res, next) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -59,46 +83,26 @@ app.use('/secure', function (req, res, next) {
 });
 
 app.use(function (req, res) {
-  switch (req.url) {
-  case '/ref.json':
-  case '/secure/ref.json':
-    res.setHeader('Content-Type', 'application/json');
-    res.statusCode = 200;
-    res.end(JSON.stringify(refJson));
+  var contentType = 'application/json';
+  var statusCode = 200;
+  var response = responses[req.url.replace(/^\/secure/, '')];
+  var content;
 
-    break;
-  case '/project.json':
-  case '/secure/project.json':
-    res.setHeader('Content-Type', 'application/json');
-    res.statusCode = 200;
-    res.end(JSON.stringify(personJson));
-
-    break;
-  case '/project-nested.json':
-  case '/secure/project-nested.json':
-    res.setHeader('Content-Type', 'application/json');
-    res.statusCode = 200;
-    res.end(JSON.stringify(personNestedJson));
-
-    break;
-  case '/nested/project.json':
-  case '/secure/nested/project.json':
-    res.setHeader('Content-Type', 'application/json');
-    res.statusCode = 200;
-    res.end(JSON.stringify(nestedPersonJson));
-
-    break;
-  case '/project.yaml':
-  case '/secure/project.yaml':
-    res.setHeader('Content-Type', 'application/x-yaml');
-    res.statusCode = 200;
-    res.end(YAML.safeDump(personJson));
-
-    break;
-  default:
-    res.writeHead(404);
-    res.end();
+  if (typeof response === 'undefined') {
+    statusCode = 404;
+    content = '';
+  } else {
+    if (req.url.indexOf('.yaml') > -1) {
+      content = YAML.safeDump(response);
+      contentType = 'application/x-yaml';
+    } else {
+      content = JSON.stringify(response);
+    }
   }
+
+  res.setHeader('Content-Type', contentType);
+  res.statusCode = statusCode;
+  res.end(content);
 });
 
 module.exports.createServer = function (transport) {

@@ -31,7 +31,7 @@ bower install json-refs --save
 
 The standalone binaries come in two flavors:
 
-* [json-refs-standalone.js](https://raw.github.com/whitlockjc/json-refs/master/browser/json-refs-standalone.js): _180kb_, full source source maps
+* [json-refs-standalone.js](https://raw.github.com/whitlockjc/json-refs/master/browser/json-refs-standalone.js): _192kb_, full source source maps
 * [json-refs-standalone-min.js](https://raw.github.com/whitlockjc/json-refs/master/browser/json-refs-standalone-min.js): _32kb_, minified, compressed
 and no sourcemap
 
@@ -140,14 +140,25 @@ differences:
 If there is an `Error`, the callback is called with the `Error` in the first argument and `undefined` in the second
 argument.  If there is no `Error`, the first argument is `undefined` and the second argument is an `object` whose value
 is the fully resolved document.  The third argument is an `object` whose value is the reference resolution metadata.
-Its keys are the location of the reference and its values are as follows:
+Its keys are the location in the resolved document where the reference was resolved.  So if you had a document like the
+following, its metadata key would be `#/child`:
 
-* `ref {string}`: The reference value as it existed in the original document
+```js
+{
+  child: {
+    $ref: 'somefile.js'
+  }
+}
+```
+
+Each metadta value is an object whose keys/values are as follows:
+
+* `ref {string}`: The reference location *(For local reference in the original document, this value is the same value
+of the originating reference.  For local references within a remote document, the reference value is the fully-qualified
+reference value based on the referencing documents fully-qualified path and the local path within the remote document.
+For collapsed references, remote references to remote references, the last reference encountered is used.)*
 * `[err] {*}`: The error whenever there was an issue resolving a remote reference
-* `[value] {*}`: The resolved value of the reference, if there is one.  If this property was set, this means that the
-reference was resolvable and it resolved to an explicit value.  If this property is not set, that means the reference
-was unresolvable.  A value of `undefined` means that the reference was resolvable to an actual value of `undefined` and
-is not indicative of an unresolvable reference.
+* `[missing] {boolean}`: This is only set if the referenced value was unresolvable and its value will always be `true`
 
 *(Promises)*
 

@@ -38,8 +38,12 @@
     "gulp-eslint": "^0.15.0",
     "gulp-istanbul": "~0.10.0",
     "gulp-mocha": "~2.1.2",
-    "gulp-mocha-phantomjs": "^0.6.1",
     "js-yaml": "^3.3.1",
+    "karma": "^0.13.1",
+    "karma-mocha": "^0.2.0",
+    "karma-mocha-reporter": "^1.0.2",
+    "karma-phantomjs-launcher": "^0.2.0",
+    "mocha": "^2.2.5",
     "run-sequence": "^1.1.1",
     "uglifyify": "~3.0.1",
     "vinyl-source-stream": "~1.1.0"

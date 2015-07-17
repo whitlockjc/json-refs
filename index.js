@@ -81,10 +81,15 @@ var supportedSchemes = ['file', 'http', 'https'];
 function getRemoteJson (url, options) {
   var json = remoteCache[url];
   var allTasks = Promise.resolve();
+  var scheme = url.indexOf(':') === -1 ? undefined : url.split(':')[0];
 
   if (!_.isUndefined(json)) {
     allTasks = allTasks.then(function () {
       return json;
+    });
+  } else if (supportedSchemes.indexOf(scheme) === -1 && !_.isUndefined(scheme)) {
+    allTasks = allTasks.then(function () {
+      return Promise.reject(new Error('Unsupported remote reference scheme: ' + scheme));
     });
   } else {
     allTasks = pathLoader.load(url, options);
@@ -244,40 +249,58 @@ var pathFromPointer = module.exports.pathFromPointer = function pathFromPointer 
   return path;
 };
 
+function combineRefs (base, ref) {
+  var basePath = pathFromPointer(base);
+
+  if (isRemotePointer(ref)) {
+    if (ref.indexOf('#') === -1) {
+      ref = '#';
+    } else {
+      ref = ref.substring(ref.indexOf('#'));
+    }
+  }
+
+  return pathToPointer(basePath.concat(pathFromPointer(ref))).replace(/\/\$ref/g, '');
+}
+
+function computeUrl (base, ref) {
+  var isRelative = ref.charAt(0) !== '#' && ref.indexOf(':') === -1;
+  var newLocation = [];
+  var refSegments = (ref.indexOf('#') > -1 ? ref.split('#')[0] : ref).split('/');
+
+  function segmentHandler (segment) {
+    if (segment === '..') {
+      newLocation.pop();
+    } else if (segment !== '.') {
+      newLocation.push(segment);
+    }
+  }
+
+  // Remove trailing slash
+  if (base && base.length > 1 && base[base.length - 1] === '/') {
+    base = base.substring(0, base.length - 1);
+  }
+
+  // Normalize the base (when available)
+  if (base) {
+    base.split('#')[0].split('/').forEach(segmentHandler);
+}
+
+  if (isRelative) {
+    // Add reference segments
+    refSegments.forEach(segmentHandler);
+  } else {
+    newLocation = refSegments;
+  }
+
+  return newLocation.join('/');
+}
+
 function realResolveRefs (json, options, metadata) {
   var depth = _.isUndefined(options.depth) ? 1 : options.depth;
   var jsonT = traverse(json);
-  var remoteRefs = {};
-  var refs = findRefs(json);
-  var allTasks = Promise.resolve();
 
-  function computeUrl (base, ref) {
-    var isRelative = ref.charAt(0) !== '#' && ref.indexOf(':') === -1;
-    var newLocation = (base || '').charAt(0) === '/' ? [''] : [];
-    var refSegments = ref.split('#')[0].split('/');
-
-    function segmentHandler (segment) {
-      if (segment === '..') {
-        newLocation.pop();
-      } else if (segment !== '.' && segment !== '') {
-        newLocation.push(segment);
-      }
-    }
-
-    // Normalize the base
-    _.each((base || '').split('#')[0].split('/'), segmentHandler);
-
-    if (isRelative) {
-      // Add reference segments
-      _.each(refSegments, segmentHandler);
-    } else {
-      newLocation = refSegments;
-    }
-
-    return newLocation.join('/');
-  }
-
-  function removeCircular (rJsonT) {
+  function fixCirculars (rJsonT) {
     var circularPtrs = [];
     var scrubbed = rJsonT.map(function () {
       var ptr = pathToPointer(this.path);
@@ -285,7 +308,7 @@ function realResolveRefs (json, options, metadata) {
       if (this.circular) {
         circularPtrs.push(ptr);
 
-        metadata[ptr + '/$ref'].circular = true;
+        metadata[combineRefs(ptr, '#')].circular = true;
 
         if (depth === 0) {
           this.update({});
@@ -311,140 +334,182 @@ function realResolveRefs (json, options, metadata) {
 
         traverse(scrubbed).set(depthPath, _.cloneDeep(value));
       }
-
-      metadata[ptr + '/$ref'].value = traverse(scrubbed).get(path);
     });
 
     return scrubbed;
   }
 
-  function replaceReference (to, from, ref, refPtr) {
-    var missing = false;
-    var refMetadata = {
+  function replaceReference (ref, refPtr) {
+    var refMetadataKey = combineRefs(refPtr, '#');
+    var localRef = ref = ref.indexOf('#') === -1 ?
+          '#' :
+          ref.substring(ref.indexOf('#'));
+    var localPath = pathFromPointer(localRef);
+    var missing = !jsonT.has(localPath);
+    var value = jsonT.get(localPath);
+    var refPtrPath = pathFromPointer(refPtr);
+    var parentPath = refPtrPath.slice(0, refPtrPath.length - 1);
+    var refMetadata = metadata[refMetadataKey] || {
       ref: ref
     };
-    var parentPath;
-    var refPath;
-    var value;
-
-    if (_.isError(from)) {
-      missing = true;
-      value = undefined;
-
-      refMetadata.err = from;
-    } else {
-      ref = ref.indexOf('#') === -1 ?
-        '#' :
-        ref.substring(ref.indexOf('#'));
-      missing = !from.has(pathFromPointer(ref));
-      value = from.get(pathFromPointer(ref));
-    }
-
-    refPath = pathFromPointer(refPtr);
-    parentPath = refPath.slice(0, refPath.length - 1);
 
     if (!missing) {
       if (parentPath.length === 0) {
         // Self references are special
-        if (to.value === value) {
+        if (jsonT.value === value) {
           value = {};
 
           refMetadata.circular = true;
         }
 
-        to.value = value;
+        jsonT.value = value;
       } else {
-        to.set(parentPath, value);
-      }
+        if (jsonT.get(parentPath) === value) {
+          value = {};
 
-      refMetadata.value = value;
-    }
-
-    metadata[refPtr] = refMetadata;
-  }
-
-  if (Object.keys(refs).length > 0) {
-    _.each(refs, function (ref, refPtr) {
-      if (isRemotePointer(ref)) {
-        remoteRefs[refPtr] = ref;
-      } else {
-        replaceReference(jsonT, jsonT, ref, refPtr);
-      }
-    });
-
-    if (Object.keys(remoteRefs).length > 0) {
-      allTasks = Promise.resolve();
-
-      _.each(remoteRefs, function (ref, refPtr) {
-        var remoteUrl = computeUrl(options.location, ref);
-        var scheme = ref.indexOf(':') === -1 ? undefined : ref.split(':')[0];
-        var nextStep;
-
-        // Do not process references to unsupported resources
-        if (supportedSchemes.indexOf(scheme) === -1 && !_.isUndefined(scheme)) {
-          nextStep = Promise.resolve();
-        } else {
-          nextStep = new Promise(function (resolve) {
-            getRemoteJson(remoteUrl, options)
-              .then(function (remoteJson) {
-                var rOptions = _.cloneDeep(options);
-                var refBase = ref.split('#')[0];
-
-                // Remove the last path segment
-                refBase = refBase.substring(0, refBase.lastIndexOf('/') + 1);
-
-                rOptions.location = computeUrl(options.location, refBase);
-
-                realResolveRefs(remoteJson, rOptions, metadata)
-                  .then(function (results) {
-                    replaceReference(jsonT, traverse(results.resolved), ref, refPtr);
-
-                    resolve();
-                  }, function (err) {
-                    replaceReference(jsonT, err, ref, refPtr);
-
-                    resolve();
-                  });
-              }, function (err) {
-                replaceReference(jsonT, err, ref, refPtr);
-
-                resolve();
-              });
-          });
+          refMetadata.circular = true;
         }
 
-        allTasks = allTasks.then(function () {
-          return nextStep;
-        });
-      });
-
-      allTasks = allTasks
-        .then(function () {
-          return {
-            metadata: metadata,
-            resolved: removeCircular(jsonT)
-          };
-        }, function (err) {
-          return Promise.reject(err);
-        });
+        jsonT.set(parentPath, value);
+      }
     } else {
-      allTasks = allTasks
-        .then(function () {
-          return {
-            metadata: metadata,
-            resolved: removeCircular(jsonT)
-          };
-        });
+      refMetadata.missing = true;
     }
-  } else {
-    allTasks = allTasks
-      .then(function () {
-        return {
-          metadata: metadata,
-          resolved: removeCircular(jsonT)
-        };
-      });
+
+    metadata[refMetadataKey] = refMetadata;
   }
+
+  // All references at this point should be local except missing/invalid references
+  _.each(findRefs(json), function (ref, refPtr) {
+    if (!isRemotePointer(ref)) {
+      replaceReference(ref, refPtr);
+    }
+  });
+
+  // Remove full locations from reference metadata
+  if (!_.isUndefined(options.location)) {
+    _.each(metadata, function (refMetadata) {
+      var normalizedPtr = refMetadata.ref;
+
+      // Remove the base
+      normalizedPtr = normalizedPtr.replace(options.location, '');
+
+      // Remove the / prefix
+      if (normalizedPtr.charAt(0) === '/') {
+        normalizedPtr = normalizedPtr.substring(1);
+      }
+
+      refMetadata.ref = normalizedPtr;
+    });
+  }
+
+  // Fix circulars
+  return {
+    metadata: metadata,
+    resolved: fixCirculars(jsonT)
+  };
+}
+
+function resolveRemoteRefs (json, options, parentPtr, parents, metadata) {
+  var allTasks = Promise.resolve();
+  var jsonT = traverse(json);
+
+  function replaceRemoteRef (refPtr, ptr, remoteLocation, remotePtr, resolved) {
+    var normalizedPtr = remoteLocation + (remotePtr === '#' ? '' : remotePtr);
+    var refMetadataKey = combineRefs(parentPtr, refPtr);
+    var refMetadata = metadata[refMetadataKey] || {};
+    var refPath = pathFromPointer(refPtr);
+    var value;
+
+    if (_.isUndefined(resolved)) {
+      refMetadata.circular = true;
+
+      value = parents[remoteLocation].ref;
+    } else {
+      value = traverse(resolved).get(pathFromPointer(remotePtr));
+
+      // If the value is a reference, replace the reference value.  Otherwise, replace the reference.
+      if (value.$ref) {
+        value = value.$ref;
+      } else {
+        refPath.pop();
+      }
+    }
+
+    // Collapse self references
+    if (refPath.length === 0) {
+      jsonT.value = value;
+    } else {
+      jsonT.set(refPath, value);
+    }
+
+    refMetadata.ref = normalizedPtr;
+
+    metadata[refMetadataKey] = refMetadata;
+  }
+
+  function resolver () {
+    return {
+      metadata: metadata,
+      resolved: jsonT.value
+    };
+  }
+
+  _.each(findRefs(json), function (ptr, refPtr) {
+    if (isRemotePointer(ptr)) {
+      allTasks = allTasks.then(function () {
+        var remoteLocation = computeUrl(options.location, ptr);
+        var refParts = ptr.split('#');
+        var hash = '#' + (refParts[1] || '');
+
+        if (_.isUndefined(parents[remoteLocation])) {
+          return getRemoteJson(remoteLocation, options)
+            .then(function (remoteJson) {
+              return remoteJson;
+            }, function (err) {
+              return err;
+            })
+            .then(function (response) {
+              var refBase = refParts[0];
+              var rOptions = _.cloneDeep(options);
+              var newParentPtr = combineRefs(parentPtr, refPtr);
+
+              // Remove the last path segment
+              refBase = refBase.substring(0, refBase.lastIndexOf('/') + 1);
+
+              // Update the recursive location
+              rOptions.location = computeUrl(options.location, refBase);
+
+              // Record the parent
+              parents[remoteLocation] = {
+                ref: parentPtr
+              };
+
+              if (_.isError(response)) {
+                metadata[newParentPtr] = {
+                  err: response,
+                  missing: true,
+                  ref: ptr
+                };
+              } else {
+                // Resolve remote references
+                return resolveRemoteRefs(response, rOptions, newParentPtr, parents, metadata)
+                  .then(function (rMetadata) {
+                    delete parents[remoteLocation];
+
+                    replaceRemoteRef(refPtr, ptr, remoteLocation, hash, rMetadata.resolved);
+                  });
+              }
+            });
+        } else {
+          // This is a circular reference
+          replaceRemoteRef(refPtr, ptr, remoteLocation, hash);
+        }
+      });
+    }
+  });
+
+  allTasks = allTasks.then(resolver, resolver);
 
   return allTasks;
 }
@@ -505,9 +570,16 @@ module.exports.resolveRefs = function resolveRefs (json, options, done) {
     }
   });
 
+  // Clone the inputs so we do not alter them
+  json = traverse(json).clone();
+  options = traverse(options).clone();
+
   allTasks = allTasks
     .then(function () {
-      return realResolveRefs(traverse(json).clone(), traverse(options).clone(), {});
+      return resolveRemoteRefs(json, options, '#', {}, {});
+    })
+    .then(function (metadata) {
+      return realResolveRefs(metadata.resolved, options, metadata.metadata);
     });
 
   // Use the callback if provided and it is a function
