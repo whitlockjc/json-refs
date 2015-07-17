@@ -524,12 +524,65 @@ function resolveRemoteRefs (json, options, parentPtr, parents, metadata) {
  * @param {object} [options] - The options (All options are passed down to whitlockjc/path-loader)
  * @param {number} [options.depth] - The depth to resolve circular references
  * @param {string} [options.location] - The location to which relative references should be resolved
+ * @param {prepareRequestCallback} [options.prepareRequest] - The callback used to prepare an HTTP request
  * @param {processContentCallback} [options.processContent] - The callback used to process a reference's content
  * @param {resultCallback} [done] - The result callback
  *
  * @throws Error if the arguments are missing or invalid
  *
  * @returns {Promise} The promise
+ *
+ * @example
+ * // Example using callbacks
+ *
+ * JsonRefs.resolveRefs({
+ *   name: 'json-refs',
+ *   owner: {
+ *     $ref: 'https://api.github.com/repos/whitlockjc/json-refs#/owner'
+ *   }
+ * }, function (err, resolved, metadata) {
+ *   if (err) throw err;
+ *
+ *   console.log(JSON.stringify(resolved)); // {name: 'json-refs', owner: { ... }}
+ *   console.log(JSON.stringify(metadata)); // {'#/owner': {ref: 'https://api.github.com/repos/whitlockjc/json-refs#/owner'}}
+ * });
+ *
+ * @example
+ * // Example using promises
+ *
+ * JsonRefs.resolveRefs({
+ *   name: 'json-refs',
+ *   owner: {
+ *     $ref: 'https://api.github.com/repos/whitlockjc/json-refs#/owner'
+ *   }
+ * }).then(function (results) {
+ *   console.log(JSON.stringify(results.resolved)); // {name: 'json-refs', owner: { ... }}
+ *   console.log(JSON.stringify(results.metadata)); // {'#/owner': {ref: 'https://api.github.com/repos/whitlockjc/json-refs#/owner'}}
+ * });
+ *
+ * @example
+ * // Example using options.prepareRequest (to add authentication credentials) and options.processContent (to process YAML)
+ *
+ * JsonRefs.resolveRefs({
+ *   name: 'json-refs',
+ *   owner: {
+ *     $ref: 'https://api.github.com/repos/whitlockjc/json-refs#/owner'
+ *   }
+ * }, {
+ *   prepareRequest: function (req) {
+ *     // Add the 'Basic Authentication' credentials
+ *     req.auth('whitlockjc', 'MY_GITHUB_PASSWORD');
+ *
+ *     // Add the 'X-API-Key' header for an API Key based authentication
+ *     // req.set('X-API-Key', 'MY_API_KEY');
+ *   },
+ *   processContent: function (content) {
+ *     return YAML.parse(content);
+ *   }
+ * }).then(function (results) {
+ *   console.log(JSON.stringify(results.resolved)); // {name: 'json-refs', owner: { ... }}
+ *   console.log(JSON.stringify(results.metadata)); // {'#/owner': {ref: 'https://api.github.com/repos/whitlockjc/json-refs#/owner'}}
+ * });
  */
 module.exports.resolveRefs = function resolveRefs (json, options, done) {
   var allTasks = Promise.resolve();

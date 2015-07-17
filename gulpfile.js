@@ -24,15 +24,17 @@
 
 'use strict';
 
+var $ = require('gulp-load-plugins')({
+  rename: {
+    'gulp-jsdoc-to-markdown': 'jsdoc2MD'
+  }
+});
 var browserify = require('browserify');
 var del = require('del');
-var eslint = require('gulp-eslint');
 var exposify = require('exposify');
 var fs = require('fs');
 var gulp = require('gulp');
-var istanbul = require('gulp-istanbul');
 var KarmaServer = require('karma').Server;
-var mocha = require('gulp-mocha');
 var path = require('path');
 var runSequence = require('run-sequence');
 var source = require('vinyl-source-stream');
@@ -49,7 +51,7 @@ if (typeof Promise === 'undefined') {
 function displayCoverageReport (display) {
   if (display) {
     gulp.src([])
-      .pipe(istanbul.writeReports());
+      .pipe($.istanbul.writeReports());
   }
 }
 
@@ -110,9 +112,9 @@ gulp.task('lint', function () {
       '!test/browser/**/*.js',
       'gulpfile.js'
     ])
-    .pipe(eslint())
-    .pipe(eslint.format('stylish'))
-    .pipe(eslint.failAfterError());
+    .pipe($.eslint())
+    .pipe($.eslint.format('stylish'))
+    .pipe($.eslint.failAfterError());
 });
 
 gulp.task('test-node', function (cb) {
@@ -138,14 +140,14 @@ gulp.task('test-node', function (cb) {
             'index.js',
             'lib/**/*.js'
           ])
-          .pipe(istanbul({includeUntested: true}))
-          .pipe(istanbul.hookRequire()) // Force `require` to return covered files
+          .pipe($.istanbul({includeUntested: true}))
+          .pipe($.istanbul.hookRequire()) // Force `require` to return covered files
           .on('finish', function () {
             gulp.src([
               'test/**/test-*.js',
               '!test/browser/test-*.js'
             ])
-              .pipe(mocha({reporter: 'spec'}))
+              .pipe($.mocha({reporter: 'spec'}))
               .on('error', function (err) {
                 reject(err);
               })
@@ -259,4 +261,13 @@ gulp.task('test', function (cb) {
   runSequence('test-node', 'test-browser', cb);
 });
 
-gulp.task('default', ['lint', 'test', 'browserify']);
+gulp.task('docs', function () {
+  return gulp.src([
+    './index.js'
+  ])
+    .pipe($.concat('API.md'))
+    .pipe($.jsdoc2MD())
+    .pipe(gulp.dest('docs'));
+});
+
+gulp.task('default', ['lint', 'test', 'browserify', 'docs']);
