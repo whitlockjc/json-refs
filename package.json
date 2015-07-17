@@ -16,6 +16,7 @@
   },
   "files": [
     "index.js",
+    "lib",
     "LICENSE"
   ],
   "homepage": "https://github.com/whitlockjc/json-refs",
