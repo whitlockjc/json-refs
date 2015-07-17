@@ -37,10 +37,16 @@ var remoteCache = {};
 var supportedSchemes = ['file', 'http', 'https'];
 
 /**
- * Callback used by all json-refs functions.
+ * Callback used by {@link resolveRefs}.
  *
  * @param {error} [err] - The error if there is a problem
- * @param {*} [result] - The result of the function
+ * @param {object} [resolved] - The resolved results
+ * @param {object} [metadata] - The reference resolution metadata.  *(The key a JSON Pointer to a path in the resolved
+ *                              document where a JSON Reference was dereferenced.  The value is also an object.  Every
+ *                              metadata entry has a `ref` property to tell you where the dereferenced value came from.
+ *                              If there is an `err` property, it is the `Error` object encountered retrieving the
+ *                              referenced value.  If there is a `missing` property, it means the referenced value could
+ *                              not be resolved.)*
  *
  * @callback resultCallback
  */
@@ -284,7 +290,7 @@ function computeUrl (base, ref) {
   // Normalize the base (when available)
   if (base) {
     base.split('#')[0].split('/').forEach(segmentHandler);
-}
+  }
 
   if (isRelative) {
     // Add reference segments
@@ -424,11 +430,14 @@ function resolveRemoteRefs (json, options, parentPtr, parents, metadata) {
     if (_.isUndefined(resolved)) {
       refMetadata.circular = true;
 
+      // Use the parent reference loocation
       value = parents[remoteLocation].ref;
     } else {
+      // Get the remote value
       value = traverse(resolved).get(pathFromPointer(remotePtr));
 
-      // If the value is a reference, replace the reference value.  Otherwise, replace the reference.
+      // If the remote value is itself a reference, update the reference to be replaced with its reference value.
+      // Otherwise, replace the remote reference.
       if (value.$ref) {
         value = value.$ref;
       } else {
@@ -515,14 +524,18 @@ function resolveRemoteRefs (json, options, parentPtr, parents, metadata) {
 }
 
 /**
- * Takes a JSON document, resolves all JSON References and returns a fully resolved equivalent.
+ * Takes a JSON document, resolves all JSON References and returns a fully resolved equivalent along with reference
+ * resolution metadata.
  *
- * If the document has no JSON References, the passed in document is returned untouched.  If there are references to be
- * resolved, the returned document is cloned and returned fully resolved.  The original document is untouched.
+ * **Important Details**
+ *
+ * * The input arguments are never altered
+ * * When using promises, only one value can be resolved so it is an object whose keys and values are the same name and
+ *   value as arguments 1 and 2 for {@link resultCallback}
  *
  * @param {object} json - The JSON  document having zero or more JSON References
  * @param {object} [options] - The options (All options are passed down to whitlockjc/path-loader)
- * @param {number} [options.depth] - The depth to resolve circular references
+ * @param {number} [options.depth=1] - The depth to resolve circular references
  * @param {string} [options.location] - The location to which relative references should be resolved
  * @param {prepareRequestCallback} [options.prepareRequest] - The callback used to prepare an HTTP request
  * @param {processContentCallback} [options.processContent] - The callback used to process a reference's content
@@ -530,7 +543,7 @@ function resolveRemoteRefs (json, options, parentPtr, parents, metadata) {
  *
  * @throws Error if the arguments are missing or invalid
  *
- * @returns {Promise} The promise
+ * @returns {Promise} The promise.
  *
  * @example
  * // Example using callbacks

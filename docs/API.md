@@ -25,15 +25,20 @@
 <dd><p>Clears the internal cache of url -&gt; JavaScript object mappings based on previously resolved references.</p>
 </dd>
 <dt><a href="#resolveRefs">resolveRefs(json, [options], [done])</a> ⇒ <code>Promise</code></dt>
-<dd><p>Takes a JSON document, resolves all JSON References and returns a fully resolved equivalent.</p>
-<p>If the document has no JSON References, the passed in document is returned untouched.  If there are references to be
-resolved, the returned document is cloned and returned fully resolved.  The original document is untouched.</p>
+<dd><p>Takes a JSON document, resolves all JSON References and returns a fully resolved equivalent along with reference
+resolution metadata.</p>
+<p><strong>Important Details</strong></p>
+<ul>
+<li>The input arguments are never altered</li>
+<li>When using promises, only one value can be resolved so it is an object whose keys and values are the same name and
+value as arguments 1 and 2 for <a href="#resultCallback">resultCallback</a></li>
+</ul>
 </dd>
 </dl>
 ## Typedefs
 <dl>
 <dt><a href="#resultCallback">resultCallback</a> : <code>function</code></dt>
-<dd><p>Callback used by all json-refs functions.</p>
+<dd><p>Callback used by <a href="#resolveRefs">resolveRefs</a>.</p>
 </dd>
 <dt><a href="#prepareRequestCallback">prepareRequestCallback</a> : <code>function</code></dt>
 <dd><p>Callback used to provide access to altering a remote request prior to the request being made.</p>
@@ -139,27 +144,31 @@ Clears the internal cache of url -> JavaScript object mappings based on previous
 **Kind**: global function  
 <a name="resolveRefs"></a>
 ## resolveRefs(json, [options], [done]) ⇒ <code>Promise</code>
-Takes a JSON document, resolves all JSON References and returns a fully resolved equivalent.
+Takes a JSON document, resolves all JSON References and returns a fully resolved equivalent along with reference
+resolution metadata.
 
-If the document has no JSON References, the passed in document is returned untouched.  If there are references to be
-resolved, the returned document is cloned and returned fully resolved.  The original document is untouched.
+**Important Details**
+
+* The input arguments are never altered
+* When using promises, only one value can be resolved so it is an object whose keys and values are the same name and
+  value as arguments 1 and 2 for [resultCallback](#resultCallback)
 
 **Kind**: global function  
-**Returns**: <code>Promise</code> - The promise  
+**Returns**: <code>Promise</code> - The promise.  
 **Throws**:
 
 - Error if the arguments are missing or invalid
 
 
-| Param | Type | Description |
-| --- | --- | --- |
-| json | <code>object</code> | The JSON  document having zero or more JSON References |
-| [options] | <code>object</code> | The options (All options are passed down to whitlockjc/path-loader) |
-| [options.depth] | <code>number</code> | The depth to resolve circular references |
-| [options.location] | <code>string</code> | The location to which relative references should be resolved |
-| [options.prepareRequest] | <code>[prepareRequestCallback](#prepareRequestCallback)</code> | The callback used to prepare an HTTP request |
-| [options.processContent] | <code>[processContentCallback](#processContentCallback)</code> | The callback used to process a reference's content |
-| [done] | <code>[resultCallback](#resultCallback)</code> | The result callback |
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| json | <code>object</code> |  | The JSON  document having zero or more JSON References |
+| [options] | <code>object</code> |  | The options (All options are passed down to whitlockjc/path-loader) |
+| [options.depth] | <code>number</code> | <code>1</code> | The depth to resolve circular references |
+| [options.location] | <code>string</code> |  | The location to which relative references should be resolved |
+| [options.prepareRequest] | <code>[prepareRequestCallback](#prepareRequestCallback)</code> |  | The callback used to prepare an HTTP request |
+| [options.processContent] | <code>[processContentCallback](#processContentCallback)</code> |  | The callback used to process a reference's content |
+| [done] | <code>[resultCallback](#resultCallback)</code> |  | The result callback |
 
 **Example**  
 ```js
@@ -218,14 +227,15 @@ JsonRefs.resolveRefs({
 ```
 <a name="resultCallback"></a>
 ## resultCallback : <code>function</code>
-Callback used by all json-refs functions.
+Callback used by [resolveRefs](#resolveRefs).
 
 **Kind**: global typedef  
 
 | Param | Type | Description |
 | --- | --- | --- |
 | [err] | <code>error</code> | The error if there is a problem |
-| [result] | <code>\*</code> | The result of the function |
+| [resolved] | <code>object</code> | The resolved results |
+| [metadata] | <code>object</code> | The reference resolution metadata.  *(The key a JSON Pointer to a path in the resolved                              document where a JSON Reference was dereferenced.  The value is also an object.  Every                              metadata entry has a `ref` property to tell you where the dereferenced value came from.                              If there is an `err` property, it is the `Error` object encountered retrieving the                              referenced value.  If there is a `missing` property, it means the referenced value could                              not be resolved.)* |
 
 <a name="prepareRequestCallback"></a>
 ## prepareRequestCallback : <code>function</code>
