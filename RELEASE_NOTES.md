@@ -1,18 +1,16 @@
 ## Release Notes
 
-### TBD
+### v1.0.0 (2015-07-17)
 
-* `#resolveRefs` now collapses all reference pointers so that the metadata key is now the reference to the local document instead of where its `$ref` was
+* Circular references are now identified in metadata _(Issue #22)_
+* Fixed a few scenarios where local self references to root didn't work right
+* Rewrote using ES5 which removed the need for `lodash-compat`
+* `#resolveRefs` now collapses all reference pointers so that the metadata key is now the reference to the local document instead of where
+its `$ref` was *(This is a breaking change and that is why we are doing a `1.0` release)*
 * `#resolveRefs` now defers local reference resolution until after remote references are resolved _(Issue #26)_
 * `#resolveRefs` now handles recursive relative references gracefully _(Issue #24)_
 * `#resolveRefs` now records metadata for remote references _(Issue #25)_
 * `#resolveRefs` now supports callbacks, as always, and promises  _(Always returns a promise even if callbacks are used)_
-* Fixed a few scenarios where local self references to root didn't work right
-
-### v0.3.3 (TBD)
-
-* Circular references are now identified in metadata _(Issue #22)_
-* Rewrote using ES5 which removed the need for `lodash-compat`
 
 ### v0.3.2 (2015-07-08)
 
