@@ -353,6 +353,174 @@ describe('json-refs', function () {
               .then(done, done);
           });
 
+          it('object (allOf composition/inheritance - single level)', function (done) {
+            var json = {
+              definitions: {
+                A: {
+                  allOf: [
+                    {
+                      $ref: '#/definitions/B'
+                    }
+                  ]
+                },
+                B: {
+                  allOf: [
+                    {
+                      $ref: '#/definitions/A'
+                    }
+                  ]
+                }
+              }
+            };
+            var cJson = _.cloneDeep(json);
+            var cOptions = _.cloneDeep(options);
+
+            cOptions.depth = 0;
+
+            jsonRefs.resolveRefs(json, cOptions)
+              .then(function (results) {
+                assert.notDeepEqual(json, results.resolved);
+
+                // Make sure the original JSON is untouched
+                assert.deepEqual(json, cJson);
+
+                assert.deepEqual(results.resolved, {
+                  definitions: {
+                    A: {
+                      allOf: [
+                        {
+                          allOf: [
+                            {}
+                          ]
+                        }
+                      ]
+                    },
+                    B: {
+                      allOf: [
+                        {
+                          allOf: [
+                            {}
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                });
+
+                assert.deepEqual(results.metadata, {
+                  '#/definitions/A/allOf/0': {
+                    ref: '#/definitions/B',
+                    circular: true
+                  },
+                  '#/definitions/B/allOf/0': {
+                    ref: '#/definitions/A',
+                    circular: true
+                  }
+                });
+              })
+              .then(done, done);
+          });
+
+          it('object (allOf composition/inheritance - multi level)', function (done) {
+            var json = {
+              definitions: {
+                A: {
+                  allOf: [
+                    {
+                      $ref: '#/definitions/B'
+                    }
+                  ]
+                },
+                B: {
+                  allOf: [
+                    {
+                      $ref: '#/definitions/C'
+                    }
+                  ]
+                },
+                C: {
+                  allOf: [
+                    {
+                      $ref: '#/definitions/A'
+                    }
+                  ]
+                }
+              }
+            };
+            var cJson = _.cloneDeep(json);
+            var cOptions = _.cloneDeep(options);
+
+            cOptions.depth = 0;
+
+            jsonRefs.resolveRefs(json, cOptions)
+              .then(function (results) {
+                assert.notDeepEqual(json, results.resolved);
+
+                // Make sure the original JSON is untouched
+                assert.deepEqual(json, cJson);
+
+                assert.deepEqual(results.resolved, {
+                  definitions: {
+                    A: {
+                      allOf: [
+                        {
+                          allOf: [
+                            {
+                              allOf: [
+                                {}
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    B: {
+                      allOf: [
+                        {
+                          allOf: [
+                            {
+                              allOf: [
+                                {}
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    C: {
+                      allOf: [
+                        {
+                          allOf: [
+                            {
+                              allOf: [
+                                {}
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                });
+
+                assert.deepEqual(results.metadata, {
+                  '#/definitions/A/allOf/0': {
+                    ref: '#/definitions/B',
+                    circular: true
+                  },
+                  '#/definitions/B/allOf/0': {
+                    ref: '#/definitions/C',
+                    circular: true
+                  },
+                  '#/definitions/C/allOf/0': {
+                    ref: '#/definitions/A',
+                    circular: true
+                  }
+                });
+              })
+              .then(done, done);
+          });
+
           it('object (properties)', function (done) {
             var json = {
               id: 'Person',

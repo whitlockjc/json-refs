@@ -306,15 +306,43 @@ function realResolveRefs (json, options, metadata) {
   var depth = _.isUndefined(options.depth) ? 1 : options.depth;
   var jsonT = traverse(json);
 
+  function findParentReference (path) {
+    var pPath = path.slice(0, path.lastIndexOf('allOf'));
+    var refMetadata = metadata[pathToPointer(pPath)];
+
+    if (!_.isUndefined(refMetadata)) {
+      return pathToPointer(pPath);
+    } else {
+      if (pPath.indexOf('allOf') > -1) {
+        return findParentReference(pPath);
+      } else {
+        return undefined;
+      }
+    }
+  }
+
   function fixCirculars (rJsonT) {
     var circularPtrs = [];
     var scrubbed = rJsonT.map(function () {
       var ptr = pathToPointer(this.path);
+      var refMetadata = metadata[ptr];
+      var pPtr;
 
       if (this.circular) {
         circularPtrs.push(ptr);
 
-        metadata[combineRefs(ptr, '#')].circular = true;
+        if (_.isUndefined(refMetadata)) {
+          // This must be circular composition/inheritance
+          pPtr = findParentReference(this.path);
+          refMetadata = metadata[pPtr];
+        }
+
+        if (!_.isUndefined(refMetadata)) {
+          refMetadata.circular = true;
+        } else {
+          // This should never happen but we need to know about it if it does
+          throw new Error('Unable to find reference leading to circular composition: ' + ptr);
+        }
 
         if (depth === 0) {
           this.update({});

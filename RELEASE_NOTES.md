@@ -1,5 +1,9 @@
 ## Release Notes
 
+### v1.0.1 (2015-07-20)
+
+* Fix problem where circular references caused by composition/inheritance wasn't caught properly
+
 ### v1.0.0 (2015-07-17)
 
 * Circular references are now identified in metadata _(Issue #22)_
