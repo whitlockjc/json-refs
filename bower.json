@@ -1,7 +1,7 @@
 {
   "name": "json-refs",
   "main": "browser/json-refs.js",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "homepage": "https://github.com/whitlockjc/json-refs",
   "authors": [
     "Jeremy Whitlock <jwhitlock@apache.org>"
