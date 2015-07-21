@@ -314,46 +314,7 @@ describe('json-refs', function () {
               .then(done, done);
           });
 
-          it('object (allOf)', function (done) {
-            var json = {
-              definitions: {
-                Cat: {
-                  allOf: [
-                    {
-                      $ref: '#/definitions/Cat'
-                    }
-                  ]
-                }
-              }
-            };
-            var cJson = _.cloneDeep(json);
-            var cOptions = _.cloneDeep(options);
-
-            cOptions.depth = 0;
-
-            jsonRefs.resolveRefs(json, cOptions)
-              .then(function (results) {
-                assert.notDeepEqual(json, results.resolved);
-
-                // Make sure the original JSON is untouched
-                assert.deepEqual(json, cJson);
-
-                assert.deepEqual(results.resolved, {
-                  definitions: {
-                    Cat: {
-                      allOf: [
-                        {}
-                      ]
-                    }
-                  }
-                });
-
-                assert.ok(results.metadata['#/definitions/Cat/allOf/0'].circular);
-              })
-              .then(done, done);
-          });
-
-          it('object (allOf composition/inheritance - single level)', function (done) {
+          it('object (allOf composition/inheritance - direct)', function (done) {
             var json = {
               definitions: {
                 A: {
@@ -421,7 +382,7 @@ describe('json-refs', function () {
               .then(done, done);
           });
 
-          it('object (allOf composition/inheritance - multi level)', function (done) {
+          it('object (allOf composition/inheritance - indirect)', function (done) {
             var json = {
               definitions: {
                 A: {

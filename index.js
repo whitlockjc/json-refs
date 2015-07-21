@@ -337,11 +337,10 @@ function realResolveRefs (json, options, metadata) {
           refMetadata = metadata[pPtr];
         }
 
+        // Reference metadata can be undefined for references to schemas that have circular composition/inheritance and
+        // are safely ignoreable.
         if (!_.isUndefined(refMetadata)) {
           refMetadata.circular = true;
-        } else {
-          // This should never happen but we need to know about it if it does
-          throw new Error('Unable to find reference leading to circular composition: ' + ptr);
         }
 
         if (depth === 0) {
