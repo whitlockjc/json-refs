@@ -74,8 +74,7 @@ gulp.task('browserify', function (cb) {
         b.transform('exposify');
       }
 
-      b.transform('brfs')
-        .bundle()
+      b.bundle()
         .pipe(source('json-refs' + (isStandalone ? '-standalone' : '') + (!useDebug ? '-min' : '') + '.js'))
         .pipe($.if(!useDebug, buffer()))
         .pipe($.if(!useDebug, $.uglify()))
