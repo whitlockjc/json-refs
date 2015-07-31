@@ -38,10 +38,12 @@
     "gulp": "~3.9.0",
     "gulp-concat": "^2.6.0",
     "gulp-eslint": "^0.15.0",
+    "gulp-if": "^1.2.5",
     "gulp-istanbul": "~0.10.0",
     "gulp-jsdoc-to-markdown": "^1.1.1",
     "gulp-load-plugins": "^1.0.0-rc.1",
     "gulp-mocha": "~2.1.2",
+    "gulp-uglify": "^1.2.0",
     "js-yaml": "^3.3.1",
     "karma": "^0.13.1",
     "karma-mocha": "^0.2.0",
@@ -51,6 +53,7 @@
     "phantomjs": "^1.9.17",
     "run-sequence": "^1.1.1",
     "uglifyify": "~3.0.1",
+    "vinyl-buffer": "^1.0.0",
     "vinyl-source-stream": "~1.1.0"
   },
   "dependencies": {

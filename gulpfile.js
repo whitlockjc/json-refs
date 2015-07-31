@@ -30,6 +30,7 @@ var $ = require('gulp-load-plugins')({
   }
 });
 var browserify = require('browserify');
+var buffer = require('vinyl-buffer');
 var del = require('del');
 var exposify = require('exposify');
 var fs = require('fs');
@@ -63,10 +64,6 @@ gulp.task('browserify', function (cb) {
         standalone: 'JsonRefs'
       });
 
-      if (!useDebug) {
-        b.transform({global: true}, 'uglifyify');
-      }
-
       if (!isStandalone) {
         // Expose Bower modules so they can be required
         exposify.config = {
@@ -80,6 +77,8 @@ gulp.task('browserify', function (cb) {
       b.transform('brfs')
         .bundle()
         .pipe(source('json-refs' + (isStandalone ? '-standalone' : '') + (!useDebug ? '-min' : '') + '.js'))
+        .pipe($.if(!useDebug, buffer()))
+        .pipe($.if(!useDebug, $.uglify()))
         .pipe(gulp.dest('browser/'))
         .on('error', reject)
         .on('end', resolve);
