@@ -58,30 +58,32 @@ function displayCoverageReport (display) {
 
 gulp.task('browserify', function (cb) {
   function browserifyBuild (isStandalone, useDebug) {
-    return new Promise(function (resolve, reject) {
-      var b = browserify('./index.js', {
-        debug: useDebug,
-        standalone: 'JsonRefs'
+    return function () {
+      return new Promise(function (resolve, reject) {
+        var b = browserify('./index.js', {
+          debug: useDebug,
+          standalone: 'JsonRefs'
+        });
+
+        if (!isStandalone) {
+          // Expose Bower modules so they can be required
+          exposify.config = {
+            'path-loader': 'PathLoader',
+            'traverse': 'traverse'
+          };
+
+          b.transform('exposify');
+        }
+
+        b.bundle()
+          .pipe(source('json-refs' + (isStandalone ? '-standalone' : '') + (!useDebug ? '-min' : '') + '.js'))
+          .pipe($.if(!useDebug, buffer()))
+          .pipe($.if(!useDebug, $.uglify()))
+          .pipe(gulp.dest('browser/'))
+          .on('error', reject)
+          .on('end', resolve);
       });
-
-      if (!isStandalone) {
-        // Expose Bower modules so they can be required
-        exposify.config = {
-          'path-loader': 'PathLoader',
-          'traverse': 'traverse'
-        };
-
-        b.transform('exposify');
-      }
-
-      b.bundle()
-        .pipe(source('json-refs' + (isStandalone ? '-standalone' : '') + (!useDebug ? '-min' : '') + '.js'))
-        .pipe($.if(!useDebug, buffer()))
-        .pipe($.if(!useDebug, $.uglify()))
-        .pipe(gulp.dest('browser/'))
-        .on('error', reject)
-        .on('end', resolve);
-    });
+    };
   }
 
   Promise.resolve()
