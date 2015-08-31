@@ -1049,9 +1049,11 @@ describe('json-refs', function () {
 
                 assert.deepEqual(results.metadata, {
                   '#/child': {
+                    circular: true,
                     ref: json.child.$ref
                   },
                   '#/child/child': {
+                    circular: true,
                     ref: 'project-circular-child-descendant.json'
                   },
                   '#/child/child/child': {
@@ -1063,11 +1065,7 @@ describe('json-refs', function () {
                   child: {
                     child: {
                       child: {
-                        child: {
-                          child: {
-                            child: {}
-                          }
-                        }
+                        child: {}
                       }
                     }
                   }
@@ -1117,19 +1115,18 @@ describe('json-refs', function () {
 
                 assert.deepEqual(results.metadata, {
                   '#/child': {
+                    circular: true,
                     ref: 'nested/project-circular-child.json'
                   },
                   '#/child/child': {
                     circular: true,
-                    ref: 'nested/project-circular-child.json'
+                    ref: 'project-circular-child.json'
                   }
                 });
                 assert.deepEqual(results.resolved, {
                   child: {
                     child: {
-                      child: {
-                        child: {}
-                      }
+                      child: {}
                     }
                   }
                 });
@@ -1174,6 +1171,7 @@ describe('json-refs', function () {
 
                 assert.deepEqual(results.metadata, {
                   '#/child': {
+                    circular: true,
                     ref: json.child.$ref
                   },
                   '#/child/child': {
@@ -1184,9 +1182,7 @@ describe('json-refs', function () {
                 assert.deepEqual(results.resolved, {
                   child: {
                     child: {
-                      child: {
-                        child: {}
-                      }
+                      child: {}
                     }
                   }
                 });
@@ -1553,24 +1549,34 @@ describe('json-refs', function () {
 
     it('should handle local references within remote documents', function (done) {
       var json = {
-        project: {
-          $ref: 'project-local-refs.json'
+        swagger: {
+          $ref: 'http://petstore.swagger.io/v2/swagger.json'
         }
       };
 
       jsonRefs.resolveRefs(json, options)
         .then(function (results) {
-          var seen = false;
-
-          _.each(results.metadata, function (entry, refPtr) {
+          _.each(results.metadata, function (entry) {
             assert.ok(_.isUndefined(entry.missing));
-
-            if (refPtr === '#/project/definitions/User/properties/address') {
-              seen = true;
-            }
           });
+        })
+        .then(done, done);
+    });
 
-          assert.ok(seen);
+    it('should handle local references within remote documents (with fragment)', function (done) {
+      var json = {
+        paths: {
+          '/': {
+            $ref: 'http://petstore.swagger.io/v2/swagger.json#/paths/~1pet'
+          }
+        }
+      };
+
+      jsonRefs.resolveRefs(json, options)
+        .then(function (results) {
+          _.each(results.metadata, function (entry) {
+            assert.ok(_.isUndefined(entry.missing));
+          });
         })
         .then(done, done);
     });

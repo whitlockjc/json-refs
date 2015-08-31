@@ -108,12 +108,17 @@ function getRemoteJson (url, options) {
       allTasks = allTasks.then(JSON.parse);
     }
 
-    allTasks.then(function (nJson) {
+    allTasks = allTasks.then(function (nJson) {
       remoteCache[url] = nJson;
 
       return nJson;
     });
   }
+
+  // Return a cloned version to avoid updating the cache
+  allTasks = allTasks.then(function (nJson) {
+    return _.cloneDeep(nJson);
+  });
 
   return allTasks;
 }
@@ -424,12 +429,14 @@ function realResolveRefs (json, options, metadata) {
     _.each(metadata, function (refMetadata) {
       var normalizedPtr = refMetadata.ref;
 
-      // Remove the base
-      normalizedPtr = normalizedPtr.replace(options.location, '');
+      // Remove the base when applicable
+      if (normalizedPtr.indexOf(options.location) === 0) {
+        normalizedPtr = normalizedPtr.substring(options.location.length);
 
-      // Remove the / prefix
-      if (normalizedPtr.charAt(0) === '/') {
-        normalizedPtr = normalizedPtr.substring(1);
+        // Remove the / prefix
+        if (normalizedPtr.charAt(0) === '/') {
+          normalizedPtr = normalizedPtr.substring(1);
+        }
       }
 
       refMetadata.ref = normalizedPtr;
@@ -534,6 +541,8 @@ function resolveRemoteRefs (json, options, parentPtr, parents, metadata) {
                     delete parents[remoteLocation];
 
                     replaceRemoteRef(refPtr, ptr, remoteLocation, hash, rMetadata.resolved);
+
+                    return rMetadata;
                   });
               }
             });
@@ -542,13 +551,14 @@ function resolveRemoteRefs (json, options, parentPtr, parents, metadata) {
           replaceRemoteRef(refPtr, ptr, remoteLocation, hash);
         }
       });
-    } else {
-      // Update local references to be relative to the root document
-      jsonT.set(pathFromPointer(refPtr), combineRefs(parentPtr, ptr));
     }
   });
 
-  allTasks = allTasks.then(resolver, resolver);
+  allTasks = allTasks
+    .then(function () {
+      realResolveRefs(jsonT.value, options, metadata);
+    })
+    .then(resolver, resolver);
 
   return allTasks;
 }
