@@ -1,0 +1,12 @@
+{
+  "definitions": {
+    "Address": {},
+    "User": {
+      "properties": {
+        "address": {
+          "$ref": "#/definitions/Address"
+        }
+      }
+    }
+  }
+}

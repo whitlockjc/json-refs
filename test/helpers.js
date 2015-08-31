@@ -39,6 +39,7 @@ var projectCircularChildJson = require('./browser/project-circular-child.json');
 var projectCircularRootJson = require('./browser/project-circular-root.json');
 var projectCircularRootDescendantJson = require('./browser/project-circular-root-descendant.json');
 var projectJson = require('./browser/project.json');
+var projectLocalRefsJson = require('./browser/project-local-refs.json');
 var projectNestedJson = require('./browser/project-nested.json');
 var refJson = require('./browser/ref.json');
 
@@ -51,6 +52,7 @@ var responses = {
   '/project-circular-child-descendant.json': projectCircularChildDescendantJson,
   '/project-circular-child.json': projectCircularChildJson,
   '/project-circular-root.json': projectCircularRootJson,
+  '/project-local-refs.json': projectLocalRefsJson,
   '/project-nested.json': projectNestedJson,
   '/project.circular-root-descendant.json': projectCircularRootDescendantJson,
   '/project.json': projectJson,

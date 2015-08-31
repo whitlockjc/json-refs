@@ -542,6 +542,9 @@ function resolveRemoteRefs (json, options, parentPtr, parents, metadata) {
           replaceRemoteRef(refPtr, ptr, remoteLocation, hash);
         }
       });
+    } else {
+      // Update local references to be relative to the root document
+      jsonT.set(pathFromPointer(refPtr), combineRefs(parentPtr, ptr));
     }
   });
 

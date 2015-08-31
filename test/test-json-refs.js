@@ -1550,5 +1550,29 @@ describe('json-refs', function () {
         });
       });
     });
+
+    it('should handle local references within remote documents', function (done) {
+      var json = {
+        project: {
+          $ref: 'project-local-refs.json'
+        }
+      };
+
+      jsonRefs.resolveRefs(json, options)
+        .then(function (results) {
+          var seen = false;
+
+          _.each(results.metadata, function (entry, refPtr) {
+            assert.ok(_.isUndefined(entry.missing));
+
+            if (refPtr === '#/project/definitions/User/properties/address') {
+              seen = true;
+            }
+          });
+
+          assert.ok(seen);
+        })
+        .then(done, done);
+    });
   });
 });

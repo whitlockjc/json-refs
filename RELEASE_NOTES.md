@@ -1,5 +1,9 @@
 ## Release Notes
 
+### v1.0.3 (2015-08-31)
+
+* Fix problem where local references in a remote document were not resolved _(Issue #30)_
+
 ### v1.0.2 (2015-07-21)
 
 * Fix problem where references to schemas with circular composition/inheritance could result in attempting to update reference metadata that does not exist
