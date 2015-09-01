@@ -1,0 +1,5 @@
+{
+  "/": {
+    "$ref": "http://petstore.swagger.io/v2/swagger.json#/paths/~1pet"
+  }
+}

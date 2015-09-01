@@ -1549,13 +1549,13 @@ describe('json-refs', function () {
 
     it('should handle local references within remote documents', function (done) {
       var json = {
-        swagger: {
-          $ref: 'http://petstore.swagger.io/v2/swagger.json'
-        }
+        $ref: 'swagger.json'
       };
 
       jsonRefs.resolveRefs(json, options)
         .then(function (results) {
+          assert.notDeepEqual(json, results.resolved);
+
           _.each(results.metadata, function (entry) {
             assert.ok(_.isUndefined(entry.missing));
           });
@@ -1565,8 +1565,14 @@ describe('json-refs', function () {
 
     it('should handle local references within remote documents (with fragment)', function (done) {
       var json = {
+        info: {
+          $ref: 'swagger.json#/swagger/info'
+        },
         paths: {
           '/': {
+            $ref: 'swagger.json#/paths/~1'
+          },
+          '/pet': {
             $ref: 'http://petstore.swagger.io/v2/swagger.json#/paths/~1pet'
           }
         }
@@ -1574,6 +1580,8 @@ describe('json-refs', function () {
 
       jsonRefs.resolveRefs(json, options)
         .then(function (results) {
+          assert.notDeepEqual(json, results.resolved);
+
           _.each(results.metadata, function (entry) {
             assert.ok(_.isUndefined(entry.missing));
           });

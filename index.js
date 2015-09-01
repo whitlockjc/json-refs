@@ -470,12 +470,16 @@ function resolveRemoteRefs (json, options, parentPtr, parents, metadata) {
       // Get the remote value
       value = traverse(resolved).get(pathFromPointer(remotePtr));
 
-      // If the remote value is itself a reference, update the reference to be replaced with its reference value.
-      // Otherwise, replace the remote reference.
-      if (value.$ref) {
-        value = value.$ref;
+      if (_.isUndefined(value)) {
+        refMetadata.missing = true;
       } else {
-        refPath.pop();
+        // If the remote value is itself a reference, update the reference to be replaced with its reference value.
+        // Otherwise, replace the remote reference.
+        if (value.$ref) {
+          value = value.$ref;
+        } else {
+          refPath.pop();
+        }
       }
     }
 

@@ -41,6 +41,8 @@ var projectCircularRootDescendantJson = require('./browser/project-circular-root
 var projectJson = require('./browser/project.json');
 var projectNestedJson = require('./browser/project-nested.json');
 var refJson = require('./browser/ref.json');
+var swaggerJson = require('./browser/swagger.json');
+var swaggerPathsJson = require('./browser/swagger-paths.json');
 
 var responses = {
   '/nested/project-circular-ancestor-child.json': projectCircularAncestorChildJson,
@@ -55,7 +57,9 @@ var responses = {
   '/project.circular-root-descendant.json': projectCircularRootDescendantJson,
   '/project.json': projectJson,
   '/project.yaml': projectJson,
-  '/ref.json': refJson
+  '/ref.json': refJson,
+  '/swagger.json': swaggerJson,
+  '/swagger-paths.json': swaggerPathsJson
 };
 
 app.use(function (req, res, next) {

@@ -1,5 +1,9 @@
 ## Release Notes
 
+### v1.0.5 (2015-08-31)
+
+* Fixed a bug where unresolved references occur for remote document fragments did not get reported
+
 ### v1.0.4 (2015-08-31)
 
 * Fix problem where local references in a remote document, referenced using a fragment, were not resolved _(Issue #30)_
