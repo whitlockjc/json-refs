@@ -1,5 +1,9 @@
 ## Release Notes
 
+### v1.1.0 (2015-09-18)
+
+* Fixed support for service/web workers *(Issue #32)*
+
 ### v1.0.5 (2015-08-31)
 
 * Fixed a bug where unresolved references occur for remote document fragments did not get reported

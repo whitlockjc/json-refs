@@ -58,7 +58,7 @@
   },
   "dependencies": {
     "native-promise-only": "^0.8.0-a",
-    "path-loader": "0.1.1",
+    "path-loader": "^0.2.0",
     "traverse": "~0.6.6"
   }
 }
