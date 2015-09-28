@@ -1,5 +1,9 @@
 ## Release Notes
 
+### v1.1.1 (2015-09-28)
+
+* Fix issue where a hash in `options.location` could create a double slash in the requested path *(Issue 34)*
+
 ### v1.1.0 (2015-09-18)
 
 * Fixed support for service/web workers *(Issue #32)*

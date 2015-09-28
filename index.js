@@ -287,13 +287,18 @@ function computeUrl (base, ref) {
     }
   }
 
-  // Remove trailing slash
-  if (base && base.length > 1 && base[base.length - 1] === '/') {
-    base = base.substring(0, base.length - 1);
-  }
-
-  // Normalize the base (when available)
   if (base) {
+    // Remove hash
+    if (base.indexOf('#') > -1) {
+      base = base.substring(0, base.indexOf('#'));
+    }
+
+    // Remove trailing slash
+    if (base.length > 1 && base[base.length - 1] === '/') {
+      base = base.substring(0, base.length - 1);
+    }
+
+    // Normalize the base
     base.split('#')[0].split('/').forEach(segmentHandler);
   }
 

@@ -1588,5 +1588,28 @@ describe('json-refs', function () {
         })
         .then(done, done);
     });
+
+    it('should handle options.location with hash and trailing slash (Issue 34)', function (done) {
+      var cOptions = _.cloneDeep(options);
+
+      cOptions.location += '/#/';
+
+      var json = {
+        info: {
+          $ref: './project.json'
+        }
+      };
+
+      jsonRefs.resolveRefs(json, cOptions)
+        .then(function (results) {
+          assert.notDeepEqual(json, results.resolved);
+
+          _.each(results.metadata, function (entry) {
+            assert.ok(_.isUndefined(entry.missing));
+            assert.ok(entry.ref.indexOf('//project.json') === -1);
+          });
+        })
+        .then(done, done);
+    });
   });
 });
