@@ -10,14 +10,30 @@
   </body>
   <script src="json-refs-standalone.js"></script>
   <script>
-    JsonRefs.resolveRefs({
+var R=null;
+    var json={
       $ref: 'https://api.github.com/repos/whitlockjc/json-refs'
-    }, function (err, resolved) {
+    };
+
+
+    var json={
+        a:{
+          $ref: 'https://api.github.com/repos/whitlockjc/json-refs#/owner/type'
+        },
+        b:{
+        $ref:"#/x"
+        },
+        c:{
+            $ref:"eins.json"
+        }
+    };
+    JsonRefs.resolveRefs(json,{depth:1}, function (err, resolved,meta) {
+console.log("META",meta);
       if (err) {
         document.body.innerHTML += '<p><strong>Dereferencing Failed</strong></p><span>' + err.message + '</span>';
       } else {
         document.body.innerHTML += '<p><strong>Dereferenced Content</strong></p><pre>' + JSON.stringify(resolved, null, 2) + '</pre>'
-      }
-    });
+           R=resolved; 
+      } });
   </script>
 </html>
