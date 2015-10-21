@@ -532,11 +532,6 @@ function resolveRemoteRefs (json, options, parentPtr, parents, metadata) {
               // Update the recursive location
               rOptions.location = computeUrl(options.location, refBase);
 
-              // Record the parent
-              parents[remoteLocation] = {
-                ref: parentPtr
-              };
-
               if (_.isError(response)) {
                 metadata[newParentPtr] = {
                   err: response,
@@ -544,6 +539,11 @@ function resolveRemoteRefs (json, options, parentPtr, parents, metadata) {
                   ref: ptr
                 };
               } else {
+                // Record the parent
+                parents[remoteLocation] = {
+                  ref: parentPtr
+                };
+
                 // Resolve remote references
                 return resolveRemoteRefs(response, rOptions, newParentPtr, parents, metadata)
                   .then(function (rMetadata) {
