@@ -1,8 +1,12 @@
 ## Release Notes
 
+### v1.1.2 (2015-10-21)
+
+* Fix a bug in the handling of remote reference errors _(Issue #37)_
+
 ### v1.1.1 (2015-09-28)
 
-* Fix issue where a hash in `options.location` could create a double slash in the requested path *(Issue 34)*
+* Fix issue where a hash in `options.location` could create a double slash in the requested path _(Issue #34)_
 
 ### v1.1.0 (2015-09-18)
 
