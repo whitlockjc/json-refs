@@ -223,6 +223,20 @@ var isRemotePointer = module.exports.isRemotePointer = function isRemotePointer 
 };
 
 /**
+ * Returns whether or not the JSON Pointer is a file reference.
+ *
+ * @param {string} ptr - The JSON Pointer
+ *
+ * @returns {boolean} true if the JSON Pointer is a file or false if not
+ *
+ * @throws Error if the arguments are missing or invalid
+ */
+var isFilePointer = module.exports.isFilePointer = function isFilePointer (ptr) {
+  // The set of file pointers is a subset of the set of remote pointers without scheme prefix
+  return isRemotePointer(ptr) && !(/^[a-zA-Z]+:\/\//.test(ptr));
+};
+
+/**
  * Takes a JSON Reference and returns an array of path segments.
  *
  * @see {@link http://tools.ietf.org/html/rfc6901}
@@ -423,11 +437,13 @@ function realResolveRefs (json, options, metadata) {
   }
 
   // All references at this point should be local except missing/invalid references
-  _.each(findRefs(json), function (ref, refPtr) {
-    if (!isRemotePointer(ref)) {
-      replaceReference(ref, refPtr);
-    }
-  });
+  if (_.isUndefined(options.resolveLocalRefs) || options.resolveLocalRefs) {
+    _.each(findRefs(json), function (ref, refPtr) {
+      if (!isRemotePointer(ref)) {
+        replaceReference(ref, refPtr);
+      }
+    });
+  }
 
   // Remove full locations from reference metadata
   if (!_.isUndefined(options.location)) {
@@ -508,7 +524,12 @@ function resolveRemoteRefs (json, options, parentPtr, parents, metadata) {
   }
 
   _.each(findRefs(json), function (ptr, refPtr) {
-    if (isRemotePointer(ptr)) {
+    // Use resolve filters from options to resolve/not resolve references
+    var isFilePtr = isFilePointer(ptr);
+    var isRemotePtr = isRemotePointer(ptr);
+
+    if ((isFilePtr && (_.isUndefined(options.resolveFileRefs) || options.resolveFileRefs)) ||
+        (!isFilePtr && isRemotePtr && (_.isUndefined(options.resolveRemoteRefs) || options.resolveRemoteRefs))) {
       allTasks = allTasks.then(function () {
         var remoteLocation = computeUrl(options.location, ptr);
         var refParts = ptr.split('#');
@@ -586,6 +607,9 @@ function resolveRemoteRefs (json, options, parentPtr, parents, metadata) {
  * @param {object} [options] - The options (All options are passed down to whitlockjc/path-loader)
  * @param {number} [options.depth=1] - The depth to resolve circular references
  * @param {string} [options.location] - The location to which relative references should be resolved
+ * @param {boolean} [options.resolveLocalRefs=true] - Resolve local references
+ * @param {boolean} [options.resolveRemoteRefs=true] - Resolve remote references
+ * @param {boolean} [options.resolveFileRefs=true] - Resolve file references
  * @param {prepareRequestCallback} [options.prepareRequest] - The callback used to prepare an HTTP request
  * @param {processContentCallback} [options.processContent] - The callback used to process a reference's content
  * @param {resultCallback} [done] - The result callback
@@ -682,6 +706,12 @@ module.exports.resolveRefs = function resolveRefs (json, options, done) {
       throw new Error('options.depth must be a number');
     } else if (!_.isUndefined(options.depth) && options.depth < 0) {
       throw new Error('options.depth must be greater or equal to zero');
+    } else if (!_.isUndefined(options.resolveLocalRefs) && !_.isBoolean(options.resolveLocalRefs)) {
+      throw new Error('options.resolveLocalRefs must be a boolean');
+    } else if (!_.isUndefined(options.resolveRemoteRefs) && !_.isBoolean(options.resolveRemoteRefs)) {
+      throw new Error('options.resolveRemoteRefs must be a boolean');
+    } else if (!_.isUndefined(options.resolveFileRefs) && !_.isBoolean(options.resolveFileRefs)) {
+      throw new Error('options.resolveFileRefs must be a boolean');
     }
   });
 
