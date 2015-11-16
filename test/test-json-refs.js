@@ -1,4 +1,4 @@
-/* global afterEach, describe, it, window */
+/* global afterEach, before, describe, it, window */
 
 /*
  * The MIT License (MIT)
@@ -203,6 +203,9 @@ describe('json-refs', function () {
         'options.depth must be a number': [{}, {depth: true}],
         'options.depth must be greater or equal to zero': [{}, {depth: -1}],
         'options.location must be a string': [{}, {location: 123}],
+        'options.resolveLocalRefs must be a boolean': [{}, {resolveLocalRefs: 'wrongType'}],
+        'options.resolveFileRefs must be a boolean': [{}, {resolveFileRefs: 'wrongType'}],
+        'options.resolveRemoteRefs must be a boolean': [{}, {resolveRemoteRefs: 'wrongType'}],
         'options.prepareRequest must be a function': [{}, {prepareRequest: 'wrongType'}],
         'options.processContent must be a function': [{}, {processContent: 'wrongType'}],
         'done must be a function': [{}, {}, 'wrongType']
@@ -1610,6 +1613,175 @@ describe('json-refs', function () {
           });
         })
         .then(done, done);
+    });
+
+    describe('should handle options.resolveXXXRefs', function () {
+      var json;
+
+      // Initialize test object
+      before(function () {
+        json = {
+            info: {
+              localRef: {
+                $ref: '#/definitions/item'
+              },
+              fileRef: {
+                $ref: 'project.json'
+              },
+              remoteRef: {
+                $ref: 'http://localhost:44444/project.json'
+              }
+            },
+            definitions: {
+              item: {
+                type: 'object',
+                properties: {
+                  itemProperty: {
+                    type: 'string'
+                  }
+                }
+              }
+            }
+          };
+      });
+
+      it('resolveLocalRefs = false', function (done) {
+        var cOptions = _.cloneDeep(options);
+        var cJson = _.cloneDeep(json);
+
+        cOptions.resolveLocalRefs = false;
+
+        jsonRefs.resolveRefs(cJson, cOptions)
+          .then(function (results) {
+            assert.notDeepEqual(cJson, results.resolved);
+
+            // Make sure the original JSON is untouched
+            assert.deepEqual(json, cJson);
+
+            // Make sure the enabled references are resolved
+            assert.deepEqual(results.resolved.info.fileRef, projectJson);
+            assert.deepEqual(results.resolved.info.remoteRef, projectJson);
+
+            // Make sure that disabled reference is untouched
+            assert.deepEqual(results.resolved.info.localRef, json.info.localRef);
+          })
+          .then(done, done);
+      });
+
+      it('resolveLocalRefs = true', function (done) {
+        var cOptions = _.cloneDeep(options);
+        var cJson = _.cloneDeep(json);
+
+        cOptions.resolveLocalRefs = true;
+
+        jsonRefs.resolveRefs(cJson, cOptions)
+          .then(function (results) {
+            assert.notDeepEqual(cJson, results.resolved);
+
+            // Make sure the original JSON is untouched
+            assert.deepEqual(json, cJson);
+
+            // Make sure the enabled references are resolved
+            assert.deepEqual(results.resolved.info.fileRef, projectJson);
+            assert.deepEqual(results.resolved.info.remoteRef, projectJson);
+
+            // Make sure that explicitly enabled reference does not change behavior
+            assert.deepEqual(results.resolved.info.localRef, json.definitions.item);
+          })
+          .then(done, done);
+      });
+
+      it('resolveFileRefs = false', function (done) {
+        var cOptions = _.cloneDeep(options);
+        var cJson = _.cloneDeep(json);
+
+        cOptions.resolveFileRefs = false;
+
+        jsonRefs.resolveRefs(cJson, cOptions)
+          .then(function (results) {
+            assert.notDeepEqual(cJson, results.resolved);
+
+            // Make sure the original JSON is untouched
+            assert.deepEqual(json, cJson);
+
+            // Make sure the enabled references are resolved
+            assert.deepEqual(results.resolved.info.localRef, json.definitions.item);
+            assert.deepEqual(results.resolved.info.remoteRef, projectJson);
+
+            // Make sure that disabled reference is untouched
+            assert.deepEqual(results.resolved.info.fileRef, json.info.fileRef);
+          })
+          .then(done, done);
+      });
+
+      it('resolveFileRefs = true', function (done) {
+        var cOptions = _.cloneDeep(options);
+        var cJson = _.cloneDeep(json);
+
+        cOptions.resolveFileRefs = true;
+
+        jsonRefs.resolveRefs(cJson, cOptions)
+          .then(function (results) {
+            assert.notDeepEqual(cJson, results.resolved);
+
+            // Make sure the original JSON is untouched
+            assert.deepEqual(json, cJson);
+
+            // Make sure the enabled references are resolved
+            assert.deepEqual(results.resolved.info.localRef, json.definitions.item);
+            assert.deepEqual(results.resolved.info.remoteRef, projectJson);
+
+            // Make sure that explicitly enabled reference does not change behavior
+            assert.deepEqual(results.resolved.info.fileRef, projectJson);
+          })
+          .then(done, done);
+      });
+
+      it('resolveRemoteRefs = false', function (done) {
+        var cOptions = _.cloneDeep(options);
+        var cJson = _.cloneDeep(json);
+
+        cOptions.resolveRemoteRefs = false;
+
+        jsonRefs.resolveRefs(cJson, cOptions)
+          .then(function (results) {
+            assert.notDeepEqual(cJson, results.resolved);
+
+            // Make sure the original JSON is untouched
+            assert.deepEqual(json, cJson);
+
+            // Make sure the enabled references are resolved
+            assert.deepEqual(results.resolved.info.localRef, json.definitions.item);
+            assert.deepEqual(results.resolved.info.fileRef, projectJson);
+
+            // Make sure that disabled reference is untouched
+            assert.deepEqual(results.resolved.info.remoteRef, json.info.remoteRef);
+          })
+          .then(done, done);
+      });
+
+      it('resolveRemoteRefs = true', function (done) {
+        var cOptions = _.cloneDeep(options);
+        var cJson = _.cloneDeep(json);
+
+        cOptions.resolveRemoteRefs = true;
+
+        jsonRefs.resolveRefs(cJson, cOptions)
+          .then(function (results) {
+            assert.notDeepEqual(cJson, results.resolved);
+
+            // Make sure the original JSON is untouched
+            assert.deepEqual(json, cJson);
+
+            // Make sure the enabled references are resolved
+            assert.deepEqual(results.resolved.info.localRef, json.definitions.item);
+            assert.deepEqual(results.resolved.info.fileRef, projectJson);
+
+            // Make sure that explicitly enabled reference does not change behavior
+            assert.deepEqual(results.resolved.info.remoteRef, projectJson);
+          })
+          .then(done, done);
+      });
     });
   });
 });
