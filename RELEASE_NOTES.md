@@ -1,5 +1,9 @@
 ## Release Notes
 
+### v1.2.0 (2015-11-16)
+
+* Added options to `#resolveRefs` that allow you to choose which reference type(s) to resolve *(Issue #27, PR #41)*
+
 ### v1.1.2 (2015-10-21)
 
 * Fix a bug in the handling of remote reference errors _(Issue #37)_

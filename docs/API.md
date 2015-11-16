@@ -12,6 +12,9 @@
 <dt><a href="#isRemotePointer">isRemotePointer</a> ⇒ <code>boolean</code></dt>
 <dd><p>Returns whether or not the JSON Pointer is a remote reference.</p>
 </dd>
+<dt><a href="#isFilePointer">isFilePointer</a> ⇒ <code>boolean</code></dt>
+<dd><p>Returns whether or not the JSON Pointer is a file reference.</p>
+</dd>
 <dt><a href="#pathFromPointer">pathFromPointer</a> ⇒ <code>Array.&lt;string&gt;</code></dt>
 <dd><p>Takes a JSON Reference and returns an array of path segments.</p>
 </dd>
@@ -105,6 +108,21 @@ Returns whether or not the JSON Pointer is a remote reference.
 | --- | --- | --- |
 | ptr | <code>string</code> | The JSON Pointer |
 
+<a name="isFilePointer"></a>
+## isFilePointer ⇒ <code>boolean</code>
+Returns whether or not the JSON Pointer is a file reference.
+
+**Kind**: global variable  
+**Returns**: <code>boolean</code> - true if the JSON Pointer is a file or false if not  
+**Throws**:
+
+- Error if the arguments are missing or invalid
+
+
+| Param | Type | Description |
+| --- | --- | --- |
+| ptr | <code>string</code> | The JSON Pointer |
+
 <a name="pathFromPointer"></a>
 ## pathFromPointer ⇒ <code>Array.&lt;string&gt;</code>
 Takes a JSON Reference and returns an array of path segments.
@@ -166,6 +184,9 @@ resolution metadata.
 | [options] | <code>object</code> |  | The options (All options are passed down to whitlockjc/path-loader) |
 | [options.depth] | <code>number</code> | <code>1</code> | The depth to resolve circular references |
 | [options.location] | <code>string</code> |  | The location to which relative references should be resolved |
+| [options.resolveLocalRefs] | <code>boolean</code> | <code>true</code> | Resolve local references |
+| [options.resolveRemoteRefs] | <code>boolean</code> | <code>true</code> | Resolve remote references |
+| [options.resolveFileRefs] | <code>boolean</code> | <code>true</code> | Resolve file references |
 | [options.prepareRequest] | <code>[prepareRequestCallback](#prepareRequestCallback)</code> |  | The callback used to prepare an HTTP request |
 | [options.processContent] | <code>[processContentCallback](#processContentCallback)</code> |  | The callback used to process a reference's content |
 | [done] | <code>[resultCallback](#resultCallback)</code> |  | The result callback |
