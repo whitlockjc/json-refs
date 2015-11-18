@@ -91,7 +91,7 @@ Find all JSON References in the document.
 
 | Param | Type | Description |
 | --- | --- | --- |
-| json | <code>object</code> | The JSON document to find references in |
+| json | <code>array</code> &#124; <code>object</code> | The JSON document to find references in |
 
 <a name="isRemotePointer"></a>
 ## isRemotePointer ⇒ <code>boolean</code>
@@ -180,7 +180,7 @@ resolution metadata.
 
 | Param | Type | Default | Description |
 | --- | --- | --- | --- |
-| json | <code>object</code> |  | The JSON  document having zero or more JSON References |
+| json | <code>array</code> &#124; <code>object</code> |  | The JSON  document having zero or more JSON References |
 | [options] | <code>object</code> |  | The options (All options are passed down to whitlockjc/path-loader) |
 | [options.depth] | <code>number</code> | <code>1</code> | The depth to resolve circular references |
 | [options.location] | <code>string</code> |  | The location to which relative references should be resolved |

@@ -45,7 +45,7 @@ describe('json-refs', function () {
     it('should throw an Error when passed the wrong arguments', function () {
       var errors = {
         'json is required': [],
-        'json must be an object': ['wrongType']
+        'json must be an array or an object': ['wrongType']
       };
 
       _.each(errors, function (args, message) {
@@ -74,6 +74,21 @@ describe('json-refs', function () {
       }), {
         '#/$ref': 'http://json-schema.org/draft-04/schema',
         '#/project/$ref': remoteRefBase + 'project.json'
+      });
+    });
+
+    it('should support Array objects (Issue #39)', function () {
+      assert.deepEqual(jsonRefs.findRefs([
+        {
+          name: 'Jeremy'
+        },
+        {
+          name: {
+            $ref: '#/0/name'
+          }
+        }
+      ]), {
+        '#/1/name/$ref': '#/0/name'
       });
     });
   });
@@ -198,7 +213,7 @@ describe('json-refs', function () {
     describe('should throw an Error when passed the wrong arguments', function () {
       var scenarios = {
         'json is required': [],
-        'json must be an object': ['wrongType'],
+        'json must be an array or an object': ['wrongType'],
         'options must be an object': [{}, 'wrongType'],
         'options.depth must be a number': [{}, {depth: true}],
         'options.depth must be greater or equal to zero': [{}, {depth: -1}],
@@ -1782,6 +1797,30 @@ describe('json-refs', function () {
           })
           .then(done, done);
       });
+    });
+
+    it('should support Array objects (Issue #39)', function (done) {
+      var json = [
+        {
+          name: 'Jeremy'
+        },
+        {
+          name: {
+            $ref: '#/0/name'
+          }
+        }
+      ];
+
+      jsonRefs.resolveRefs(json, options)
+        .then(function (results) {
+          assert.notDeepEqual(json, results.resolved);
+
+          assert.deepEqual(results.resolved, [
+            json[0],
+            json[0]
+          ]);
+        })
+        .then(done, done);
     });
   });
 });

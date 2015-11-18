@@ -178,7 +178,7 @@ var pathToPointer = module.exports.pathToPointer = function pathToPointer (path)
  *
  * @see {@link http://tools.ietf.org/html/draft-pbryan-zyp-json-ref-03#section-3}
  *
- * @param {object} json - The JSON document to find references in
+ * @param {array|object} json - The JSON document to find references in
  *
  * @returns {object} An object whose keys are JSON Pointers to the '$ref' node of the JSON Reference
  *
@@ -187,8 +187,8 @@ var pathToPointer = module.exports.pathToPointer = function pathToPointer (path)
 var findRefs = module.exports.findRefs = function findRefs (json) {
   if (_.isUndefined(json)) {
     throw new Error('json is required');
-  } else if (!_.isPlainObject(json)) {
-    throw new Error('json must be an object');
+  } else if (!_.isArray(json) && !_.isPlainObject(json)) {
+    throw new Error('json must be an array or an object');
   }
 
   return traverse(json).reduce(function (acc) {
@@ -603,7 +603,7 @@ function resolveRemoteRefs (json, options, parentPtr, parents, metadata) {
  * * When using promises, only one value can be resolved so it is an object whose keys and values are the same name and
  *   value as arguments 1 and 2 for {@link resultCallback}
  *
- * @param {object} json - The JSON  document having zero or more JSON References
+ * @param {array|object} json - The JSON  document having zero or more JSON References
  * @param {object} [options] - The options (All options are passed down to whitlockjc/path-loader)
  * @param {number} [options.depth=1] - The depth to resolve circular references
  * @param {string} [options.location] - The location to which relative references should be resolved
@@ -687,8 +687,8 @@ module.exports.resolveRefs = function resolveRefs (json, options, done) {
   allTasks = allTasks.then(function () {
     if (_.isUndefined(json)) {
       throw new Error('json is required');
-    } else if (!_.isPlainObject(json)) {
-      throw new Error('json must be an object');
+    } else if (!_.isArray(json) && !_.isPlainObject(json)) {
+      throw new Error('json must be an array or an object');
     } else if (!_.isPlainObject(options)) {
       throw new Error('options must be an object');
     } else if (!_.isUndefined(done) && !_.isFunction(done)) {

@@ -1,5 +1,9 @@
 ## Release Notes
 
+### v1.2.1 (2015-11-18)
+
+* Updated `#findRefs` and `#resolveRefs` to work with arrays and objects *(Issue #39)*
+
 ### v1.2.0 (2015-11-16)
 
 * Added options to `#resolveRefs` that allow you to choose which reference type(s) to resolve *(Issue #27, PR #41)*
