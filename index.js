@@ -288,114 +288,74 @@ function combineRefs (base, ref) {
   return pathToPointer(basePath.concat(pathFromPointer(ref))).replace(/\/\$ref/g, '');
 }
 
-function computeUrl (base, ref) {
-  var isRelative = ref.charAt(0) !== '#' && ref.indexOf(':') === -1;
-  var newLocation = [];
-  var refSegments = (ref.indexOf('#') > -1 ? ref.split('#')[0] : ref).split('/');
+function findParentReference (path, metadata) {
+  var pPath = path.slice(0, path.lastIndexOf('allOf'));
+  var refMetadata = metadata[pathToPointer(pPath)];
 
-  function segmentHandler (segment) {
-    if (segment === '..') {
-      newLocation.pop();
-    } else if (segment !== '.') {
-      newLocation.push(segment);
-    }
-  }
-
-  if (base) {
-    // Remove hash
-    if (base.indexOf('#') > -1) {
-      base = base.substring(0, base.indexOf('#'));
-    }
-
-    // Remove trailing slash
-    if (base.length > 1 && base[base.length - 1] === '/') {
-      base = base.substring(0, base.length - 1);
-    }
-
-    // Normalize the base
-    base.split('#')[0].split('/').forEach(segmentHandler);
-  }
-
-  if (isRelative) {
-    // Add reference segments
-    refSegments.forEach(segmentHandler);
+  if (!_.isUndefined(refMetadata)) {
+    return pathToPointer(pPath);
   } else {
-    newLocation = refSegments;
+    if (pPath.indexOf('allOf') > -1) {
+      return findParentReference(pPath, metadata);
+    } else {
+      return undefined;
+    }
   }
-
-  return newLocation.join('/');
 }
 
-function realResolveRefs (json, options, metadata) {
+function fixCirculars (rJsonT, options, metadata) {
+  var circularPtrs = [];
   var depth = _.isUndefined(options.depth) ? 1 : options.depth;
-  var jsonT = traverse(json);
+  var scrubbed = rJsonT.map(function () {
+    var ptr = pathToPointer(this.path);
+    var refMetadata = metadata[ptr];
+    var pPtr;
 
-  function findParentReference (path) {
-    var pPath = path.slice(0, path.lastIndexOf('allOf'));
-    var refMetadata = metadata[pathToPointer(pPath)];
+    if (this.circular) {
+      circularPtrs.push(ptr);
 
-    if (!_.isUndefined(refMetadata)) {
-      return pathToPointer(pPath);
-    } else {
-      if (pPath.indexOf('allOf') > -1) {
-        return findParentReference(pPath);
+      if (_.isUndefined(refMetadata)) {
+        // This must be circular composition/inheritance
+        pPtr = findParentReference(this.path, metadata);
+        refMetadata = metadata[pPtr];
+      }
+
+      // Reference metadata can be undefined for references to schemas that have circular composition/inheritance and
+      // are safely ignoreable.
+      if (!_.isUndefined(refMetadata)) {
+        refMetadata.circular = true;
+      }
+
+      if (depth === 0) {
+        this.update({});
       } else {
-        return undefined;
+        this.update(traverse(this.node).map(function () {
+          if (this.circular) {
+            this.parent.update({});
+          }
+        }));
       }
     }
-  }
+  });
 
-  function fixCirculars (rJsonT) {
-    var circularPtrs = [];
-    var scrubbed = rJsonT.map(function () {
-      var ptr = pathToPointer(this.path);
-      var refMetadata = metadata[ptr];
-      var pPtr;
+  // Replace scrubbed circulars based on depth
+  _.each(circularPtrs, function (ptr) {
+    var depthPath = [];
+    var path = pathFromPointer(ptr);
+    var value = traverse(scrubbed).get(path);
+    var i;
 
-      if (this.circular) {
-        circularPtrs.push(ptr);
+    for (i = 0; i < depth; i++) {
+      depthPath.push.apply(depthPath, path);
 
-        if (_.isUndefined(refMetadata)) {
-          // This must be circular composition/inheritance
-          pPtr = findParentReference(this.path);
-          refMetadata = metadata[pPtr];
-        }
+      traverse(scrubbed).set(depthPath, _.cloneDeep(value));
+    }
+  });
 
-        // Reference metadata can be undefined for references to schemas that have circular composition/inheritance and
-        // are safely ignoreable.
-        if (!_.isUndefined(refMetadata)) {
-          refMetadata.circular = true;
-        }
+  return scrubbed;
+}
 
-        if (depth === 0) {
-          this.update({});
-        } else {
-          this.update(traverse(this.node).map(function () {
-            if (this.circular) {
-              this.parent.update({});
-            }
-          }));
-        }
-      }
-    });
-
-    // Replace scrubbed circulars based on depth
-    _.each(circularPtrs, function (ptr) {
-      var depthPath = [];
-      var path = pathFromPointer(ptr);
-      var value = traverse(scrubbed).get(path);
-      var i;
-
-      for (i = 0; i < depth; i++) {
-        depthPath.push.apply(depthPath, path);
-
-        traverse(scrubbed).set(depthPath, _.cloneDeep(value));
-      }
-    });
-
-    return scrubbed;
-  }
-
+function realResolveLocalRefs (jsonT, metadata) {
   function replaceReference (ref, refPtr) {
     var refMetadataKey = combineRefs(refPtr, '#');
     var localRef = ref = ref.indexOf('#') === -1 ?
@@ -436,13 +396,113 @@ function realResolveRefs (json, options, metadata) {
     metadata[refMetadataKey] = refMetadata;
   }
 
+  _.each(findRefs(jsonT.value), function (ref, refPtr) {
+    if (!isRemotePointer(ref)) {
+      replaceReference(ref, refPtr);
+    }
+  });
+}
+
+/**
+ * Takes a JSON document, resolves all local JSON References and returns a resolved equivalent along with reference
+ * resolution metadata.
+ *
+ * **Important Details**
+ *
+ * * The input arguments are never altered
+ * * This API is identical to calling {@link resolveRefs|#resolveRefs} with `options.resolveFileRefs` set to `false`
+ *   and `options.resolveRemoteRefs` set to `false`.  The reason for this specialized API is to avoid forcing the
+ *   consumer to use an asynchronous API for synchronous work.
+ *
+ * @param {array|object} json - The JSON  document having zero or more JSON References
+ * @param {object} [options] - The options (All options are passed down to whitlockjc/path-loader)
+ * @param {number} [options.depth=1] - The depth to resolve circular references
+ *
+ * @returns {object} an object whose keys and values are the same name and value as arguments 1 and 2 for
+ *   {@link resultCallback}
+ */
+module.exports.resolveLocalRefs = function resolveLocalRefs (json, options) {
+  if (_.isUndefined(options)) {
+    options = {};
+  }
+
+  var metadata = {};
+  var jsonT;
+
+  if (_.isUndefined(json)) {
+    throw new Error('json is required');
+  } else if (!_.isArray(json) && !_.isPlainObject(json)) {
+    throw new Error('json must be an array or an object');
+  } else if (!_.isPlainObject(options)) {
+    throw new Error('options must be an object');
+  }
+
+  // Validate the options
+  if (!_.isUndefined(options.depth) && !_.isNumber(options.depth)) {
+    throw new Error('options.depth must be a number');
+  } else if (!_.isUndefined(options.depth) && options.depth < 0) {
+    throw new Error('options.depth must be greater or equal to zero');
+  }
+
+  // Clone the inputs so we do not alter them
+  json = traverse(json).clone();
+  options = traverse(options).clone();
+
+  jsonT = traverse(json);
+
+  realResolveLocalRefs(jsonT, metadata);
+
+  // Fix circulars
+  return {
+    metadata: metadata,
+    resolved: fixCirculars(jsonT, options, metadata)
+  };
+};
+
+function computeUrl (base, ref) {
+  var isRelative = ref.charAt(0) !== '#' && ref.indexOf(':') === -1;
+  var newLocation = [];
+  var refSegments = (ref.indexOf('#') > -1 ? ref.split('#')[0] : ref).split('/');
+
+  function segmentHandler (segment) {
+    if (segment === '..') {
+      newLocation.pop();
+    } else if (segment !== '.') {
+      newLocation.push(segment);
+    }
+  }
+
+  if (base) {
+    // Remove hash
+    if (base.indexOf('#') > -1) {
+      base = base.substring(0, base.indexOf('#'));
+    }
+
+    // Remove trailing slash
+    if (base.length > 1 && base[base.length - 1] === '/') {
+      base = base.substring(0, base.length - 1);
+    }
+
+    // Normalize the base
+    base.split('#')[0].split('/').forEach(segmentHandler);
+  }
+
+  if (isRelative) {
+    // Add reference segments
+    refSegments.forEach(segmentHandler);
+  } else {
+    newLocation = refSegments;
+  }
+
+  return newLocation.join('/');
+}
+
+function realResolveRefs (json, options, metadata) {
+  var jsonT = traverse(json);
+
   // All references at this point should be local except missing/invalid references
   if (_.isUndefined(options.resolveLocalRefs) || options.resolveLocalRefs) {
-    _.each(findRefs(json), function (ref, refPtr) {
-      if (!isRemotePointer(ref)) {
-        replaceReference(ref, refPtr);
-      }
-    });
+    realResolveLocalRefs(jsonT, metadata);
   }
 
   // Remove full locations from reference metadata
@@ -467,7 +527,7 @@ function realResolveRefs (json, options, metadata) {
   // Fix circulars
   return {
     metadata: metadata,
-    resolved: fixCirculars(jsonT)
+    resolved: fixCirculars(jsonT, options, metadata)
   };
 }
 
@@ -602,6 +662,8 @@ function resolveRemoteRefs (json, options, parentPtr, parents, metadata) {
  * **Important Details**
  *
  * * The input arguments are never altered
+ * * If you only need to resolve local references and would prefer a synchronous API, please use
+ *   {@link resolveLocalRefs|#resolveLocalRefs}.
  * * When using promises, only one value can be resolved so it is an object whose keys and values are the same name and
  *   value as arguments 1 and 2 for {@link resultCallback}
  *

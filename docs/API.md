@@ -27,12 +27,25 @@
 <dt><a href="#clearCache">clearCache()</a></dt>
 <dd><p>Clears the internal cache of url -&gt; JavaScript object mappings based on previously resolved references.</p>
 </dd>
+<dt><a href="#resolveLocalRefs">resolveLocalRefs(json, [options])</a> ⇒ <code>object</code></dt>
+<dd><p>Takes a JSON document, resolves all local JSON References and returns a resolved equivalent along with reference
+resolution metadata.</p>
+<p><strong>Important Details</strong></p>
+<ul>
+<li>The input arguments are never altered</li>
+<li>This API is identical to calling <a href="#resolveRefs">#resolveRefs</a> with <code>options.resolveFileRefs</code> set to <code>false</code>
+and <code>options.resolveRemoteRefs</code> set to <code>false</code>.  The reason for this specialized API is to avoid forcing the
+consumer to use an asynchronous API for synchronous work.</li>
+</ul>
+</dd>
 <dt><a href="#resolveRefs">resolveRefs(json, [options], [done])</a> ⇒ <code>Promise</code></dt>
 <dd><p>Takes a JSON document, resolves all JSON References and returns a fully resolved equivalent along with reference
 resolution metadata.</p>
 <p><strong>Important Details</strong></p>
 <ul>
 <li>The input arguments are never altered</li>
+<li>If you only need to resolve local references and would prefer a synchronous API, please use
+<a href="#resolveLocalRefs">#resolveLocalRefs</a>.</li>
 <li>When using promises, only one value can be resolved so it is an object whose keys and values are the same name and
 value as arguments 1 and 2 for <a href="#resultCallback">resultCallback</a></li>
 </ul>
@@ -160,6 +173,28 @@ Retrieves the content at the URL and returns its JSON content.
 Clears the internal cache of url -> JavaScript object mappings based on previously resolved references.
 
 **Kind**: global function  
+<a name="resolveLocalRefs"></a>
+## resolveLocalRefs(json, [options]) ⇒ <code>object</code>
+Takes a JSON document, resolves all local JSON References and returns a resolved equivalent along with reference
+resolution metadata.
+
+**Important Details**
+
+* The input arguments are never altered
+* This API is identical to calling [#resolveRefs](#resolveRefs) with `options.resolveFileRefs` set to `false`
+  and `options.resolveRemoteRefs` set to `false`.  The reason for this specialized API is to avoid forcing the
+  consumer to use an asynchronous API for synchronous work.
+
+**Kind**: global function  
+**Returns**: <code>object</code> - an object whose keys and values are the same name and value as arguments 1 and 2 for
+  [resultCallback](#resultCallback)  
+
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| json | <code>array</code> &#124; <code>object</code> |  | The JSON  document having zero or more JSON References |
+| [options] | <code>object</code> |  | The options (All options are passed down to whitlockjc/path-loader) |
+| [options.depth] | <code>number</code> | <code>1</code> | The depth to resolve circular references |
+
 <a name="resolveRefs"></a>
 ## resolveRefs(json, [options], [done]) ⇒ <code>Promise</code>
 Takes a JSON document, resolves all JSON References and returns a fully resolved equivalent along with reference
@@ -168,6 +203,8 @@ resolution metadata.
 **Important Details**
 
 * The input arguments are never altered
+* If you only need to resolve local references and would prefer a synchronous API, please use
+  [#resolveLocalRefs](#resolveLocalRefs).
 * When using promises, only one value can be resolved so it is an object whose keys and values are the same name and
   value as arguments 1 and 2 for [resultCallback](#resultCallback)
 

@@ -209,6 +209,55 @@ describe('json-refs', function () {
     });
   });
 
+  describe('#resolveLocalRefs', function () {
+    it('should throw an Error when passed the wrong arguments', function () {
+      var scenarios = {
+        'json is required': [],
+        'json must be an array or an object': ['wrongType'],
+        'options must be an object': [{}, 'wrongType'],
+        'options.depth must be a number': [{}, {depth: true}],
+        'options.depth must be greater or equal to zero': [{}, {depth: -1}]
+      };
+
+      _.each(scenarios, function (args, message) {
+        try {
+          jsonRefs.resolveLocalRefs.apply(jsonRefs, args);
+
+          assert.fail('JsonRefs#resolveLocalrefs should had failed (' + message + ')');
+        } catch (err) {
+          assert.equal(err.message, message);
+        }
+      });
+    });
+
+    it('should resolve only local references', function () {
+      var json = {
+        name: {
+          given: 'Jeremy',
+          family: 'Whitlock'
+        },
+        firstName: {
+          $ref: '#/name/given'
+        },
+        lastName: {
+          $ref: '#/name/family'
+        },
+        details: {
+          $ref: './details.json'
+        }
+      };
+      var results = jsonRefs.resolveLocalRefs(json);
+
+      assert.notDeepEqual(json, results.resolved);
+      assert.deepEqual(results.resolved, {
+        name: json.name,
+        firstName: json.name.given,
+        lastName: json.name.family,
+        details: json.details
+      });
+    });
+  });
+
   describe('#resolveRefs', function () {
     describe('should throw an Error when passed the wrong arguments', function () {
       var scenarios = {

@@ -2,6 +2,7 @@
 
 ### TBD
 
+* Added `#resolveLocalRefs` to avoid forcing consumers only resolving local references to use a callback/Promise based API *(`#resolveRefs`)*
 * Update reference metdata to record when a reference is remote
 
 ### v1.2.1 (2015-11-18)
