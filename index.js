@@ -482,6 +482,8 @@ function resolveRemoteRefs (json, options, parentPtr, parents, metadata) {
     var refPath = pathFromPointer(refPtr);
     var value;
 
+    refMetadata.remote = true;
+
     if (_.isUndefined(resolved)) {
       refMetadata.circular = true;
 

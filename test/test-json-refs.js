@@ -955,7 +955,8 @@ describe('json-refs', function () {
 
               assert.deepEqual(results.metadata, {
                 '#/project': {
-                  ref: json.project.$ref
+                  ref: json.project.$ref,
+                  remote: true
                 },
                 '#/owner': {
                   ref: json.owner.$ref
@@ -1068,15 +1069,18 @@ describe('json-refs', function () {
                 assert.deepEqual(results.metadata, {
                   '#/child': {
                     circular: true,
-                    ref: json.child.$ref
+                    ref: json.child.$ref,
+                    remote: true
                   },
                   '#/child/child': {
                     circular: true,
-                    ref: 'project-circular-child-descendant.json'
+                    ref: 'project-circular-child-descendant.json',
+                    remote: true
                   },
                   '#/child/child/child': {
                     circular: true,
-                    ref: 'nested/project-circular-ancestor-child.json'
+                    ref: 'nested/project-circular-ancestor-child.json',
+                    remote: true
                   }
                 });
                 assert.deepEqual(results.resolved, {
@@ -1108,7 +1112,8 @@ describe('json-refs', function () {
                 assert.deepEqual(results.metadata, {
                   '#': {
                     circular: true,
-                    ref: 'nested/project-circular-ancestor-root.json'
+                    ref: 'nested/project-circular-ancestor-root.json',
+                    remote: true
                   }
                 });
                 assert.deepEqual(results.resolved, {});
@@ -1134,11 +1139,13 @@ describe('json-refs', function () {
                 assert.deepEqual(results.metadata, {
                   '#/child': {
                     circular: true,
-                    ref: 'nested/project-circular-child.json'
+                    ref: 'nested/project-circular-child.json',
+                    remote: true
                   },
                   '#/child/child': {
                     circular: true,
-                    ref: 'project-circular-child.json'
+                    ref: 'project-circular-child.json',
+                    remote: true
                   }
                 });
                 assert.deepEqual(results.resolved, {
@@ -1168,7 +1175,8 @@ describe('json-refs', function () {
                 assert.deepEqual(results.metadata, {
                   '#': {
                     circular: true,
-                    ref: 'nested/project-circular-root.json'
+                    ref: 'nested/project-circular-root.json',
+                    remote: true
                   }
                 });
                 assert.deepEqual(results.resolved, {});
@@ -1190,11 +1198,13 @@ describe('json-refs', function () {
                 assert.deepEqual(results.metadata, {
                   '#/child': {
                     circular: true,
-                    ref: json.child.$ref
+                    ref: json.child.$ref,
+                    remote: true
                   },
                   '#/child/child': {
                     circular: true,
-                    ref: projectCircularChildJson.child.$ref
+                    ref: projectCircularChildJson.child.$ref,
+                    remote: true
                   }
                 });
                 assert.deepEqual(results.resolved, {
@@ -1222,7 +1232,8 @@ describe('json-refs', function () {
                 assert.deepEqual(results.metadata, {
                   '#': {
                     circular: true,
-                    ref: projectCircularRootJson.$ref
+                    ref: projectCircularRootJson.$ref,
+                    remote: true
                   }
                 });
                 assert.deepEqual(results.resolved, {});
@@ -1267,7 +1278,8 @@ describe('json-refs', function () {
               });
               assert.deepEqual(results.metadata, {
                 '#/project': {
-                  ref: json.project.$ref
+                  ref: json.project.$ref,
+                  remote: true
                 },
                 '#/owner': {
                   ref: json.owner.$ref
@@ -1347,14 +1359,16 @@ describe('json-refs', function () {
 
               // Make sure the original JSON is untouched
               assert.deepEqual(json, cJson);
-              assert.deepEqual({
+              assert.deepEqual(results.metadata, {
                 '#/project': {
-                  ref: 'project.json'
+                  ref: 'project.json',
+                  remote: true
                 },
                 '#/nestedProject': {
-                  ref: 'nested/project.json'
+                  ref: 'nested/project.json',
+                  remote: true
                 }
-              }, results.metadata);
+              });
 
               assert.deepEqual(results.resolved, {
                 project: projectJson,
@@ -1381,14 +1395,16 @@ describe('json-refs', function () {
 
               // Make sure the original JSON is untouched
               assert.deepEqual(json, cJson);
-              assert.deepEqual({
+              assert.deepEqual(results.metadata, {
                 '#/fullName': {
-                  ref: 'project.json#/full_name'
+                  ref: 'project.json#/full_name',
+                    remote: true
                 },
                 '#/name': {
-                  ref: 'project.json#/name'
+                  ref: 'project.json#/name',
+                    remote: true
                 }
-              }, results.metadata);
+              });
 
               assert.deepEqual(results.resolved, {
                 fullName: projectJson.full_name,
@@ -1556,7 +1572,8 @@ describe('json-refs', function () {
               });
               assert.deepEqual(results.metadata, {
                 '#/project': {
-                  ref: json.project.$ref
+                  ref: json.project.$ref,
+                  remote: true
                 }
               });
             })

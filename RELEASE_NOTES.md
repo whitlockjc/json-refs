@@ -1,5 +1,9 @@
 ## Release Notes
 
+### TBD
+
+* Update reference metdata to record when a reference is remote
+
 ### v1.2.1 (2015-11-18)
 
 * Updated `#findRefs` and `#resolveRefs` to work with arrays and objects *(Issue #39)*
