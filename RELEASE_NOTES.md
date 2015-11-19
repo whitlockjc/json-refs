@@ -1,6 +1,6 @@
 ## Release Notes
 
-### TBD
+### v1.3.0 (2015-11-19)
 
 * Added `#resolveLocalRefs` to avoid forcing consumers only resolving local references to use a callback/Promise based API *(`#resolveRefs`)*
 * Update reference metdata to record when a reference is remote
