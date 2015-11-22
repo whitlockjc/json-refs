@@ -1,5 +1,0 @@
-{
-  "child": {
-    "$ref": "nested/project-circular-ancestor-child.json"
-  }
-}

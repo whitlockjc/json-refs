@@ -1,8 +1,0 @@
-{
-  "swagger": {
-    "$ref": "http://petstore.swagger.io/v2/swagger.json"
-  },
-  "paths": {
-    "$ref": "swagger-paths.json"
-  }
-}

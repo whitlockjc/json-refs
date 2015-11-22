@@ -1,5 +1,0 @@
-{
-  "child": {
-    "$ref": "project-circular-child.json"
-  }
-}

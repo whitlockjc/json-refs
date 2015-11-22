@@ -22,10 +22,9 @@
     "test"
   ],
   "dependencies": {
-    "traverse": "~0.6.7",
     "path-loader": "~0.2.0"
   },
   "devDependencies": {
-    "mocha": "^2.1.0"
+    "mocha": "~2.3.4"
   }
 }

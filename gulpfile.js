@@ -39,9 +39,7 @@ var KarmaServer = require('karma').Server;
 var path = require('path');
 var runSequence = require('run-sequence');
 var source = require('vinyl-source-stream');
-var testHelpers = require('./test/helpers');
 
-var httpServer = testHelpers.createServer(require('http'));
 var runningAllTests = false;
 
 // Load promises polyfill if necessary
@@ -105,6 +103,15 @@ gulp.task('clean', function (done) {
   ], done);
 });
 
+gulp.task('docs', function () {
+  return gulp.src([
+    './index.js'
+  ])
+    .pipe($.concat('API.md'))
+    .pipe($.jsdoc2MD())
+    .pipe(gulp.dest('docs'));
+});
+
 gulp.task('lint', function () {
   return gulp.src([
       'index.js',
@@ -118,48 +125,32 @@ gulp.task('lint', function () {
 });
 
 gulp.task('test-node', function (cb) {
-  function cleanUp () {
-    try {
-      httpServer.close();
-
-      cb();
-    } catch (err) {
-      if (err.message.indexOf('Not running') === -1) {
-        cb(err);
-      }
-    }
-  }
-
   Promise.resolve()
-    .then(function () {
-      httpServer = testHelpers.createServer(require('http')).listen(44444);
-    })
     .then(function () {
       return new Promise(function (resolve, reject) {
         gulp.src([
-            'index.js',
-            'lib/**/*.js'
+          'index.js'
+        ])
+        .pipe($.istanbul({includeUntested: true}))
+        .pipe($.istanbul.hookRequire()) // Force `require` to return covered files
+        .on('finish', function () {
+          gulp.src([
+            'test/**/test-*.js',
+            '!test/browser/test-*.js'
           ])
-          .pipe($.istanbul({includeUntested: true}))
-          .pipe($.istanbul.hookRequire()) // Force `require` to return covered files
-          .on('finish', function () {
-            gulp.src([
-              'test/**/test-*.js',
-              '!test/browser/test-*.js'
-            ])
-              .pipe($.mocha({reporter: 'spec'}))
-              .on('error', function (err) {
-                reject(err);
-              })
-              .on('end', function () {
-                displayCoverageReport(!runningAllTests);
+            .pipe($.mocha({reporter: 'spec'}))
+            .on('error', function (err) {
+              reject(err);
+            })
+            .on('end', function () {
+              displayCoverageReport(!runningAllTests);
 
-                resolve();
-              });
-          });
+              resolve();
+            });
+        });
       });
     })
-    .then(cleanUp, cleanUp);
+    .then(cb, cb);
 });
 
 gulp.task('test-browser', ['browserify'], function (cb) {
@@ -172,14 +163,6 @@ gulp.task('test-browser', ['browserify'], function (cb) {
       basePath + 'json-refs-standalone.js',
       basePath + 'test-browser.js'
     ]);
-
-    try {
-      httpServer.close();
-    } catch (err) {
-      if (err.message.indexOf('Not running') === -1) {
-        throw err;
-      }
-    }
   }
 
   function finisher (err) {
@@ -219,9 +202,6 @@ gulp.task('test-browser', ['browserify'], function (cb) {
       });
     })
     .then(function () {
-      httpServer = testHelpers.createServer(require('http')).listen(44444);
-    })
-    .then(function () {
       return new Promise(function (resolve, reject) {
         new KarmaServer({
           configFile: path.join(__dirname, 'test/browser/karma-bower.conf.js'),
@@ -259,15 +239,6 @@ gulp.task('test', function (cb) {
   // Done this way to ensure that test-node runs prior to test-browser.  Since both of those tasks are independent,
   // doing this 'The Gulp Way' isn't feasible.
   runSequence('test-node', 'test-browser', cb);
-});
-
-gulp.task('docs', function () {
-  return gulp.src([
-    './index.js'
-  ])
-    .pipe($.concat('API.md'))
-    .pipe($.jsdoc2MD())
-    .pipe(gulp.dest('docs'));
 });
 
 gulp.task('default', ['lint', 'test', 'browserify', 'docs']);

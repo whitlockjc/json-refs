@@ -29,26 +29,26 @@
     "json"
   ],
   "devDependencies": {
-    "basic-auth": "^1.0.3",
     "brfs": "~1.4.0",
-    "browserify": "~10.2.4",
+    "browserify": "~12.0.1",
     "connect": "^3.4.0",
-    "del": "^1.2.0",
-    "exposify": "~0.4.3",
+    "del": "^2.1.0",
+    "exposify": "~0.5.0",
     "gulp": "~3.9.0",
     "gulp-concat": "^2.6.0",
-    "gulp-eslint": "^0.15.0",
-    "gulp-if": "^1.2.5",
+    "gulp-eslint": "^1.1.0",
+    "gulp-if": "^2.0.0",
     "gulp-istanbul": "~0.10.0",
     "gulp-jsdoc-to-markdown": "^1.1.1",
     "gulp-load-plugins": "^1.0.0-rc.1",
-    "gulp-mocha": "~2.1.2",
+    "gulp-mocha": "~2.2.0",
     "gulp-uglify": "^1.2.0",
     "js-yaml": "^3.3.1",
     "karma": "^0.13.1",
     "karma-mocha": "^0.2.0",
     "karma-mocha-reporter": "^1.0.2",
     "karma-phantomjs-launcher": "^0.2.0",
+    "lodash": "^3.10.1",
     "mocha": "^2.2.5",
     "phantomjs": "^1.9.17",
     "run-sequence": "^1.1.1",
@@ -59,6 +59,6 @@
   "dependencies": {
     "native-promise-only": "^0.8.0-a",
     "path-loader": "^0.2.0",
-    "traverse": "~0.6.6"
+    "uri-js": "^2.1.1"
   }
 }
