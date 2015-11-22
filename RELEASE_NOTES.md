@@ -1,5 +1,9 @@
 ## Release Notes
 
+## v2.0.0 (TBD)
+
+* Updated `#isJsonReference` to valdiate the `$ref` value is a URI instead of treating all string values as valid
+
 ### v1.3.0 (2015-11-19)
 
 * Added `#resolveLocalRefs` to avoid forcing consumers only resolving local references to use a callback/Promise based API *(`#resolveRefs`)*

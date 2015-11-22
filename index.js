@@ -31,3 +31,36 @@
  * @module JsonRefs
  */
 
+ var URI = require('uri-js');
+
+/* Internal Functions */
+function isType (obj, type) {
+  // A PhantomJS bug (https://github.com/ariya/phantomjs/issues/11722) prohibits us from using the same approach for
+  // undefined checking that we use for other types.
+  if (type === 'Undefined') {
+    return typeof obj === 'undefined';
+  } else {
+    return Object.prototype.toString.call(obj) === '[object ' + type + ']';
+  }
+}
+
+/* Module Members */
+
+/**
+ * Returns whether or not the object represents a JSON Reference.
+ *
+ * An object is a JSON Reference only if the following are all true:
+ *
+ *   * The object is of type `Object`
+ *   * The object has a `$ref` property
+ *   * The `$ref` property is a valid URI
+ *
+ * @param {object} obj - The object to check
+ *
+ * @returns {boolean} the result of the check
+ *
+ * @see {@link http://tools.ietf.org/html/draft-pbryan-zyp-json-ref-03#section-3}
+ */
+module.exports.isJsonReference = function (obj) {
+  return isType(obj, 'Object') && isType(obj.$ref, 'String') && isType(URI.parse(obj.$ref).error, 'Undefined');
+};

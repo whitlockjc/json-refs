@@ -26,3 +26,51 @@
 
 'use strict';
 
+var _ = require('lodash');
+var assert = require('assert');
+var JsonRefs = require('../');
+
+describe('json-refs', function () {
+  var invalidScenarios = [
+    undefined,
+    1,
+    {},
+    {$ref: 1},
+    {$ref: '/file[/].html'}
+  ];
+  var validScenarios = [
+    '#/definitions/Person',
+    '/definitions/Person',
+    'someId',
+    'someId#/name',
+    './models.json',
+    'https://rawgit.com/whitlockjc/json-refs/master/package.json',
+    'https://rawgit.com/whitlockjc/json-refs/master/package.json#/name'
+  ];
+
+  describe('#isJsonReference', function () {
+    it('should return true for valid JSON References', function () {
+      _.each(validScenarios, function (scenario, index) {
+        try {
+          assert.ok(JsonRefs.isJsonReference({$ref: scenario}));
+        } catch (err) {
+          err.message = '(Test scenario ' + index + ') ' + err.message;
+
+          throw err;
+        }
+      });
+    });
+
+    it('should return false for invalid JSON References', function () {
+      _.each(invalidScenarios, function (scenario, index) {
+        try {
+          assert.ok(!JsonRefs.isJsonReference(scenario));
+        } catch (err) {
+          err.message = '(Test scenario ' + index + ') ' + err.message;
+
+          throw err;
+        }
+      });
+    });
+  });
+});
