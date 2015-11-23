@@ -31,24 +31,69 @@ var assert = require('assert');
 var JsonRefs = require('../');
 
 describe('json-refs', function () {
-  var invalidScenarios = [
-    undefined,
-    1,
-    {},
-    {$ref: 1},
-    {$ref: '/file[/].html'}
-  ];
-  var validScenarios = [
-    '#/definitions/Person',
-    '/definitions/Person',
-    'someId',
-    'someId#/name',
-    './models.json',
-    'https://rawgit.com/whitlockjc/json-refs/master/package.json',
-    'https://rawgit.com/whitlockjc/json-refs/master/package.json#/name'
-  ];
+  describe('#isJsonPointer', function () {
+    var invalidScenarios = [
+      undefined,
+      1,
+      ' ',
+      '# ',
+      'some/path',
+      '#some/path',
+      'http://localhost#/some/path',
+      './some/path'
+    ];
+    var validScenarios = [
+      '',
+      '#',
+      '/',
+      '#/',
+      '#/some/path',
+      '/some/path'
+    ];
+
+    it('should return true for valid JSON Pointers', function () {
+      _.each(validScenarios, function (scenario, index) {
+        try {
+          assert.ok(JsonRefs.isJsonPointer(scenario));
+        } catch (err) {
+          err.message = '(Test scenario ' + index + ') ' + err.message;
+
+          throw err;
+        }
+      });
+    });
+
+    it('should return false for invalid JSON Pointers', function () {
+      _.each(invalidScenarios, function (scenario, index) {
+        try {
+          assert.ok(!JsonRefs.isJsonPointer(scenario));
+        } catch (err) {
+          err.message = '(Test scenario ' + index + ') ' + err.message;
+
+          throw err;
+        }
+      });
+    });
+  });
 
   describe('#isJsonReference', function () {
+    var invalidScenarios = [
+      undefined,
+      1,
+      {},
+      {$ref: 1},
+      {$ref: '/file[/].html'}
+    ];
+    var validScenarios = [
+      '#/definitions/Person',
+      '/definitions/Person',
+      'someId',
+      'someId#/name',
+      './models.json',
+      'https://rawgit.com/whitlockjc/json-refs/master/package.json',
+      'https://rawgit.com/whitlockjc/json-refs/master/package.json#/name'
+    ];
+
     it('should return true for valid JSON References', function () {
       _.each(validScenarios, function (scenario, index) {
         try {

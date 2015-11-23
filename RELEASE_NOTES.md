@@ -2,6 +2,7 @@
 
 ## v2.0.0 (TBD)
 
+* Added `isJsonPointer` to validate JSON Pointer values
 * Updated `#isJsonReference` to valdiate the `$ref` value is a URI instead of treating all string values as valid
 
 ### v1.3.0 (2015-11-19)

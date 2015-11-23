@@ -47,7 +47,40 @@ function isType (obj, type) {
 /* Module Members */
 
 /**
- * Returns whether or not the object represents a JSON Reference.
+ * Returns whether the string represents a JSON Pointer.
+ *
+ * A string is a JSON Pointer if the following are all true:
+ *
+ *   * The string is of type `String`
+ *   * The string must be empty or start with a `/` or `#/`
+ *
+ * @param {string} str - The string to check
+ *
+ * @returns {boolean} the result of the check
+ *
+ * @see {@link https://tools.ietf.org/html/rfc6901#section-3}
+ */
+module.exports.isJsonPointer = function (str) {
+  var valid = isType(str, 'String');
+  var firstChar;
+
+  if (valid) {
+    if (str !== '') {
+      firstChar = str.charAt(0)
+
+      if (['#', '/'].indexOf(firstChar) === -1) {
+        valid = false;
+      } else if (firstChar === '#' && str !== '#' && str.charAt(1) !== '/') {
+        valid = false;
+      }
+    }
+  }
+
+  return valid;
+};
+
+/**
+ * Returns whether the object represents a JSON Reference.
  *
  * An object is a JSON Reference only if the following are all true:
  *
@@ -64,3 +97,4 @@ function isType (obj, type) {
 module.exports.isJsonReference = function (obj) {
   return isType(obj, 'Object') && isType(obj.$ref, 'String') && isType(URI.parse(obj.$ref).error, 'Undefined');
 };
+
