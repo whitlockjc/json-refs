@@ -5,12 +5,12 @@ JSON Pointers *(https://tools.ietf.org/html/rfc6901)*.
 
 
 * [JsonRefs](#module_JsonRefs)
-  * [.isJsonPointer(str)](#module_JsonRefs.isJsonPointer) ⇒ <code>boolean</code>
-  * [.isJsonReference(obj)](#module_JsonRefs.isJsonReference) ⇒ <code>boolean</code>
+  * [.isPtr(str)](#module_JsonRefs.isPtr) ⇒ <code>boolean</code>
+  * [.isRef(obj)](#module_JsonRefs.isRef) ⇒ <code>boolean</code>
 
-<a name="module_JsonRefs.isJsonPointer"></a>
-### JsonRefs.isJsonPointer(str) ⇒ <code>boolean</code>
-Returns whether the string represents a JSON Pointer.
+<a name="module_JsonRefs.isPtr"></a>
+### JsonRefs.isPtr(str) ⇒ <code>boolean</code>
+Returns whether the argument represents a JSON Pointer.
 
 A string is a JSON Pointer if the following are all true:
 
@@ -25,9 +25,9 @@ A string is a JSON Pointer if the following are all true:
 | --- | --- | --- |
 | str | <code>string</code> | The string to check |
 
-<a name="module_JsonRefs.isJsonReference"></a>
-### JsonRefs.isJsonReference(obj) ⇒ <code>boolean</code>
-Returns whether the object represents a JSON Reference.
+<a name="module_JsonRefs.isRef"></a>
+### JsonRefs.isRef(obj) ⇒ <code>boolean</code>
+Returns whether the argument represents a JSON Reference.
 
 An object is a JSON Reference only if the following are all true:
 

@@ -47,7 +47,7 @@ function isType (obj, type) {
 /* Module Members */
 
 /**
- * Returns whether the string represents a JSON Pointer.
+ * Returns whether the argument represents a JSON Pointer.
  *
  * A string is a JSON Pointer if the following are all true:
  *
@@ -60,7 +60,7 @@ function isType (obj, type) {
  *
  * @see {@link https://tools.ietf.org/html/rfc6901#section-3}
  */
-module.exports.isJsonPointer = function (str) {
+module.exports.isPtr = function (str) {
   var valid = isType(str, 'String');
   var firstChar;
 
@@ -80,7 +80,7 @@ module.exports.isJsonPointer = function (str) {
 };
 
 /**
- * Returns whether the object represents a JSON Reference.
+ * Returns whether the argument represents a JSON Reference.
  *
  * An object is a JSON Reference only if the following are all true:
  *
@@ -94,7 +94,7 @@ module.exports.isJsonPointer = function (str) {
  *
  * @see {@link http://tools.ietf.org/html/draft-pbryan-zyp-json-ref-03#section-3}
  */
-module.exports.isJsonReference = function (obj) {
+module.exports.isRef = function (obj) {
   return isType(obj, 'Object') && isType(obj.$ref, 'String') && isType(URI.parse(obj.$ref).error, 'Undefined');
 };
 

@@ -31,7 +31,7 @@ var assert = require('assert');
 var JsonRefs = require('../');
 
 describe('json-refs', function () {
-  describe('#isJsonPointer', function () {
+  describe('#isPtr', function () {
     var invalidScenarios = [
       undefined,
       1,
@@ -54,7 +54,7 @@ describe('json-refs', function () {
     it('should return true for valid JSON Pointers', function () {
       _.each(validScenarios, function (scenario, index) {
         try {
-          assert.ok(JsonRefs.isJsonPointer(scenario));
+          assert.ok(JsonRefs.isPtr(scenario));
         } catch (err) {
           err.message = '(Test scenario ' + index + ') ' + err.message;
 
@@ -66,7 +66,7 @@ describe('json-refs', function () {
     it('should return false for invalid JSON Pointers', function () {
       _.each(invalidScenarios, function (scenario, index) {
         try {
-          assert.ok(!JsonRefs.isJsonPointer(scenario));
+          assert.ok(!JsonRefs.isPtr(scenario));
         } catch (err) {
           err.message = '(Test scenario ' + index + ') ' + err.message;
 
@@ -76,7 +76,7 @@ describe('json-refs', function () {
     });
   });
 
-  describe('#isJsonReference', function () {
+  describe('#isRef', function () {
     var invalidScenarios = [
       undefined,
       1,
@@ -97,7 +97,7 @@ describe('json-refs', function () {
     it('should return true for valid JSON References', function () {
       _.each(validScenarios, function (scenario, index) {
         try {
-          assert.ok(JsonRefs.isJsonReference({$ref: scenario}));
+          assert.ok(JsonRefs.isRef({$ref: scenario}));
         } catch (err) {
           err.message = '(Test scenario ' + index + ') ' + err.message;
 
@@ -109,7 +109,7 @@ describe('json-refs', function () {
     it('should return false for invalid JSON References', function () {
       _.each(invalidScenarios, function (scenario, index) {
         try {
-          assert.ok(!JsonRefs.isJsonReference(scenario));
+          assert.ok(!JsonRefs.isRef(scenario));
         } catch (err) {
           err.message = '(Test scenario ' + index + ') ' + err.message;
 
