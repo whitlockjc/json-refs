@@ -2,8 +2,12 @@
 
 ## v2.0.0 (TBD)
 
-* Added `isJsonPointer` to validate JSON Pointer values
-* Updated `#isJsonReference` to valdiate the `$ref` value is a URI instead of treating all string values as valid
+* Renamed `#isJsonPointer` to `#isJsonPtr`
+* Renamed `#isJsonReference` to `#isJsonRef`
+* Renamed `#pathFromPointer` to `#pathFromPtr`
+* Renamed `#pathToPointer` to `#pathToPtr`
+* Updated `#isJsonPtr` to valdiate the `$ref` value is a URI instead of treating all string values as valid
+* Updated `#pathToPtr` to take an optional second argment to allow for returning both hash-based *(default)* and slash-based JSON Pointers
 
 ### v1.3.0 (2015-11-19)
 
