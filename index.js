@@ -31,9 +31,14 @@
  * @module JsonRefs
  */
 
- var URI = require('uri-js');
+var URI = require('uri-js');
 
 /* Internal Functions */
+
+function decodeSegment (seg) {
+  return seg.replace(/~0/g, '~').replace(/~1/g, '/');
+}
+
 function isType (obj, type) {
   // A PhantomJS bug (https://github.com/ariya/phantomjs/issues/11722) prohibits us from using the same approach for
   // undefined checking that we use for other types.
@@ -42,6 +47,13 @@ function isType (obj, type) {
   } else {
     return Object.prototype.toString.call(obj) === '[object ' + type + ']';
   }
+}
+
+function encodeSegment (seg) {
+  if (!isType(seg, 'String')) {
+    seg = JSON.stringify(seg);
+  }
+  return seg.replace(/~/g, '~0').replace(/\//g, '~1');
 }
 
 /* Module Members */
@@ -54,23 +66,23 @@ function isType (obj, type) {
  *   * The string is of type `String`
  *   * The string must be empty or start with a `/` or `#/`
  *
- * @param {string} str - The string to check
+ * @param {string} ptr - The string to check
  *
  * @returns {boolean} the result of the check
  *
  * @see {@link https://tools.ietf.org/html/rfc6901#section-3}
  */
-module.exports.isPtr = function (str) {
-  var valid = isType(str, 'String');
+var isPtr = module.exports.isPtr = function (ptr) {
+  var valid = isType(ptr, 'String');
   var firstChar;
 
   if (valid) {
-    if (str !== '') {
-      firstChar = str.charAt(0)
+    if (ptr !== '') {
+      firstChar = ptr.charAt(0)
 
       if (['#', '/'].indexOf(firstChar) === -1) {
         valid = false;
-      } else if (firstChar === '#' && str !== '#' && str.charAt(1) !== '/') {
+      } else if (firstChar === '#' && ptr !== '#' && ptr.charAt(1) !== '/') {
         valid = false;
       }
     }
@@ -94,7 +106,52 @@ module.exports.isPtr = function (str) {
  *
  * @see {@link http://tools.ietf.org/html/draft-pbryan-zyp-json-ref-03#section-3}
  */
-module.exports.isRef = function (obj) {
+var isRef = module.exports.isRef = function (obj) {
   return isType(obj, 'Object') && isType(obj.$ref, 'String') && isType(URI.parse(obj.$ref).error, 'Undefined');
 };
 
+/**
+ * Returns an array of path segments for the provided JSON Pointer.
+ *
+ * @param {string} ptr - The JSON Pointer
+ *
+ * @returns {string[]} the path segments
+ *
+ * @throws {Error} if the provided argument is not a JSON Pointer
+ */
+var pathFromPtr = module.exports.pathFromPtr = function (ptr) {
+  if (!isPtr(ptr)) {
+    throw new Error('ptr must be a JSON Pointer');
+  }
+
+  var segments = ptr.split('/');
+
+  // Remove the first segment
+  segments.shift();
+
+  // Decode each segment
+  segments = segments.map(decodeSegment);
+
+  return segments;
+};
+
+/**
+ * Returns a JSON Pointer for the provided array of path segments.
+ *
+ * **Note:** If a path segment in `path` is not a `String`, it will be converted to one using `JSON.stringify`.
+ *
+ * @param {string[]} path - The array of path segments
+ * @param {boolean} [hashPrefix=true] - Whether or not create a hash-prefixed JSON Pointer
+ *
+ * @returns {string} the corresponding JSON Pointer
+ *
+ * @throws {Error} if the argument is not an array
+ */
+var pathToPtr = module.exports.pathToPtr = function (path, hashPrefix) {
+  if (!isType(path, 'Array')) {
+    throw new Error('path must be an Array');
+  }
+
+  // Encode each segment and return
+  return (hashPrefix !== false ? '#' : '') + (path.length > 0 ? '/' : '') + path.map(encodeSegment).join('/');
+};
