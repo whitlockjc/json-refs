@@ -1,0 +1,45 @@
+# Simple details that could be referenced
+project:
+  description: Various utilities for JSON References and JSON Pointers.
+  name: json-refs
+
+# An array of references to make sure document walking works for arrays
+array:
+  - $ref: '#/project/name'
+  - $ref: '#/project/description'
+
+# Various circular references
+circular:
+  # Reference to the root of the document
+  root:
+    $ref: '#'
+  # Reference to an ancestor
+  ancestor:
+    $ref: '#/circular'
+
+definitions:
+  HumanName:
+    type: object
+    properties:
+      given:
+        type: string
+      family:
+        type: string
+  Person:
+    type: object
+    properties:
+      age:
+        type: integer
+      name:
+        $ref: '#/definitions/HumanName'
+
+# Local reference
+local:
+  $ref: '#/project/name'
+
+# A reference with extra properties that should produce a warning
+warning:
+  $ref: '#/project/name'
+  # This should not be processed as it should be ignored
+  ignored:
+    $ref: '#/project/name'

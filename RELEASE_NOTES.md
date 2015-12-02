@@ -6,12 +6,16 @@
 * Renamed `#isJsonReference` to `#isJsonRef`
 * Renamed `#pathFromPointer` to `#pathFromPtr`
 * Renamed `#pathToPointer` to `#pathToPtr`
+* Updated `#findRefs` to no longer use [js-traverse](https://github.com/substack/js-traverse), to no longer process
+child properties of JSON Reference objects and to use an *options* object
 * Updated `#isJsonPtr` to valdiate the `$ref` value is a URI instead of treating all string values as valid
-* Updated `#pathToPtr` to take an optional second argment to allow for returning both hash-based *(default)* and slash-based JSON Pointers
+* Updated `#pathToPtr` to take an optional second argment to allow for returning both hash-based *(default)* and
+slash-based JSON Pointers
 
 ### v1.3.0 (2015-11-19)
 
-* Added `#resolveLocalRefs` to avoid forcing consumers only resolving local references to use a callback/Promise based API *(`#resolveRefs`)*
+* Added `#resolveLocalRefs` to avoid forcing consumers only resolving local references to use a callback/Promise based
+API *(`#resolveRefs`)*
 * Update reference metdata to record when a reference is remote
 
 ### v1.2.1 (2015-11-18)
@@ -48,7 +52,8 @@
 
 ### v1.0.2 (2015-07-21)
 
-* Fix problem where references to schemas with circular composition/inheritance could result in attempting to update reference metadata that does not exist
+* Fix problem where references to schemas with circular composition/inheritance could result in attempting to update
+reference metadata that does not exist
 
 ### v1.0.1 (2015-07-20)
 
@@ -59,12 +64,14 @@
 * Circular references are now identified in metadata _(Issue #22)_
 * Fixed a few scenarios where local self references to root didn't work right
 * Rewrote using ES5 which removed the need for `lodash-compat`
-* `#resolveRefs` now collapses all reference pointers so that the metadata key is now the reference to the local document instead of where
+* `#resolveRefs` now collapses all reference pointers so that the metadata key is now the reference to the local
+document instead of where
 its `$ref` was *(This is a breaking change and that is why we are doing a `1.0` release)*
 * `#resolveRefs` now defers local reference resolution until after remote references are resolved _(Issue #26)_
 * `#resolveRefs` now handles recursive relative references gracefully _(Issue #24)_
 * `#resolveRefs` now records metadata for remote references _(Issue #25)_
-* `#resolveRefs` now supports callbacks, as always, and promises  _(Always returns a promise even if callbacks are used)_
+* `#resolveRefs` now supports callbacks, as always, and promises
+_(Always returns a promise even if callbacks are used)_
 
 ### v0.3.2 (2015-07-08)
 

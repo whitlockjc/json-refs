@@ -39,6 +39,35 @@ function decodeSegment (seg) {
   return seg.replace(/~0/g, '~').replace(/~1/g, '/');
 }
 
+function findAncestors (obj, path) {
+  var ancestors = [];
+  var node = obj;
+
+  path.slice(0, path.length - 1).forEach(function (seg) {
+    if (seg in node) {
+      node = node[seg];
+
+      ancestors.push(node);
+    }
+  });
+
+  return ancestors;
+}
+
+function findValue (obj, path) {
+  var value = obj;
+
+  path.forEach(function (seg) {
+    if (seg in value) {
+      value = value[seg];
+    } else {
+      throw Error('JSON Pointer points to missing location: ' + pathToPtr(path));
+    }
+  });
+
+  return value;
+}
+
 function isType (obj, type) {
   // A PhantomJS bug (https://github.com/ariya/phantomjs/issues/11722) prohibits us from using the same approach for
   // undefined checking that we use for other types.
@@ -53,7 +82,52 @@ function encodeSegment (seg) {
   if (!isType(seg, 'String')) {
     seg = JSON.stringify(seg);
   }
+
   return seg.replace(/~/g, '~0').replace(/\//g, '~1');
+}
+
+function refHasExtraKeys (ref) {
+  return Object.keys(ref).reduce(function (extras, key) {
+    if (key !== '$ref') {
+      extras.push(key);
+    }
+
+    return extras;
+  }, []).length > 0;
+}
+
+function walk (ancestors, node, path, fn) {
+  var processChildren = true;
+
+  function walkItem (item, segment) {
+    path.push(segment);
+    walk(ancestors, item, path, fn);
+    path.pop();
+  }
+
+  // Call the iteratee
+  if (isType(fn, 'Function')) {
+    processChildren = fn(ancestors, node, path);
+  }
+
+  // We do not process circular objects again
+  if (ancestors.indexOf(node) === -1) {
+    ancestors.push(node);
+
+    if (processChildren !== false) {
+      if (isType(node, 'Array')) {
+        node.forEach(function (member, index) {
+          walkItem(member, index.toString());
+        });
+      } else if (isType(node, 'Object')) {
+        Object.keys(node).forEach(function (key) {
+          walkItem(node[key], key);
+        });
+      }
+    }
+  }
+
+  ancestors.pop();
 }
 
 /* Module Members */
@@ -78,7 +152,7 @@ var isPtr = module.exports.isPtr = function (ptr) {
 
   if (valid) {
     if (ptr !== '') {
-      firstChar = ptr.charAt(0)
+      firstChar = ptr.charAt(0);
 
       if (['#', '/'].indexOf(firstChar) === -1) {
         valid = false;
@@ -154,4 +228,80 @@ var pathToPtr = module.exports.pathToPtr = function (path, hashPrefix) {
 
   // Encode each segment and return
   return (hashPrefix !== false ? '#' : '') + (path.length > 0 ? '/' : '') + path.map(encodeSegment).join('/');
+};
+
+/**
+ * Finds JSON References defined within the provided array/object.
+ *
+ * @param {array|object} obj - The structure to find JSON References within
+ * @param {object} [options={}] - The options to use when finding references
+ * @param {string|string[]} [options.subDocPath=[]] - The JSON Pointer or array of path segments to the sub document
+ * location to search from
+ *
+ * @returns {object} an object whose keys are JSON Pointers (fragment version) to where the JSON Reference is defined
+ * and whose values are the JSON Reference definition.
+ *
+ * @throws {Error} if `from` is not a valid JSON Pointer
+ */
+module.exports.findRefs = function (obj, options) {
+  var ancestors = [];
+  var fromObj = obj;
+  var fromPath = [];
+  var refs = {};
+
+  // Validate the provided document
+  if (!isType(obj, 'Array') && !isType(obj, 'Object')) {
+    throw new TypeError('obj must be an Array or an Object');
+  }
+
+  // Validate the provided options
+  if (!isType(options, 'Undefined') && !isType(options, 'Object')) {
+    throw new TypeError('options must be an Object');
+  }
+
+  // Set default for options
+  if (isType(options, 'Undefined')) {
+    options = {
+      subDocPath: []
+    };
+  } else if (isType(options.subDocPath, 'Undefined')) {
+    options.subDocPath = [];
+  }
+
+  // Validate the options values
+  if (!isType(options.subDocPath, 'Array') && !isPtr(options.subDocPath)) {
+    // If a pointer is provided, throw an error if it's not the proper type
+    throw new Error('options.subDocPath must be an Array of path segments or a valid JSON Pointer');
+  }
+
+  // Convert from to a pointer
+  if (isType(options.subDocPath, 'String')) {
+    fromPath = pathFromPtr(options.subDocPath);
+  } else {
+    fromPath = options.subDocPath;
+  }
+
+  if (fromPath.length > 0) {
+    ancestors = findAncestors(obj, fromPath);
+    fromObj = findValue(obj, fromPath);
+  }
+
+  // Walk the document (or sub document) and find all JSON References
+  walk(ancestors, fromObj, fromPath, function (ancestors, node, path) {
+    var processChildren = true;
+
+    if (isRef(node)) {
+      refs[pathToPtr(path)] = node;
+
+      // Whenever a JSON Reference has extra children, its children should be ignored so we want to stop processing.
+      //   See: http://tools.ietf.org/html/draft-pbryan-zyp-json-ref-03#section-3
+      if (refHasExtraKeys(node)) {
+        processChildren = false;
+      }
+    }
+
+    return processChildren;
+  });
+
+  return refs;
 };
