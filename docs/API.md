@@ -13,7 +13,8 @@ JSON Pointers *(https://tools.ietf.org/html/rfc6901)*.
     * [.pathToPtr](#module_JsonRefs.pathToPtr) ⇒ <code>string</code>
     * [.findRefs(obj, [options])](#module_JsonRefs.findRefs) ⇒ <code>object</code>
   * _inner_
-    * [~UnresolvedRefDetails](#module_JsonRefs..UnresolvedRefDetails) : <code>Object</code>
+    * [~RefDetailsFilter](#module_JsonRefs..RefDetailsFilter) ⇒ <code>boolean</code>
+    * [~UnresolvedRefDetails](#module_JsonRefs..UnresolvedRefDetails) : <code>object</code>
 
 <a name="module_JsonRefs.getRefDetails"></a>
 ### JsonRefs.getRefDetails ⇒ <code>[UnresolvedRefDetails](#module_JsonRefs..UnresolvedRefDetails)</code>
@@ -110,10 +111,23 @@ and whose values are [UnresolvedRefDetails](#module_JsonRefs..UnresolvedRefDetai
 | --- | --- | --- | --- |
 | obj | <code>array</code> &#124; <code>object</code> |  | The structure to find JSON References within |
 | [options] | <code>object</code> | <code>{}</code> | The options to use when finding references |
+| [options.filter] | <code>string</code> &#124; <code>Array.&lt;string&gt;</code> &#124; <code>function</code> | <code>&quot;[]&quot;</code> | The filter to use when gathering JSON References *(If this value is a single string or an array of strings, the value(s) are expected to be the `type(s)` you are interested in collecting as described in [getRefDetails](#module_JsonRefs.getRefDetails).  If it is a function, it is expected that the function behaves like [RefDetailsFilter](#module_JsonRefs..RefDetailsFilter).)* |
 | [options.subDocPath] | <code>string</code> &#124; <code>Array.&lt;string&gt;</code> | <code>&quot;[]&quot;</code> | The JSON Pointer or array of path segments to the sub document location to search from |
 
+<a name="module_JsonRefs..RefDetailsFilter"></a>
+### JsonRefs~RefDetailsFilter ⇒ <code>boolean</code>
+Simple function used to filter our JSON References.
+
+**Kind**: inner typedef of <code>[JsonRefs](#module_JsonRefs)</code>  
+**Returns**: <code>boolean</code> - whether the JSON Reference should be filtered *(out)* or not  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| refDetails | <code>[UnresolvedRefDetails](#module_JsonRefs..UnresolvedRefDetails)</code> | The JSON Reference Details to test |
+| path | <code>Array.&lt;string&gt;</code> | The path to the JSON Reference |
+
 <a name="module_JsonRefs..UnresolvedRefDetails"></a>
-### JsonRefs~UnresolvedRefDetails : <code>Object</code>
+### JsonRefs~UnresolvedRefDetails : <code>object</code>
 Detailed information about unresolved JSON References.
 
 **Kind**: inner typedef of <code>[JsonRefs](#module_JsonRefs)</code>  
@@ -124,7 +138,7 @@ Detailed information about unresolved JSON References.
 | def | <code>object</code> | The JSON Reference definition |
 | error | <code>string</code> | The error information for invalid JSON Reference definition *(Only present when the JSON Reference definition is invalid)* |
 | uri | <code>string</code> | The URI portion of the JSON Reference |
-| uriDetails | <code>object</code> | Detailed information about the URI *([https://github.com/garycourt/uri-js](https://github.com/garycourt/uri-js))* |
-| type | <code>string</code> | The JSON Reference type |
+| uriDetails | <code>object</code> | Detailed information about the URI as provided by [URI.parse](https://github.com/garycourt/uri-js). |
+| type | <code>string</code> | The JSON Reference type *(This value can be one of the following: `invalid`, `local`, `relative` or `remote`.)* |
 | warning | <code>string</code> | The warning information *(Only present when the JSON Reference definition produces a warning)* |
 

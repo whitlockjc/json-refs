@@ -138,16 +138,31 @@ function walk (ancestors, node, path, fn) {
 /* Module Members */
 
 /**
+ * Simple function used to filter our JSON References.
+ *
+ * @typedef {function} RefDetailsFilter
+ *
+ * @param {module:JsonRefs~UnresolvedRefDetails} refDetails - The JSON Reference Details to test
+ * @param {string[]} path - The path to the JSON Reference
+ *
+ * @returns {boolean} whether the JSON Reference should be filtered *(out)* or not
+ *
+ * @alias module:JsonRefs~RefDetailsFilter
+ */
+
+/**
  * Detailed information about unresolved JSON References.
  *
- * @typedef {Object} UnresolvedRefDetails
+ * @typedef {object} UnresolvedRefDetails
  *
  * @property {object} def - The JSON Reference definition
  * @property {string} [error] - The error information for invalid JSON Reference definition *(Only present when the
  * JSON Reference definition is invalid)*
  * @property {string} uri - The URI portion of the JSON Reference
- * @property {object} uriDetails - Detailed information about the URI *({@link https://github.com/garycourt/uri-js})*
- * @property {string} type - The JSON Reference type
+ * @property {object} uriDetails - Detailed information about the URI as provided by
+ * {@link https://github.com/garycourt/uri-js|URI.parse}.
+ * @property {string} type - The JSON Reference type *(This value can be one of the following: `invalid`, `local`,
+ * `relative` or `remote`.)*
  * @property {string} [warning] - The warning information *(Only present when the JSON Reference definition produces a
  * warning)*
  *
@@ -182,11 +197,22 @@ var getRefDetails = module.exports.getRefDetails = function (obj) {
     details.uri = cacheKey;
     details.uriDetails = uriDetails;
 
-    if (!isType(details.uriDetails.error, 'Undefined')) {
+    if (isType(uriDetails.error, 'Undefined')) {
+      // Convert the URI reference to one of our types
+      switch (uriDetails.reference) {
+        case 'absolute':
+        case 'uri':
+          details.type = 'remote';
+          break;
+        case 'same-document':
+          details.type = 'local';
+          break;
+        default:
+          details.type = uriDetails.reference;
+      }
+    } else {
       details.error = details.uriDetails.error;
       details.type = 'invalid';
-    } else {
-      details.type = details.uriDetails.reference;
     }
 
     // Identify warning
@@ -319,6 +345,10 @@ var pathToPtr = module.exports.pathToPtr = function (path, hashPrefix) {
  *
  * @param {array|object} obj - The structure to find JSON References within
  * @param {object} [options={}] - The options to use when finding references
+ * @param {string|string[]|function} [options.filter=[]] - The filter to use when gathering JSON References *(If this
+ * value is a single string or an array of strings, the value(s) are expected to be the `type(s)` you are interested in
+ * collecting as described in {@link module:JsonRefs.getRefDetails}.  If it is a function, it is expected that the
+ * function behaves like {@link module:JsonRefs~RefDetailsFilter}.)*
  * @param {string|string[]} [options.subDocPath=[]] - The JSON Pointer or array of path segments to the sub document
  * location to search from
  *
@@ -334,6 +364,7 @@ module.exports.findRefs = function (obj, options) {
   var fromObj = obj;
   var fromPath = [];
   var refs = {};
+  var refFilter;
 
   // Validate the provided document
   if (!isType(obj, 'Array') && !isType(obj, 'Object')) {
@@ -347,24 +378,38 @@ module.exports.findRefs = function (obj, options) {
 
   // Set default for options
   if (isType(options, 'Undefined')) {
-    options = {
-      subDocPath: []
-    };
-  } else if (isType(options.subDocPath, 'Undefined')) {
-    options.subDocPath = [];
+    options = {};
   }
 
   // Validate the options values
-  if (!isType(options.subDocPath, 'Array') && !isPtr(options.subDocPath)) {
+  if (!isType(options.subDocPath, 'Undefined') && !isType(options.subDocPath, 'Array') && !isPtr(options.subDocPath)) {
     // If a pointer is provided, throw an error if it's not the proper type
-    throw new Error('options.subDocPath must be an Array of path segments or a valid JSON Pointer');
+    throw new TypeError('options.subDocPath must be an Array of path segments or a valid JSON Pointer');
+  } else if (!isType(options.filter, 'Undefined') && !isType(options.filter, 'Array') &&
+             !isType(options.filter, 'Function') && !isType(options.filter, 'String')) {
+    throw new TypeError('options.filter must be an Array, a Function of a String');
   }
 
   // Convert from to a pointer
-  if (isType(options.subDocPath, 'String')) {
-    fromPath = pathFromPtr(options.subDocPath);
-  } else {
+  if (isType(options.subDocPath, 'Array')) {
     fromPath = options.subDocPath;
+  } else if (isType(options.subDocPath, 'String')) {
+    fromPath = pathFromPtr(options.subDocPath);
+  }
+
+  // Convert options.filter from an Array/String to a Function
+  if (isType(options.filter, 'Array') || isType(options.filter, 'String')) {
+    refFilter = function (refDetails) {
+      var validTypes = isType(options.filter, 'String') ? [options.filter] : options.filter;
+
+      return validTypes.indexOf(refDetails.type) > -1;
+    };
+  } else if (isType(options.filter, 'Function')) {
+    refFilter = options.filter;
+  } else {
+    refFilter = function () {
+      return true;
+    };
   }
 
   if (fromPath.length > 0) {
@@ -375,9 +420,14 @@ module.exports.findRefs = function (obj, options) {
   // Walk the document (or sub document) and find all JSON References
   walk(ancestors, fromObj, fromPath, function (ancestors, node, path) {
     var processChildren = true;
+    var refDetails;
 
     if (isRef(node)) {
-      refs[pathToPtr(path)] = getRefDetails(node);
+      refDetails = getRefDetails(node);
+
+      if (refFilter(refDetails, path) === true) {
+        refs[pathToPtr(path)] = refDetails;
+      }
 
       // Whenever a JSON Reference has extra children, its children should be ignored so we want to stop processing.
       //   See: http://tools.ietf.org/html/draft-pbryan-zyp-json-ref-03#section-3

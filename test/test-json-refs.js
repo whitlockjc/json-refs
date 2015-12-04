@@ -83,13 +83,24 @@ function validateRefDetails (actual, defPtr, def) {
     assert.deepEqual(actual.uriDetails, uriDetails);
 
     if (_.isUndefined(actual.uriDetails.error)) {
-      type = uriDetails.reference;
+      switch (uriDetails.reference) {
+        case 'absolute':
+        case 'uri':
+          type = 'remote';
+          break;
+        case 'same-document':
+          type = 'local';
+          break;
+        default:
+          type = uriDetails.reference;
+      }
     } else {
       assert.equal(actual.error, uriDetails.error);
     }
   }
 
   assert.equal(actual.type, type);
+  assert.ok(['invalid', 'local', 'relative', 'remote'].indexOf(actual.type) > -1);
 
   if (defPtr === '#/warning') {
     assert.equal(actual.warning, 'Extra JSON Reference properties will be ignored: ignored');
@@ -107,6 +118,7 @@ function runRefDetailsTestScenarios (actual, defMap) {
 describe('json-refs', function () {
   describe('#findRefs', function () {
     it('should throw an error for invalid arguments', function () {
+      var ofTypeError = new TypeError('options.filter must be an Array, a Function of a String');
       var osdpTypeError = new TypeError('options.subDocPath must be an Array of path segments or a valid JSON Pointer');
       var osdpMissingError = new Error('JSON Pointer points to missing location: #/missing');
       var objTypeError = new TypeError('obj must be an Array or an Object');
@@ -117,42 +129,73 @@ describe('json-refs', function () {
         [['wrongType'], objTypeError],
         [[{}, 1], optionsTypeError],
         [[[], {subDocPath: 1}], osdpTypeError],
-        [[{}, {subDocPath: '#/missing'}], osdpMissingError]
+        [[{}, {subDocPath: '#/missing'}], osdpMissingError],
+        [[{}, {filter: 1}], ofTypeError]
       ], JsonRefs.findRefs);
     });
 
-    it('should return the proper reference details (object document, no sub document path)', function () {
-      runRefDetailsTestScenarios(JsonRefs.findRefs(testDocument), {
-        '#/array/0': testDocument.array[0],
-        '#/array/1': testDocument.array[1],
-        '#/circular/root': testDocument.circular.root,
-        '#/circular/ancestor': testDocument.circular.ancestor,
-        '#/definitions/Person/properties/name': testDocument.definitions.Person.properties.name,
-        '#/local': testDocument.local,
-        '#/remote/absolute': testDocument.remote.absolute,
-        '#/remote/absolute-with-hash': testDocument.remote['absolute-with-hash'],
-        '#/remote/relative': testDocument.remote.relative,
-        '#/remote/relative-with-hash': testDocument.remote['relative-with-hash'],
-        '#/warning': testDocument.warning
-      });
-    });
+    describe('should return the proper reference details', function () {
+      describe('no options', function () {
+        it('array input', function () {
+          runRefDetailsTestScenarios(JsonRefs.findRefs(testDocument.array, {}), {
+            '#/0': testDocument.array[0],
+            '#/1': testDocument.array[1]
+          });
+        });
 
-    it('should return the proper reference details (object document, sub document path)', function () {
-      runRefDetailsTestScenarios(JsonRefs.findRefs(testDocument, {subDocPath: '#/definitions'}), {
-        '#/definitions/Person/properties/name': testDocument.definitions.Person.properties.name
+        it('option input (no options)', function () {
+          runRefDetailsTestScenarios(JsonRefs.findRefs(testDocument), {
+            '#/array/0': testDocument.array[0],
+            '#/array/1': testDocument.array[1],
+            '#/circular/root': testDocument.circular.root,
+            '#/circular/ancestor': testDocument.circular.ancestor,
+            '#/definitions/Person/properties/name': testDocument.definitions.Person.properties.name,
+            '#/local': testDocument.local,
+            '#/remote/absolute': testDocument.remote.absolute,
+            '#/remote/absolute-with-hash': testDocument.remote['absolute-with-hash'],
+            '#/remote/relative': testDocument.remote.relative,
+            '#/remote/relative-with-hash': testDocument.remote['relative-with-hash'],
+            '#/warning': testDocument.warning
+          });
+        });
       });
-    });
 
-    it('should return the proper reference details (array document, default document path)', function () {
-      runRefDetailsTestScenarios(JsonRefs.findRefs(testDocument.array, {}), {
-        '#/0': testDocument.array[0],
-        '#/1': testDocument.array[1]
+      describe('options.filter', function () {
+        it('option as array', function () {
+          assert.deepEqual(Object.keys(JsonRefs.findRefs(testDocument, {filter: ['relative', 'remote']})), [
+            '#/remote/absolute',
+            '#/remote/absolute-with-hash',
+            '#/remote/relative',
+            '#/remote/relative-with-hash'
+          ]);
+        });
+
+        it('option as function', function () {
+          assert.deepEqual(Object.keys(JsonRefs.findRefs(testDocument, {filter: function () {
+            return false;
+          }})), []);
+        });
+
+        it('option as string', function () {
+          assert.deepEqual(Object.keys(JsonRefs.findRefs(testDocument, {filter: 'relative'})), [
+            '#/remote/relative',
+            '#/remote/relative-with-hash'
+          ]);
+        });
       });
-    });
 
-    it('should return the proper reference details (array document, sub document path)', function () {
-      runRefDetailsTestScenarios(JsonRefs.findRefs(testDocument, {subDocPath: '#/array/0'}), {
-        '#/array/0': testDocument.array[0]
+      describe('options.subDocPath', function () {
+        it('option as array', function () {
+          runRefDetailsTestScenarios(JsonRefs.findRefs(testDocument, {subDocPath: ['array', '0']}), {
+            '#/array/0': testDocument.array[0]
+          });
+        });
+
+        it('option as string', function () {
+          runRefDetailsTestScenarios(JsonRefs.findRefs(testDocument, {subDocPath: '#/definitions'}), {
+            '#/definitions/Person/properties/name': testDocument.definitions.Person.properties.name
+          });
+        });
       });
     });
   });

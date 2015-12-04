@@ -108,7 +108,7 @@ gulp.task('docs', function () {
     './index.js'
   ])
     .pipe($.concat('API.md'))
-    .pipe($.jsdoc2MD({'sort-by': ['kind', 'scope', 'name']}))
+    .pipe($.jsdoc2MD())
     .pipe(gulp.dest('docs'));
 });
 
