@@ -32,6 +32,7 @@
  */
 
 var URI = require('uri-js');
+var uriDetailsCache = {};
 
 /* Internal Functions */
 
@@ -86,6 +87,10 @@ function encodeSegment (seg) {
   return seg.replace(/~/g, '~0').replace(/\//g, '~1');
 }
 
+function isRefLike (obj) {
+  return isType(obj, 'Object') && isType(obj.$ref, 'String');
+}
+
 function refHasExtraKeys (ref) {
   return Object.keys(ref).reduce(function (extras, key) {
     if (key !== '$ref') {
@@ -133,6 +138,77 @@ function walk (ancestors, node, path, fn) {
 /* Module Members */
 
 /**
+ * Detailed information about unresolved JSON References.
+ *
+ * @typedef {Object} UnresolvedRefDetails
+ *
+ * @property {object} def - The JSON Reference definition
+ * @property {string} [error] - The error information for invalid JSON Reference definition *(Only present when the
+ * JSON Reference definition is invalid)*
+ * @property {string} uri - The URI portion of the JSON Reference
+ * @property {object} uriDetails - Detailed information about the URI *({@link https://github.com/garycourt/uri-js})*
+ * @property {string} type - The JSON Reference type
+ * @property {string} [warning] - The warning information *(Only present when the JSON Reference definition produces a
+ * warning)*
+ *
+ * @alias module:JsonRefs~UnresolvedRefDetails
+ */
+
+/**
+ * Returns detailed information about the JSON Reference.
+ *
+ * @param {object} obj - The JSON Reference definition
+ *
+ * @returns {module:JsonRefs~UnresolvedRefDetails} the detailed information
+ *
+ * @alias module:JsonRefs.getRefDetails
+ */
+var getRefDetails = module.exports.getRefDetails = function (obj) {
+  var details = {
+    def: obj
+  };
+  var cacheKey;
+  var extraKeys;
+  var uriDetails;
+
+  if (isRefLike(obj)) {
+    cacheKey = obj.$ref;
+    uriDetails = uriDetailsCache[cacheKey];
+
+    if (isType(uriDetails, 'Undefined')) {
+      uriDetails =  uriDetailsCache[cacheKey] = URI.parse(obj.$ref);
+    }
+
+    details.uri = cacheKey;
+    details.uriDetails = uriDetails;
+
+    if (!isType(details.uriDetails.error, 'Undefined')) {
+      details.error = details.uriDetails.error;
+      details.type = 'invalid';
+    } else {
+      details.type = details.uriDetails.reference;
+    }
+
+    // Identify warning
+    extraKeys = Object.keys(obj).reduce(function (keys, key) {
+      if (key !== '$ref') {
+        keys.push(key);
+      }
+
+      return keys;
+    }, []);
+
+    if (extraKeys.length > 0) {
+      details.warning = 'Extra JSON Reference properties will be ignored: ' + extraKeys.join(', ');
+    }
+  } else {
+    details.type = 'invalid';
+  }
+
+  return details;
+};
+
+/**
  * Returns whether the argument represents a JSON Pointer.
  *
  * A string is a JSON Pointer if the following are all true:
@@ -145,6 +221,8 @@ function walk (ancestors, node, path, fn) {
  * @returns {boolean} the result of the check
  *
  * @see {@link https://tools.ietf.org/html/rfc6901#section-3}
+ *
+ * @alias module:JsonRefs.isPtr
  */
 var isPtr = module.exports.isPtr = function (ptr) {
   var valid = isType(ptr, 'String');
@@ -179,9 +257,11 @@ var isPtr = module.exports.isPtr = function (ptr) {
  * @returns {boolean} the result of the check
  *
  * @see {@link http://tools.ietf.org/html/draft-pbryan-zyp-json-ref-03#section-3}
+ *
+ * @alias module:JsonRefs.isRef
  */
 var isRef = module.exports.isRef = function (obj) {
-  return isType(obj, 'Object') && isType(obj.$ref, 'String') && isType(URI.parse(obj.$ref).error, 'Undefined');
+  return isRefLike(obj) && getRefDetails(obj).type !== 'invalid';
 };
 
 /**
@@ -192,6 +272,8 @@ var isRef = module.exports.isRef = function (obj) {
  * @returns {string[]} the path segments
  *
  * @throws {Error} if the provided argument is not a JSON Pointer
+ *
+ * @alias module:JsonRefs.pathFromPtr
  */
 var pathFromPtr = module.exports.pathFromPtr = function (ptr) {
   if (!isPtr(ptr)) {
@@ -220,6 +302,8 @@ var pathFromPtr = module.exports.pathFromPtr = function (ptr) {
  * @returns {string} the corresponding JSON Pointer
  *
  * @throws {Error} if the argument is not an array
+ *
+ * @alias module:JsonRefs.pathToPtr
  */
 var pathToPtr = module.exports.pathToPtr = function (path, hashPrefix) {
   if (!isType(path, 'Array')) {
@@ -239,9 +323,11 @@ var pathToPtr = module.exports.pathToPtr = function (path, hashPrefix) {
  * location to search from
  *
  * @returns {object} an object whose keys are JSON Pointers (fragment version) to where the JSON Reference is defined
- * and whose values are the JSON Reference definition.
+ * and whose values are {@link module:JsonRefs~UnresolvedRefDetails}.
  *
  * @throws {Error} if `from` is not a valid JSON Pointer
+ *
+ * @alias module:JsonRefs.findRefs
  */
 module.exports.findRefs = function (obj, options) {
   var ancestors = [];
@@ -291,7 +377,7 @@ module.exports.findRefs = function (obj, options) {
     var processChildren = true;
 
     if (isRef(node)) {
-      refs[pathToPtr(path)] = node;
+      refs[pathToPtr(path)] = getRefDetails(node);
 
       // Whenever a JSON Reference has extra children, its children should be ignored so we want to stop processing.
       //   See: http://tools.ietf.org/html/draft-pbryan-zyp-json-ref-03#section-3

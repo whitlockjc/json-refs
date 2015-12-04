@@ -31,6 +31,7 @@ var assert = require('assert');
 var fs = require('fs');
 var JsonRefs = require('../');
 var path = require('path');
+var URI = require('uri-js');
 var YAML = require('js-yaml');
 var testDocument = YAML.safeLoad(fs.readFileSync(path.join(__dirname, 'test-document.yaml'), 'utf-8'));
 
@@ -66,6 +67,43 @@ function runTestScenarios (scenarios, fn) {
   });
 }
 
+function validateRefDetails (actual, defPtr, def) {
+  var uriDetails = !_.isUndefined(def.$ref) ? URI.parse(def.$ref) : undefined;
+  var type = 'invalid';
+
+  assert.deepEqual(actual.def, def);
+
+  if (_.isUndefined(uriDetails)) {
+    assert.ok(_.isUndefined(actual.uri));
+    assert.ok(_.isUndefined(actual.uriDetails));
+    assert.ok(_.isUndefined(actual.error));
+    assert.ok(_.isUndefined(actual.warning));
+  } else {
+    assert.equal(actual.uri, def.$ref);
+    assert.deepEqual(actual.uriDetails, uriDetails);
+
+    if (_.isUndefined(actual.uriDetails.error)) {
+      type = uriDetails.reference;
+    } else {
+      assert.equal(actual.error, uriDetails.error);
+    }
+  }
+
+  assert.equal(actual.type, type);
+
+  if (defPtr === '#/warning') {
+    assert.equal(actual.warning, 'Extra JSON Reference properties will be ignored: ignored');
+  }
+}
+
+function runRefDetailsTestScenarios (actual, defMap) {
+  assert.deepEqual(Object.keys(actual), Object.keys(defMap));
+
+  _.each(defMap, function (def, ptr) {
+    validateRefDetails(actual[ptr], ptr, def);
+  });
+}
+
 describe('json-refs', function () {
   describe('#findRefs', function () {
     it('should throw an error for invalid arguments', function () {
@@ -84,34 +122,49 @@ describe('json-refs', function () {
     });
 
     it('should return the proper reference details (object document, no sub document path)', function () {
-      assert.deepEqual(JsonRefs.findRefs(testDocument), {
+      runRefDetailsTestScenarios(JsonRefs.findRefs(testDocument), {
         '#/array/0': testDocument.array[0],
         '#/array/1': testDocument.array[1],
         '#/circular/root': testDocument.circular.root,
         '#/circular/ancestor': testDocument.circular.ancestor,
         '#/definitions/Person/properties/name': testDocument.definitions.Person.properties.name,
         '#/local': testDocument.local,
+        '#/remote/absolute': testDocument.remote.absolute,
+        '#/remote/absolute-with-hash': testDocument.remote['absolute-with-hash'],
+        '#/remote/relative': testDocument.remote.relative,
+        '#/remote/relative-with-hash': testDocument.remote['relative-with-hash'],
         '#/warning': testDocument.warning
       });
     });
 
     it('should return the proper reference details (object document, sub document path)', function () {
-      assert.deepEqual(JsonRefs.findRefs(testDocument, {subDocPath: '#/definitions'}), {
+      runRefDetailsTestScenarios(JsonRefs.findRefs(testDocument, {subDocPath: '#/definitions'}), {
         '#/definitions/Person/properties/name': testDocument.definitions.Person.properties.name
       });
     });
 
     it('should return the proper reference details (array document, default document path)', function () {
-      assert.deepEqual(JsonRefs.findRefs(testDocument.array, {}), {
+      runRefDetailsTestScenarios(JsonRefs.findRefs(testDocument.array, {}), {
         '#/0': testDocument.array[0],
         '#/1': testDocument.array[1]
       });
     });
 
     it('should return the proper reference details (array document, sub document path)', function () {
-      assert.deepEqual(JsonRefs.findRefs(testDocument, {subDocPath: '#/array/0'}), {
+      runRefDetailsTestScenarios(JsonRefs.findRefs(testDocument, {subDocPath: '#/array/0'}), {
         '#/array/0': testDocument.array[0]
       });
+    });
+  });
+
+  describe('#getRefDetails', function () {
+    // #findRefs uses #getRefs and all scenarios other than the 'invalid' reference is tested
+    it('should return proper reference details (invalid reference - reference like)', function () {
+      validateRefDetails(JsonRefs.getRefDetails(testDocument.invalid), '#/invalid', testDocument.invalid);
+    });
+
+    it('should return proper reference details (invalid reference)', function () {
+      validateRefDetails(JsonRefs.getRefDetails(testDocument.project), '#/project', testDocument.project);
     });
   });
 

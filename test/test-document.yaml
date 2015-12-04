@@ -33,9 +33,24 @@ definitions:
       name:
         $ref: '#/definitions/HumanName'
 
+# Invalid reference
+invalid:
+  $ref: 'file[/].html'
+
 # Local reference
 local:
   $ref: '#/project/name'
+
+# Remote references
+remote:
+  absolute:
+    $ref: 'https://rawgit.com/whitlockjc/json-refs/master/package.json'
+  absolute-with-hash:
+    $ref: 'https://rawgit.com/whitlockjc/json-refs/master/package.json#/name'
+  relative:
+    $ref: '../../package.json'
+  relative-with-hash:
+    $ref: '../../package.json#/name'
 
 # A reference with extra properties that should produce a warning
 warning:
