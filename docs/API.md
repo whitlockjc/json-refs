@@ -6,15 +6,33 @@ JSON Pointers *(https://tools.ietf.org/html/rfc6901)*.
 
 * [JsonRefs](#module_JsonRefs)
   * _static_
+    * [.findRefs](#module_JsonRefs.findRefs) ⇒ <code>object</code>
     * [.getRefDetails](#module_JsonRefs.getRefDetails) ⇒ <code>[UnresolvedRefDetails](#module_JsonRefs..UnresolvedRefDetails)</code>
     * [.isPtr](#module_JsonRefs.isPtr) ⇒ <code>boolean</code>
     * [.isRef](#module_JsonRefs.isRef) ⇒ <code>boolean</code>
     * [.pathFromPtr](#module_JsonRefs.pathFromPtr) ⇒ <code>Array.&lt;string&gt;</code>
     * [.pathToPtr](#module_JsonRefs.pathToPtr) ⇒ <code>string</code>
-    * [.findRefs(obj, [options])](#module_JsonRefs.findRefs) ⇒ <code>object</code>
   * _inner_
+    * [~JsonRefsOptions](#module_JsonRefs..JsonRefsOptions) : <code>object</code>
     * [~RefDetailsFilter](#module_JsonRefs..RefDetailsFilter) ⇒ <code>boolean</code>
     * [~UnresolvedRefDetails](#module_JsonRefs..UnresolvedRefDetails) : <code>object</code>
+
+<a name="module_JsonRefs.findRefs"></a>
+### JsonRefs.findRefs ⇒ <code>object</code>
+Finds JSON References defined within the provided array/object.
+
+**Kind**: static property of <code>[JsonRefs](#module_JsonRefs)</code>  
+**Returns**: <code>object</code> - an object whose keys are JSON Pointers (fragment version) to where the JSON Reference is defined
+and whose values are [UnresolvedRefDetails](#module_JsonRefs..UnresolvedRefDetails).  
+**Throws**:
+
+- <code>Error</code> if `from` is not a valid JSON Pointer
+
+
+| Param | Type | Description |
+| --- | --- | --- |
+| obj | <code>array</code> &#124; <code>object</code> | The structure to find JSON References within |
+| options | <code>[JsonRefsOptions](#module_JsonRefs..JsonRefsOptions)</code> | The JsonRefs options |
 
 <a name="module_JsonRefs.getRefDetails"></a>
 ### JsonRefs.getRefDetails ⇒ <code>[UnresolvedRefDetails](#module_JsonRefs..UnresolvedRefDetails)</code>
@@ -95,23 +113,15 @@ Returns a JSON Pointer for the provided array of path segments.
 | path | <code>Array.&lt;string&gt;</code> |  | The array of path segments |
 | [hashPrefix] | <code>boolean</code> | <code>true</code> | Whether or not create a hash-prefixed JSON Pointer |
 
-<a name="module_JsonRefs.findRefs"></a>
-### JsonRefs.findRefs(obj, [options]) ⇒ <code>object</code>
-Finds JSON References defined within the provided array/object.
+<a name="module_JsonRefs..JsonRefsOptions"></a>
+### JsonRefs~JsonRefsOptions : <code>object</code>
+The options used for various JsonRefs APIs.
 
-**Kind**: static method of <code>[JsonRefs](#module_JsonRefs)</code>  
-**Returns**: <code>object</code> - an object whose keys are JSON Pointers (fragment version) to where the JSON Reference is defined
-and whose values are [UnresolvedRefDetails](#module_JsonRefs..UnresolvedRefDetails).  
-**Throws**:
-
-- <code>Error</code> if `from` is not a valid JSON Pointer
-
+**Kind**: inner typedef of <code>[JsonRefs](#module_JsonRefs)</code>  
 
 | Param | Type | Default | Description |
 | --- | --- | --- | --- |
-| obj | <code>array</code> &#124; <code>object</code> |  | The structure to find JSON References within |
-| [options] | <code>object</code> | <code>{}</code> | The options to use when finding references |
-| [options.filter] | <code>string</code> &#124; <code>Array.&lt;string&gt;</code> &#124; <code>function</code> | <code>&quot;[]&quot;</code> | The filter to use when gathering JSON References *(If this value is a single string or an array of strings, the value(s) are expected to be the `type(s)` you are interested in collecting as described in [getRefDetails](#module_JsonRefs.getRefDetails).  If it is a function, it is expected that the function behaves like [RefDetailsFilter](#module_JsonRefs..RefDetailsFilter).)* |
+| [filter] | <code>string</code> &#124; <code>Array.&lt;string&gt;</code> &#124; <code>function</code> | <code>&quot;[]&quot;</code> | The filter to use when gathering JSON References *(If this value is a single string or an array of strings, the value(s) are expected to be the `type(s)` you are interested in collecting as described in [getRefDetails](#module_JsonRefs.getRefDetails).  If it is a function, it is expected that the function behaves like [RefDetailsFilter](#module_JsonRefs..RefDetailsFilter).)* |
 | [options.subDocPath] | <code>string</code> &#124; <code>Array.&lt;string&gt;</code> | <code>&quot;[]&quot;</code> | The JSON Pointer or array of path segments to the sub document location to search from |
 
 <a name="module_JsonRefs..RefDetailsFilter"></a>

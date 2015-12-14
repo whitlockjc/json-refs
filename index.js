@@ -176,6 +176,21 @@ function walk (ancestors, node, path, fn) {
  */
 
 /**
+ * The options used for various JsonRefs APIs.
+ *
+ * @typedef {object} JsonRefsOptions
+ *
+ * @param {string|string[]|function} [filter=[]] - The filter to use when gathering JSON References *(If this value is
+ * a single string or an array of strings, the value(s) are expected to be the `type(s)` you are interested in
+ * collecting as described in {@link module:JsonRefs.getRefDetails}.  If it is a function, it is expected that the
+ * function behaves like {@link module:JsonRefs~RefDetailsFilter}.)*
+ * @param {string|string[]} [options.subDocPath=[]] - The JSON Pointer or array of path segments to the sub document
+ * location to search from
+ *
+ * @alias module:JsonRefs~JsonRefsOptions
+ */
+
+/**
  * Returns detailed information about the JSON Reference.
  *
  * @param {object} obj - The JSON Reference definition
@@ -350,13 +365,7 @@ var pathToPtr = module.exports.pathToPtr = function (path, hashPrefix) {
  * Finds JSON References defined within the provided array/object.
  *
  * @param {array|object} obj - The structure to find JSON References within
- * @param {object} [options={}] - The options to use when finding references
- * @param {string|string[]|function} [options.filter=[]] - The filter to use when gathering JSON References *(If this
- * value is a single string or an array of strings, the value(s) are expected to be the `type(s)` you are interested in
- * collecting as described in {@link module:JsonRefs.getRefDetails}.  If it is a function, it is expected that the
- * function behaves like {@link module:JsonRefs~RefDetailsFilter}.)*
- * @param {string|string[]} [options.subDocPath=[]] - The JSON Pointer or array of path segments to the sub document
- * location to search from
+ * @param {module:JsonRefs~JsonRefsOptions} options - The JsonRefs options
  *
  * @returns {object} an object whose keys are JSON Pointers (fragment version) to where the JSON Reference is defined
  * and whose values are {@link module:JsonRefs~UnresolvedRefDetails}.
@@ -365,7 +374,7 @@ var pathToPtr = module.exports.pathToPtr = function (path, hashPrefix) {
  *
  * @alias module:JsonRefs.findRefs
  */
-module.exports.findRefs = function (obj, options) {
+var findRefs = module.exports.findRefs = function (obj, options) {
   var ancestors = [];
   var fromObj = obj;
   var fromPath = [];
