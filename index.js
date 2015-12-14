@@ -34,6 +34,12 @@
 var URI = require('uri-js');
 var uriDetailsCache = {};
 
+// Load promises polyfill if necessary
+/* istanbul ignore if */
+if (typeof Promise === 'undefined') {
+  require('native-promise-only');
+}
+
 /* Internal Functions */
 
 function decodeSegment (seg) {
