@@ -2,6 +2,7 @@
 
 ## v2.0.0 (TBD)
 
+* Added `#findRefsAt` to allow you to retrieve a remote document and then find its references
 * Added `#getRefDetails` to centralize the code used to generate reference metadata *(Also allows you to see why an
 object you expect to be returned by `#findRefs` is not returned.)*
 * Renamed `#isJsonPointer` to `#isJsonPtr`

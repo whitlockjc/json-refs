@@ -5,113 +5,18 @@ JSON Pointers *(https://tools.ietf.org/html/rfc6901)*.
 
 
 * [JsonRefs](#module_JsonRefs)
-  * _static_
-    * [.findRefs](#module_JsonRefs.findRefs) ⇒ <code>object</code>
-    * [.getRefDetails](#module_JsonRefs.getRefDetails) ⇒ <code>[UnresolvedRefDetails](#module_JsonRefs..UnresolvedRefDetails)</code>
-    * [.isPtr](#module_JsonRefs.isPtr) ⇒ <code>boolean</code>
-    * [.isRef](#module_JsonRefs.isRef) ⇒ <code>boolean</code>
-    * [.pathFromPtr](#module_JsonRefs.pathFromPtr) ⇒ <code>Array.&lt;string&gt;</code>
-    * [.pathToPtr](#module_JsonRefs.pathToPtr) ⇒ <code>string</code>
   * _inner_
     * [~JsonRefsOptions](#module_JsonRefs..JsonRefsOptions) : <code>object</code>
     * [~RefDetailsFilter](#module_JsonRefs..RefDetailsFilter) ⇒ <code>boolean</code>
     * [~UnresolvedRefDetails](#module_JsonRefs..UnresolvedRefDetails) : <code>object</code>
-
-<a name="module_JsonRefs.findRefs"></a>
-### JsonRefs.findRefs ⇒ <code>object</code>
-Finds JSON References defined within the provided array/object.
-
-**Kind**: static property of <code>[JsonRefs](#module_JsonRefs)</code>  
-**Returns**: <code>object</code> - an object whose keys are JSON Pointers (fragment version) to where the JSON Reference is defined
-and whose values are [UnresolvedRefDetails](#module_JsonRefs..UnresolvedRefDetails).  
-**Throws**:
-
-- <code>Error</code> if `from` is not a valid JSON Pointer
-
-
-| Param | Type | Description |
-| --- | --- | --- |
-| obj | <code>array</code> &#124; <code>object</code> | The structure to find JSON References within |
-| options | <code>[JsonRefsOptions](#module_JsonRefs..JsonRefsOptions)</code> | The JsonRefs options |
-
-<a name="module_JsonRefs.getRefDetails"></a>
-### JsonRefs.getRefDetails ⇒ <code>[UnresolvedRefDetails](#module_JsonRefs..UnresolvedRefDetails)</code>
-Returns detailed information about the JSON Reference.
-
-**Kind**: static property of <code>[JsonRefs](#module_JsonRefs)</code>  
-**Returns**: <code>[UnresolvedRefDetails](#module_JsonRefs..UnresolvedRefDetails)</code> - the detailed information  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| obj | <code>object</code> | The JSON Reference definition |
-
-<a name="module_JsonRefs.isPtr"></a>
-### JsonRefs.isPtr ⇒ <code>boolean</code>
-Returns whether the argument represents a JSON Pointer.
-
-A string is a JSON Pointer if the following are all true:
-
-  * The string is of type `String`
-  * The string must be empty or start with a `/` or `#/`
-
-**Kind**: static property of <code>[JsonRefs](#module_JsonRefs)</code>  
-**Returns**: <code>boolean</code> - the result of the check  
-**See**: [https://tools.ietf.org/html/rfc6901#section-3](https://tools.ietf.org/html/rfc6901#section-3)  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| ptr | <code>string</code> | The string to check |
-
-<a name="module_JsonRefs.isRef"></a>
-### JsonRefs.isRef ⇒ <code>boolean</code>
-Returns whether the argument represents a JSON Reference.
-
-An object is a JSON Reference only if the following are all true:
-
-  * The object is of type `Object`
-  * The object has a `$ref` property
-  * The `$ref` property is a valid URI
-
-**Kind**: static property of <code>[JsonRefs](#module_JsonRefs)</code>  
-**Returns**: <code>boolean</code> - the result of the check  
-**See**: [http://tools.ietf.org/html/draft-pbryan-zyp-json-ref-03#section-3](http://tools.ietf.org/html/draft-pbryan-zyp-json-ref-03#section-3)  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| obj | <code>object</code> | The object to check |
-
-<a name="module_JsonRefs.pathFromPtr"></a>
-### JsonRefs.pathFromPtr ⇒ <code>Array.&lt;string&gt;</code>
-Returns an array of path segments for the provided JSON Pointer.
-
-**Kind**: static property of <code>[JsonRefs](#module_JsonRefs)</code>  
-**Returns**: <code>Array.&lt;string&gt;</code> - the path segments  
-**Throws**:
-
-- <code>Error</code> if the provided argument is not a JSON Pointer
-
-
-| Param | Type | Description |
-| --- | --- | --- |
-| ptr | <code>string</code> | The JSON Pointer |
-
-<a name="module_JsonRefs.pathToPtr"></a>
-### JsonRefs.pathToPtr ⇒ <code>string</code>
-Returns a JSON Pointer for the provided array of path segments.
-
-**Note:** If a path segment in `path` is not a `String`, it will be converted to one using `JSON.stringify`.
-
-**Kind**: static property of <code>[JsonRefs](#module_JsonRefs)</code>  
-**Returns**: <code>string</code> - the corresponding JSON Pointer  
-**Throws**:
-
-- <code>Error</code> if the argument is not an array
-
-
-| Param | Type | Default | Description |
-| --- | --- | --- | --- |
-| path | <code>Array.&lt;string&gt;</code> |  | The array of path segments |
-| [hashPrefix] | <code>boolean</code> | <code>true</code> | Whether or not create a hash-prefixed JSON Pointer |
+  * _static_
+    * [.findRefs(obj, [options])](#module_JsonRefs.findRefs) ⇒ <code>object</code>
+    * [.findRefsAt(location, [options])](#module_JsonRefs.findRefsAt) ⇒ <code>Promise</code>
+    * [.getRefDetails(obj)](#module_JsonRefs.getRefDetails) ⇒ <code>[UnresolvedRefDetails](#module_JsonRefs..UnresolvedRefDetails)</code>
+    * [.isPtr(ptr)](#module_JsonRefs.isPtr) ⇒ <code>boolean</code>
+    * [.isRef(obj)](#module_JsonRefs.isRef) ⇒ <code>boolean</code>
+    * [.pathFromPtr(ptr)](#module_JsonRefs.pathFromPtr) ⇒ <code>Array.&lt;string&gt;</code>
+    * [.pathToPtr(path, [hashPrefix])](#module_JsonRefs.pathToPtr) ⇒ <code>string</code>
 
 <a name="module_JsonRefs..JsonRefsOptions"></a>
 ### JsonRefs~JsonRefsOptions : <code>object</code>
@@ -121,7 +26,10 @@ The options used for various JsonRefs APIs.
 
 | Param | Type | Default | Description |
 | --- | --- | --- | --- |
+| [relativeBase] | <code>string</code> |  | The base location to use when resolving relative references *(Only useful for APIs that do remote reference resolution.  If this value is not defined, [path-loader](https://github.com/whitlockjc/path-loader) will use `window.location.href` for the browser and `process.cwd()` for Node.js.)* |
 | [filter] | <code>string</code> &#124; <code>Array.&lt;string&gt;</code> &#124; <code>function</code> | <code>&quot;[]&quot;</code> | The filter to use when gathering JSON References *(If this value is a single string or an array of strings, the value(s) are expected to be the `type(s)` you are interested in collecting as described in [getRefDetails](#module_JsonRefs.getRefDetails).  If it is a function, it is expected that the function behaves like [RefDetailsFilter](#module_JsonRefs..RefDetailsFilter).)* |
+| [loaderOptions] | <code>object</code> |  | The options to pass to [PathLoader~load](https://github.com/whitlockjc/path-loader/blob/master/docs/API.md#module_PathLoader.load). |
+| [relativeBase] | <code>string</code> |  | The location to resolve relative references from |
 | [options.subDocPath] | <code>string</code> &#124; <code>Array.&lt;string&gt;</code> | <code>&quot;[]&quot;</code> | The JSON Pointer or array of path segments to the sub document location to search from |
 
 <a name="module_JsonRefs..RefDetailsFilter"></a>
@@ -151,4 +59,116 @@ Detailed information about unresolved JSON References.
 | uriDetails | <code>object</code> | Detailed information about the URI as provided by [URI.parse](https://github.com/garycourt/uri-js). |
 | type | <code>string</code> | The JSON Reference type *(This value can be one of the following: `invalid`, `local`, `relative` or `remote`.)* |
 | warning | <code>string</code> | The warning information *(Only present when the JSON Reference definition produces a warning)* |
+
+<a name="module_JsonRefs.findRefs"></a>
+### JsonRefs.findRefs(obj, [options]) ⇒ <code>object</code>
+Finds JSON References defined within the provided array/object.
+
+**Kind**: static method of <code>[JsonRefs](#module_JsonRefs)</code>  
+**Returns**: <code>object</code> - an object whose keys are JSON Pointers *(fragment version)* to where the JSON Reference is defined
+and whose values are [UnresolvedRefDetails](#module_JsonRefs..UnresolvedRefDetails).  
+**Throws**:
+
+- <code>Error</code> if `from` is not a valid JSON Pointer
+
+
+| Param | Type | Description |
+| --- | --- | --- |
+| obj | <code>array</code> &#124; <code>object</code> | The structure to find JSON References within |
+| [options] | <code>[JsonRefsOptions](#module_JsonRefs..JsonRefsOptions)</code> | The JsonRefs options |
+
+<a name="module_JsonRefs.findRefsAt"></a>
+### JsonRefs.findRefsAt(location, [options]) ⇒ <code>Promise</code>
+Finds JSON References defined within the document at the provided location.
+
+This API is identical to [findRefs](#module_JsonRefs.findRefs) except this API will retrieve a remote document and then
+return the result of [findRefs](#module_JsonRefs.findRefs) on the retrieved document.
+
+**Kind**: static method of <code>[JsonRefs](#module_JsonRefs)</code>  
+**Returns**: <code>Promise</code> - a promise that resolves an object whose keys are JSON Pointers *(fragment version)* to where the
+JSON Reference is defined and whose values are [UnresolvedRefDetails](#module_JsonRefs..UnresolvedRefDetails).  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| location | <code>string</code> | The location to retrieve *(Can be relative or absolute, just make sure you look at the [options documentation](#module_JsonRefs..JsonRefsOptions) to see how relative references are handled.)* |
+| [options] | <code>[JsonRefsOptions](#module_JsonRefs..JsonRefsOptions)</code> | The JsonRefs options |
+
+<a name="module_JsonRefs.getRefDetails"></a>
+### JsonRefs.getRefDetails(obj) ⇒ <code>[UnresolvedRefDetails](#module_JsonRefs..UnresolvedRefDetails)</code>
+Returns detailed information about the JSON Reference.
+
+**Kind**: static method of <code>[JsonRefs](#module_JsonRefs)</code>  
+**Returns**: <code>[UnresolvedRefDetails](#module_JsonRefs..UnresolvedRefDetails)</code> - the detailed information  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| obj | <code>object</code> | The JSON Reference definition |
+
+<a name="module_JsonRefs.isPtr"></a>
+### JsonRefs.isPtr(ptr) ⇒ <code>boolean</code>
+Returns whether the argument represents a JSON Pointer.
+
+A string is a JSON Pointer if the following are all true:
+
+  * The string is of type `String`
+  * The string must be empty or start with a `/` or `#/`
+
+**Kind**: static method of <code>[JsonRefs](#module_JsonRefs)</code>  
+**Returns**: <code>boolean</code> - the result of the check  
+**See**: [https://tools.ietf.org/html/rfc6901#section-3](https://tools.ietf.org/html/rfc6901#section-3)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| ptr | <code>string</code> | The string to check |
+
+<a name="module_JsonRefs.isRef"></a>
+### JsonRefs.isRef(obj) ⇒ <code>boolean</code>
+Returns whether the argument represents a JSON Reference.
+
+An object is a JSON Reference only if the following are all true:
+
+  * The object is of type `Object`
+  * The object has a `$ref` property
+  * The `$ref` property is a valid URI
+
+**Kind**: static method of <code>[JsonRefs](#module_JsonRefs)</code>  
+**Returns**: <code>boolean</code> - the result of the check  
+**See**: [http://tools.ietf.org/html/draft-pbryan-zyp-json-ref-03#section-3](http://tools.ietf.org/html/draft-pbryan-zyp-json-ref-03#section-3)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| obj | <code>object</code> | The object to check |
+
+<a name="module_JsonRefs.pathFromPtr"></a>
+### JsonRefs.pathFromPtr(ptr) ⇒ <code>Array.&lt;string&gt;</code>
+Returns an array of path segments for the provided JSON Pointer.
+
+**Kind**: static method of <code>[JsonRefs](#module_JsonRefs)</code>  
+**Returns**: <code>Array.&lt;string&gt;</code> - the path segments  
+**Throws**:
+
+- <code>Error</code> if the provided argument is not a JSON Pointer
+
+
+| Param | Type | Description |
+| --- | --- | --- |
+| ptr | <code>string</code> | The JSON Pointer |
+
+<a name="module_JsonRefs.pathToPtr"></a>
+### JsonRefs.pathToPtr(path, [hashPrefix]) ⇒ <code>string</code>
+Returns a JSON Pointer for the provided array of path segments.
+
+**Note:** If a path segment in `path` is not a `String`, it will be converted to one using `JSON.stringify`.
+
+**Kind**: static method of <code>[JsonRefs](#module_JsonRefs)</code>  
+**Returns**: <code>string</code> - the corresponding JSON Pointer  
+**Throws**:
+
+- <code>Error</code> if the argument is not an array
+
+
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| path | <code>Array.&lt;string&gt;</code> |  | The array of path segments |
+| [hashPrefix] | <code>boolean</code> | <code>true</code> | Whether or not create a hash-prefixed JSON Pointer |
 

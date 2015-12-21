@@ -66,8 +66,7 @@ gulp.task('browserify', function (cb) {
         if (!isStandalone) {
           // Expose Bower modules so they can be required
           exposify.config = {
-            'path-loader': 'PathLoader',
-            'traverse': 'traverse'
+            'path-loader': 'PathLoader'
           };
 
           b.transform('exposify');
@@ -108,7 +107,7 @@ gulp.task('docs', function () {
     './index.js'
   ])
     .pipe($.concat('API.md'))
-    .pipe($.jsdoc2MD({'sort-by': ['scope', 'category', 'name']}))
+    .pipe($.jsdoc2MD({'sort-by': ['category', 'name']}))
     .pipe(gulp.dest('docs'));
 });
 

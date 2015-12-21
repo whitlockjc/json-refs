@@ -31,7 +31,11 @@
  * @module JsonRefs
  */
 
+var pathLoader = require('path-loader');
+var qs = require('querystring');
 var URI = require('uri-js');
+
+var remoteCache = {};
 var uriDetailsCache = {};
 
 // Load promises polyfill if necessary
@@ -41,6 +45,70 @@ if (typeof Promise === 'undefined') {
 }
 
 /* Internal Functions */
+
+function combinePaths (p1, p2) {
+  var combined = [];
+
+  function pathToSegments (path) {
+    return isType(path, 'Undefined') || path === '' ? [] : path.split('/');
+  }
+
+  function handleSegment (seg) {
+    if (seg === '..') {
+      combined.pop();
+    } else {
+      combined.push(seg);
+    }
+  }
+
+  pathToSegments(p1).concat(pathToSegments(p2)).forEach(handleSegment);
+
+  return combined.length === 0 ? '' : combined.join('/');
+}
+
+function combineQueryParams (qs1, qs2) {
+  var combined = {};
+
+  function mergeQueryParams (obj) {
+    Object.keys(obj).forEach(function (key) {
+      combined[key] = obj[key];
+    });
+  }
+
+  mergeQueryParams(qs.parse(qs1 || ''));
+  mergeQueryParams(qs.parse(qs2 || ''));
+
+  return Object.keys(combined).length === 0 ? undefined : qs.stringify(combined);
+}
+
+function combineURIs (u1, u2) {
+  var u2Details = URI.parse(isType(u2, 'Undefined') ? '' : u2);
+  var u1Details;
+  var combinedDetails;
+
+  if (u2Details.reference === 'absolute') {
+    combinedDetails = u2Details;
+  } else {
+    u1Details = isType(u1, 'Undefined') ? undefined : URI.parse(u1);
+
+    if (!isType(u1Details, 'Undefined')) {
+      combinedDetails = u1Details;
+
+      // Join the paths
+      combinedDetails.path = URI.normalize(combinePaths(u1Details.path, u2Details.path));
+
+      // Join query parameters
+      combinedDetails.query = combineQueryParams(u1Details.query, u2Details.query);
+    } else {
+      combinedDetails = u2Details;
+    }
+  }
+
+  // Remove the fragment
+  combinedDetails.fragment = undefined;
+
+  return URI.serialize(combinedDetails);
+}
 
 function decodeSegment (seg) {
   return seg.replace(/~0/g, '~').replace(/~1/g, '/');
@@ -85,6 +153,31 @@ function isType (obj, type) {
   }
 }
 
+// This is a very simplistic clone function that does not take into account non-JSON types.  For these types the
+// original value is used as the clone.  So while it's not a complete deep clone, for the needs of this project
+// this should be sufficient.
+function clone (obj) {
+  var cloned;
+
+  if (isType(obj, 'Array')) {
+    cloned = [];
+
+    obj.forEach(function (value, index) {
+      cloned[index] = clone(value);
+    });
+  } else if (isType(obj, 'Object')) {
+    cloned = {};
+
+    Object.keys(obj).forEach(function (key) {
+      cloned[key] = clone(obj[key]);
+    });
+  } else {
+    cloned = obj;
+  }
+
+  return cloned;
+}
+
 function encodeSegment (seg) {
   if (!isType(seg, 'String')) {
     seg = JSON.stringify(seg);
@@ -93,18 +186,57 @@ function encodeSegment (seg) {
   return seg.replace(/~/g, '~0').replace(/\//g, '~1');
 }
 
+function getRemoteDocument (url, options) {
+  var cacheEntry = remoteCache[url];
+  var allTasks = Promise.resolve();
+  var loaderOptions = clone(options.loaderOptions || {});
+
+  if (isType(cacheEntry, 'Undefined')) {
+    // If there is no content processor, default to processing the raw response as JSON
+    if (isType(loaderOptions.processContent, 'Undefined')) {
+      loaderOptions.processContent = function (res, callback) {
+        callback(undefined, JSON.parse(res.text));
+      };
+    }
+
+    // Attempt to load the resource using  path-loader
+    allTasks = pathLoader.load(url, loaderOptions);
+
+    // Update the cache
+    allTasks = allTasks.then(function (res) {
+      remoteCache[url] = {
+        response: res
+      };
+
+      return res;
+    });
+  } else {
+    // Return the cached version
+    allTasks = allTasks.then(function () {
+      return cacheEntry.response;
+    });
+  }
+
+  // Return a cloned version to avoid updating the cache
+  allTasks = allTasks.then(function (res) {
+    return clone(res);
+  });
+
+  return allTasks;
+}
+
 function isRefLike (obj) {
   return isType(obj, 'Object') && isType(obj.$ref, 'String');
 }
 
-function refHasExtraKeys (ref) {
+function getExtraRefKeys (ref) {
   return Object.keys(ref).reduce(function (extras, key) {
     if (key !== '$ref') {
       extras.push(key);
     }
 
     return extras;
-  }, []).length > 0;
+  }, []);
 }
 
 function walk (ancestors, node, path, fn) {
@@ -141,7 +273,54 @@ function walk (ancestors, node, path, fn) {
   ancestors.pop();
 }
 
+function validateOptions (options) {
+  if (!isType(options, 'Undefined')) {
+    if (!isType(options, 'Object')) {
+      throw new TypeError('options must be an Object');
+    } else if (!isType(options.subDocPath, 'Undefined') &&
+               !isType(options.subDocPath, 'Array') &&
+               !isPtr(options.subDocPath)) {
+      // If a pointer is provided, throw an error if it's not the proper type
+      throw new TypeError('options.subDocPath must be an Array of path segments or a valid JSON Pointer');
+    } else if (!isType(options.filter, 'Undefined') &&
+               !isType(options.filter, 'Array') &&
+               !isType(options.filter, 'Function') &&
+               !isType(options.filter, 'String')) {
+      throw new TypeError('options.filter must be an Array, a Function of a String');
+    }
+  }
+}
+
 /* Module Members */
+
+/*
+ * Each of the functions below are defined as function statements and *then* exported in two steps instead of one due
+ * to a bug in jsdoc (https://github.com/jsdoc2md/jsdoc-parse/issues/18) that causes our documentation to be
+ * generated improperly.  The impact to the user is significant enough for us to warrant working around it until this
+ * is fixed.
+ */
+
+/**
+ * The options used for various JsonRefs APIs.
+ *
+ * @typedef {object} JsonRefsOptions
+ *
+ * @param {string} [relativeBase] - The base location to use when resolving relative references *(Only useful for APIs
+ * that do remote reference resolution.  If this value is not defined,
+ * {@link https://github.com/whitlockjc/path-loader|path-loader} will use `window.location.href` for the browser and
+ * `process.cwd()` for Node.js.)*
+ * @param {string|string[]|function} [filter=[]] - The filter to use when gathering JSON References *(If this value is
+ * a single string or an array of strings, the value(s) are expected to be the `type(s)` you are interested in
+ * collecting as described in {@link module:JsonRefs.getRefDetails}.  If it is a function, it is expected that the
+ * function behaves like {@link module:JsonRefs~RefDetailsFilter}.)*
+ * @param {object} [loaderOptions] - The options to pass to
+ * {@link https://github.com/whitlockjc/path-loader/blob/master/docs/API.md#module_PathLoader.load|PathLoader~load}.
+ * @param {string} [relativeBase] - The location to resolve relative references from
+ * @param {string|string[]} [options.subDocPath=[]] - The JSON Pointer or array of path segments to the sub document
+ * location to search from
+ *
+ * @alias module:JsonRefs~JsonRefsOptions
+ */
 
 /**
  * Simple function used to filter our JSON References.
@@ -176,21 +355,6 @@ function walk (ancestors, node, path, fn) {
  */
 
 /**
- * The options used for various JsonRefs APIs.
- *
- * @typedef {object} JsonRefsOptions
- *
- * @param {string|string[]|function} [filter=[]] - The filter to use when gathering JSON References *(If this value is
- * a single string or an array of strings, the value(s) are expected to be the `type(s)` you are interested in
- * collecting as described in {@link module:JsonRefs.getRefDetails}.  If it is a function, it is expected that the
- * function behaves like {@link module:JsonRefs~RefDetailsFilter}.)*
- * @param {string|string[]} [options.subDocPath=[]] - The JSON Pointer or array of path segments to the sub document
- * location to search from
- *
- * @alias module:JsonRefs~JsonRefsOptions
- */
-
-/**
  * Returns detailed information about the JSON Reference.
  *
  * @param {object} obj - The JSON Reference definition
@@ -199,7 +363,7 @@ function walk (ancestors, node, path, fn) {
  *
  * @alias module:JsonRefs.getRefDetails
  */
-var getRefDetails = module.exports.getRefDetails = function (obj) {
+function getRefDetails (obj) {
   var details = {
     def: obj
   };
@@ -237,13 +401,7 @@ var getRefDetails = module.exports.getRefDetails = function (obj) {
     }
 
     // Identify warning
-    extraKeys = Object.keys(obj).reduce(function (keys, key) {
-      if (key !== '$ref') {
-        keys.push(key);
-      }
-
-      return keys;
-    }, []);
+    extraKeys = getExtraRefKeys(obj);
 
     if (extraKeys.length > 0) {
       details.warning = 'Extra JSON Reference properties will be ignored: ' + extraKeys.join(', ');
@@ -253,7 +411,7 @@ var getRefDetails = module.exports.getRefDetails = function (obj) {
   }
 
   return details;
-};
+}
 
 /**
  * Returns whether the argument represents a JSON Pointer.
@@ -271,7 +429,7 @@ var getRefDetails = module.exports.getRefDetails = function (obj) {
  *
  * @alias module:JsonRefs.isPtr
  */
-var isPtr = module.exports.isPtr = function (ptr) {
+function isPtr (ptr) {
   var valid = isType(ptr, 'String');
   var firstChar;
 
@@ -288,7 +446,7 @@ var isPtr = module.exports.isPtr = function (ptr) {
   }
 
   return valid;
-};
+}
 
 /**
  * Returns whether the argument represents a JSON Reference.
@@ -307,9 +465,9 @@ var isPtr = module.exports.isPtr = function (ptr) {
  *
  * @alias module:JsonRefs.isRef
  */
-var isRef = module.exports.isRef = function (obj) {
+function isRef (obj) {
   return isRefLike(obj) && getRefDetails(obj).type !== 'invalid';
-};
+}
 
 /**
  * Returns an array of path segments for the provided JSON Pointer.
@@ -322,7 +480,7 @@ var isRef = module.exports.isRef = function (obj) {
  *
  * @alias module:JsonRefs.pathFromPtr
  */
-var pathFromPtr = module.exports.pathFromPtr = function (ptr) {
+function pathFromPtr (ptr) {
   if (!isPtr(ptr)) {
     throw new Error('ptr must be a JSON Pointer');
   }
@@ -336,7 +494,7 @@ var pathFromPtr = module.exports.pathFromPtr = function (ptr) {
   segments = segments.map(decodeSegment);
 
   return segments;
-};
+}
 
 /**
  * Returns a JSON Pointer for the provided array of path segments.
@@ -352,29 +510,29 @@ var pathFromPtr = module.exports.pathFromPtr = function (ptr) {
  *
  * @alias module:JsonRefs.pathToPtr
  */
-var pathToPtr = module.exports.pathToPtr = function (path, hashPrefix) {
+function pathToPtr (path, hashPrefix) {
   if (!isType(path, 'Array')) {
     throw new Error('path must be an Array');
   }
 
   // Encode each segment and return
   return (hashPrefix !== false ? '#' : '') + (path.length > 0 ? '/' : '') + path.map(encodeSegment).join('/');
-};
+}
 
 /**
  * Finds JSON References defined within the provided array/object.
  *
  * @param {array|object} obj - The structure to find JSON References within
- * @param {module:JsonRefs~JsonRefsOptions} options - The JsonRefs options
+ * @param {module:JsonRefs~JsonRefsOptions} [options] - The JsonRefs options
  *
- * @returns {object} an object whose keys are JSON Pointers (fragment version) to where the JSON Reference is defined
+ * @returns {object} an object whose keys are JSON Pointers *(fragment version)* to where the JSON Reference is defined
  * and whose values are {@link module:JsonRefs~UnresolvedRefDetails}.
  *
  * @throws {Error} if `from` is not a valid JSON Pointer
  *
  * @alias module:JsonRefs.findRefs
  */
-var findRefs = module.exports.findRefs = function (obj, options) {
+function findRefs (obj, options) {
   var ancestors = [];
   var fromObj = obj;
   var fromPath = [];
@@ -386,24 +544,13 @@ var findRefs = module.exports.findRefs = function (obj, options) {
     throw new TypeError('obj must be an Array or an Object');
   }
 
-  // Validate the provided options
-  if (!isType(options, 'Undefined') && !isType(options, 'Object')) {
-    throw new TypeError('options must be an Object');
-  }
-
   // Set default for options
   if (isType(options, 'Undefined')) {
     options = {};
   }
 
-  // Validate the options values
-  if (!isType(options.subDocPath, 'Undefined') && !isType(options.subDocPath, 'Array') && !isPtr(options.subDocPath)) {
-    // If a pointer is provided, throw an error if it's not the proper type
-    throw new TypeError('options.subDocPath must be an Array of path segments or a valid JSON Pointer');
-  } else if (!isType(options.filter, 'Undefined') && !isType(options.filter, 'Array') &&
-             !isType(options.filter, 'Function') && !isType(options.filter, 'String')) {
-    throw new TypeError('options.filter must be an Array, a Function of a String');
-  }
+  // Validate options
+  validateOptions(options);
 
   // Convert from to a pointer
   if (isType(options.subDocPath, 'Array')) {
@@ -446,7 +593,7 @@ var findRefs = module.exports.findRefs = function (obj, options) {
 
       // Whenever a JSON Reference has extra children, its children should be ignored so we want to stop processing.
       //   See: http://tools.ietf.org/html/draft-pbryan-zyp-json-ref-03#section-3
-      if (refHasExtraKeys(node)) {
+      if (getExtraRefKeys(node).length > 0) {
         processChildren = false;
       }
     }
@@ -455,4 +602,59 @@ var findRefs = module.exports.findRefs = function (obj, options) {
   });
 
   return refs;
-};
+}
+
+/**
+ * Finds JSON References defined within the document at the provided location.
+ *
+ * This API is identical to {@link module:JsonRefs.findRefs} except this API will retrieve a remote document and then
+ * return the result of {@link module:JsonRefs.findRefs} on the retrieved document.
+ *
+ * @param {string} location - The location to retrieve *(Can be relative or absolute, just make sure you look at the
+ * {@link module:JsonRefs~JsonRefsOptions|options documentation} to see how relative references are handled.)*
+ * @param {module:JsonRefs~JsonRefsOptions} [options] - The JsonRefs options
+ *
+ * @returns {Promise} a promise that resolves an object whose keys are JSON Pointers *(fragment version)* to where the
+ * JSON Reference is defined and whose values are {@link module:JsonRefs~UnresolvedRefDetails}.
+ *
+ * @alias module:JsonRefs.findRefsAt
+ */
+function findRefsAt (location, options) {
+  var allTasks = Promise.resolve();
+
+  allTasks = allTasks
+    .then(function () {
+      // Validate the provided location
+      if (!isType(location, 'String')) {
+        throw new TypeError('location must be a string');
+      }
+
+      // Set default for options
+      if (isType(options, 'Undefined')) {
+        options = {};
+      }
+
+      // Validate options (Doing this here for a quick)
+      validateOptions(options);
+
+      // Combine the location and the optional relative base
+      location = combineURIs(options.relativeBase, location);
+    })
+    .then(function () {
+      return getRemoteDocument(location, options);
+    })
+    .then(function (res) {
+      return findRefs(res, options);
+    });
+
+  return allTasks;
+}
+
+/* Export the module members */
+module.exports.findRefs = findRefs;
+module.exports.findRefsAt = findRefsAt;
+module.exports.getRefDetails = getRefDetails;
+module.exports.isPtr = isPtr;
+module.exports.isRef = isRef;
+module.exports.pathFromPtr = pathFromPtr;
+module.exports.pathToPtr = pathToPtr;

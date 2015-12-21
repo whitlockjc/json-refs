@@ -13,7 +13,7 @@ module.exports = function (config) {
     files: [
       {pattern: 'json-refs-standalone.js', watch: false, included: true},
       {pattern: 'test-browser.js', watch: false, included: true},
-      {pattern: '**/*.json', watched: false, included: false, served: true}
+      {pattern: 'documents/**/*', watched: false, included: false, served: true}
     ],
     client: {
       mocha: {

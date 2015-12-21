@@ -33,7 +33,70 @@ var JsonRefs = require('../');
 var path = require('path');
 var URI = require('uri-js');
 var YAML = require('js-yaml');
-var testDocument = YAML.safeLoad(fs.readFileSync(path.join(__dirname, 'test-document.yaml'), 'utf-8'));
+
+var documentBase = path.join(__dirname, 'browser', 'documents');
+var ofTypeError = new TypeError('options.filter must be an Array, a Function of a String');
+var osdpTypeError = new TypeError('options.subDocPath must be an Array of path segments or a valid JSON Pointer');
+var osdpMissingError = new Error('JSON Pointer points to missing location: #/missing');
+var objTypeError = new TypeError('obj must be an Array or an Object');
+var optionsTypeError = new TypeError('options must be an Object');
+// This variable does not use documentBase because doing so breaks browserify's brfs transform
+var testDocument = YAML.safeLoad(fs.readFileSync(path.join(__dirname, 'browser', 'documents', 'test-document.yaml'),
+                                                 'utf-8'));
+
+function validateError (expected, actual, index) {
+  try {
+    if (_.isError(expected)) {
+      assert.equal(actual.message, expected.message);
+    } else {
+      throw actual;
+    }
+  } catch (err) {
+    err.message = 'Test scenario (' + index + ') failed: ' + err.message;
+
+    throw err;
+  }
+}
+
+function runPromiseTestScenarios (scenarios, fn, done) {
+  var allTests = Promise.resolve();
+
+  _.each(scenarios, function (scenario, index) {
+    var args = scenario[0];
+    var expected = scenario[1];
+    var aFn = assert.equal;
+
+    if (_.isArray(expected) || _.isPlainObject(expected)) {
+      aFn = assert.deepEqual;
+    }
+
+    allTests = allTests
+      .then(function () {
+        return fn.apply(JsonRefs, args);
+      })
+      .then(function () {
+        if (_.isError(expected)) {
+          throw new Error('Scenario should had failed');
+        } else {
+          aFn.apply(assert, [fn.apply(JsonRefs, args), expected]);
+        }
+      })
+      .catch(function (err) {
+        if (_.isError(expected)) {
+          // Do not revalidate errors
+          if (err.message.indexOf('Test scenario (') === -1) {
+            validateError(expected, err, index);
+          } else {
+            throw err;
+          }
+        } else {
+          throw new Error('Test scenario (' + index + ') should not had failed: ' + err.message);
+        }
+      });
+  });
+
+  allTests.then(done, done);
+}
 
 function runTestScenarios (scenarios, fn) {
   _.each(scenarios, function (scenario, index) {
@@ -52,17 +115,7 @@ function runTestScenarios (scenarios, fn) {
         assert.fail('Should had thrown an error (' + expected.message + ')');
       }
     } catch (err) {
-      try {
-        if (_.isError(expected)) {
-          assert.equal(err.message, expected.message);
-        } else {
-          throw err;
-        }
-      } catch (err2) {
-        err2.message = '(Test scenario ' + index + ') ' + err2.message;
-
-        throw err2;
-      }
+      validateError(expected, err, index);
     }
   });
 }
@@ -115,15 +168,13 @@ function runRefDetailsTestScenarios (actual, defMap) {
   });
 }
 
+function yamlContentProcessor (res, callback) {
+  callback(undefined, YAML.safeLoad(res.text));
+}
+
 describe('json-refs', function () {
   describe('#findRefs', function () {
     it('should throw an error for invalid arguments', function () {
-      var ofTypeError = new TypeError('options.filter must be an Array, a Function of a String');
-      var osdpTypeError = new TypeError('options.subDocPath must be an Array of path segments or a valid JSON Pointer');
-      var osdpMissingError = new Error('JSON Pointer points to missing location: #/missing');
-      var objTypeError = new TypeError('obj must be an Array or an Object');
-      var optionsTypeError = new TypeError('options must be an Object');
-
       runTestScenarios([
         [[], objTypeError],
         [['wrongType'], objTypeError],
@@ -200,8 +251,61 @@ describe('json-refs', function () {
     });
   });
 
+  describe('#findRefsAt', function () {
+    // #findRefsAt uses #findRefs so all of the validation it does for input arguments is already tested so we just
+    // need to test the cases that are unique to #findRefsAt.
+    it('should return an error for an invalid location values', function (done) {
+      var ilTypeError = new TypeError('location must be a string');
+
+      runPromiseTestScenarios([
+        [[undefined], ilTypeError],
+        [[false], ilTypeError]
+      ], JsonRefs.findRefsAt, done);
+    });
+
+    it('should handle a location to a missing resource', function (done) {
+      var location = typeof window === 'undefined' ?
+        './missing.json' :
+        'https://rawgit.com/whitlockjc/json-refs/master/missing.json';
+
+      JsonRefs.findRefsAt(location)
+        .then(function () {
+          throw new Error('JsonRefs.findRefsAt should had failed');
+        })
+        .catch(function (err) {
+          if (typeof window === 'undefined') {
+            assert.ok(err.message.indexOf('ENOENT') > -1);
+            assert.ok(err.message.indexOf('missing.json') > -1);
+          } else {
+            assert.equal(err.message, 'Not Found');
+          }
+        })
+        .then(done, done);
+    });
+
+    it('should handle a valid location', function (done) {
+      var loaderOptions = {
+        processContent: yamlContentProcessor
+      };
+
+      JsonRefs.findRefsAt('./test-document.yaml', {
+        loaderOptions: loaderOptions,
+        relativeBase: typeof window === 'undefined' ?
+          documentBase :
+          'base/documents'
+      })
+        .then(function (res) {
+          assert.deepEqual(res, JsonRefs.findRefs(testDocument));
+        })
+        .catch(function (err) {
+          throw err;
+        })
+        .then(done, done);
+    });
+  });
+
   describe('#getRefDetails', function () {
-    // #findRefs uses #getRefs and all scenarios other than the 'invalid' reference is tested
+    // #findRefs uses #getRefDetails and all scenarios other than the 'invalid' reference is tested
     it('should return proper reference details (invalid reference - reference like)', function () {
       validateRefDetails(JsonRefs.getRefDetails(testDocument.invalid), '#/invalid', testDocument.invalid);
     });
