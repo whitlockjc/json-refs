@@ -148,6 +148,21 @@ return the result of [findRefs](#module_JsonRefs.findRefs) on the retrieved docu
 | location | <code>string</code> | The location to retrieve *(Can be relative or absolute, just make sure you look at the [options documentation](#module_JsonRefs..JsonRefsOptions) to see how relative references are handled.)* |
 | [options] | <code>[JsonRefsOptions](#module_JsonRefs..JsonRefsOptions)</code> | The JsonRefs options |
 
+**Example**  
+```js
+// Example that only resolves references within a sub document
+JsonRefs.findRefsAt('http://petstore.swagger.io/v2/swagger.json', {
+    subDocPath: '#/definitions'
+  })
+  .then(function (res) {
+     // Do something with the response
+     //
+     // res.refs: JSON Reference locations and details
+     // res.value: The retrieved document
+  }, function (err) {
+    console.log(err.stack);
+  });
+```
 <a name="module_JsonRefs.getRefDetails"></a>
 ### JsonRefs.getRefDetails(obj) ⇒ <code>[UnresolvedRefDetails](#module_JsonRefs..UnresolvedRefDetails)</code>
 Returns detailed information about the JSON Reference.
@@ -239,6 +254,21 @@ Finds JSON References defined within the provided array/object and resolves them
 | obj | <code>array</code> &#124; <code>object</code> | The structure to find JSON References within |
 | [options] | <code>[JsonRefsOptions](#module_JsonRefs..JsonRefsOptions)</code> | The JsonRefs options |
 
+**Example**  
+```js
+// Example that only resolves relative and remote references
+JsonRefs.resolveRefsAt(swaggerObj, {
+    filter: ['relative', 'remote']
+  })
+  .then(function (res) {
+     // Do something with the response
+     //
+     // res.refs: JSON Reference locations and details
+     // res.resolved: The document with the appropriate JSON References resolved
+  }, function (err) {
+    console.log(err.stack);
+  });
+```
 <a name="module_JsonRefs.resolveRefsAt"></a>
 ### JsonRefs.resolveRefsAt(location, [options]) ⇒ <code>Promise</code>
 Resolves JSON References defined within the document at the provided location.
@@ -254,3 +284,17 @@ return the result of [resolveRefs](#module_JsonRefs.resolveRefs) on the retrieve
 | location | <code>string</code> | The location to retrieve *(Can be relative or absolute, just make sure you look at the [options documentation](#module_JsonRefs..JsonRefsOptions) to see how relative references are handled.)* |
 | [options] | <code>[JsonRefsOptions](#module_JsonRefs..JsonRefsOptions)</code> | The JsonRefs options |
 
+**Example**  
+```js
+// Example that loads a JSON document (No options.loaderOptions.processContent required) and resolves all references
+JsonRefs.resolveRefsAt('./swagger.json')
+  .then(function (res) {
+     // Do something with the response
+     //
+     // res.refs: JSON Reference locations and details
+     // res.resolved: The document with the appropriate JSON References resolved
+     // res.value: The retrieved document
+  }, function (err) {
+    console.log(err.stack);
+  });
+```

@@ -763,7 +763,7 @@ function pathToPtr (path, hashPrefix) {
 function findRefs (obj, options) {
   var ancestors = [];
   var fromObj = obj;
-  var fromPath = [];
+  var fromPath;
   var refs = {};
   var refFilter;
 
@@ -829,6 +829,20 @@ function findRefs (obj, options) {
  * @returns {Promise} a promise that resolves a {@link module:JsonRefs~RetrievedRefsResults}
  *
  * @alias module:JsonRefs.findRefsAt
+ *
+ * @example
+ * // Example that only resolves references within a sub document
+ * JsonRefs.findRefsAt('http://petstore.swagger.io/v2/swagger.json', {
+ *     subDocPath: '#/definitions'
+ *   })
+ *   .then(function (res) {
+ *      // Do something with the response
+ *      //
+ *      // res.refs: JSON Reference locations and details
+ *      // res.value: The retrieved document
+ *   }, function (err) {
+ *     console.log(err.stack);
+ *   });
  */
 function findRefsAt (location, options) {
   var allTasks = Promise.resolve();
@@ -892,6 +906,20 @@ function findRefsAt (location, options) {
  * @returns {Promise} a promise that resolves a {@link module:JsonRefs~ResolvedRefsResults}
  *
  * @alias module:JsonRefs.resolveRefs
+ *
+ * @example
+ * // Example that only resolves relative and remote references
+ * JsonRefs.resolveRefsAt(swaggerObj, {
+ *     filter: ['relative', 'remote']
+ *   })
+ *   .then(function (res) {
+ *      // Do something with the response
+ *      //
+ *      // res.refs: JSON Reference locations and details
+ *      // res.resolved: The document with the appropriate JSON References resolved
+ *   }, function (err) {
+ *     console.log(err.stack);
+ *   });
  */
 function resolveRefs (obj, options) {
   var allTasks = Promise.resolve();
@@ -1024,6 +1052,19 @@ function resolveRefs (obj, options) {
  * @returns {Promise} a promise that resolves a {@link module:JsonRefs~RetrievedResolvedRefsResults}
  *
  * @alias module:JsonRefs.resolveRefsAt
+ *
+ * @example
+ * // Example that loads a JSON document (No options.loaderOptions.processContent required) and resolves all references
+ * JsonRefs.resolveRefsAt('./swagger.json')
+ *   .then(function (res) {
+ *      // Do something with the response
+ *      //
+ *      // res.refs: JSON Reference locations and details
+ *      // res.resolved: The document with the appropriate JSON References resolved
+ *      // res.value: The retrieved document
+ *   }, function (err) {
+ *     console.log(err.stack);
+ *   });
  */
 function resolveRefsAt (location, options) {
   var allTasks = Promise.resolve();

@@ -6,14 +6,14 @@
 * Added `#getRefDetails` to centralize the code used to generate reference metadata *(Also allows you to see why an
 object you expect to be returned by `#findRefs` is not returned.)*
 * Added `#resolveRefsAt` to allow you to retrieve a remote document and then resolve its references
-* Renamed `#isJsonPointer` to `#isJsonPtr`
-* Renamed `#isJsonReference` to `#isJsonRef`
+* Renamed `#isJsonPointer` to `#isPtr`
+* Renamed `#isJsonReference` to `#isRef`
 * Renamed `#pathFromPointer` to `#pathFromPtr`
 * Renamed `#pathToPointer` to `#pathToPtr`
 * Updated `#findRefs` to no longer use [js-traverse](https://github.com/substack/js-traverse), to no longer process
 child properties of JSON Reference objects and to use an *options* object *(See API documentation for details)*
-* Updated `#isJsonPtr` to validate the `$ref` value is a URI instead of treating all string values as valid
-* Updated `#pathToPtr` to take an optional second argment to allow for returning both hash-based *(default)* and
+* Updated `#isPtr` to validate the `$ref` value is a URI instead of treating all string values as valid
+* Updated `#pathToPtr` to take an optional second argument to allow for returning both hash-based *(default)* and
 slash-based JSON Pointers
 * Updated `#resolveRefs` to work with the new `options` object *(Removes `options.depth`)*
 
