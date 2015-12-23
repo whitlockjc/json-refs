@@ -583,6 +583,15 @@ function validateOptions (options) {
  */
 
 /**
+ * Clears the internal cache of remote documents, reference details, etc.
+ *
+ * @alias module:JsonRefs.clearCache
+ */
+function clearCache () {
+  remoteCache = {};
+}
+
+/**
  * Returns detailed information about the JSON Reference.
  *
  * @param {object} obj - The JSON Reference definition
@@ -1111,6 +1120,7 @@ function resolveRefsAt (location, options) {
 }
 
 /* Export the module members */
+module.exports.clearCache = clearCache;
 module.exports.findRefs = findRefs;
 module.exports.findRefsAt = findRefsAt;
 module.exports.getRefDetails = getRefDetails;

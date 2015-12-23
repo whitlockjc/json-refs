@@ -14,6 +14,7 @@ JSON Pointers *(https://tools.ietf.org/html/rfc6901)*.
         * [~RetrievedResolvedRefsResults](#module_JsonRefs..RetrievedResolvedRefsResults) : <code>object</code>
         * [~UnresolvedRefDetails](#module_JsonRefs..UnresolvedRefDetails) : <code>object</code>
     * _static_
+        * [.clearCache()](#module_JsonRefs.clearCache)
         * [.findRefs(obj, [options])](#module_JsonRefs.findRefs) ⇒ <code>object</code>
         * [.findRefsAt(location, [options])](#module_JsonRefs.findRefsAt) ⇒ <code>Promise</code>
         * [.getRefDetails(obj)](#module_JsonRefs.getRefDetails) ⇒ <code>[UnresolvedRefDetails](#module_JsonRefs..UnresolvedRefDetails)</code>
@@ -116,6 +117,11 @@ Detailed information about unresolved JSON References.
 | type | <code>string</code> | The JSON Reference type *(This value can be one of the following: `invalid`, `local`, `relative` or `remote`.)* |
 | warning | <code>string</code> | The warning information *(Only present when the JSON Reference definition produces a warning)* |
 
+<a name="module_JsonRefs.clearCache"></a>
+### JsonRefs.clearCache()
+Clears the internal cache of remote documents, reference details, etc.
+
+**Kind**: static method of <code>[JsonRefs](#module_JsonRefs)</code>  
 <a name="module_JsonRefs.findRefs"></a>
 ### JsonRefs.findRefs(obj, [options]) ⇒ <code>object</code>
 Finds JSON References defined within the provided array/object.
