@@ -36,6 +36,7 @@ var qs = require('querystring');
 var URI = require('uri-js');
 
 var remoteCache = {};
+var remoteTypes = ['relative', 'remote'];
 var uriDetailsCache = {};
 
 // Load promises polyfill if necessary
@@ -45,6 +46,31 @@ if (typeof Promise === 'undefined') {
 }
 
 /* Internal Functions */
+
+// This is a very simplistic clone function that does not take into account non-JSON types.  For these types the
+// original value is used as the clone.  So while it's not a complete deep clone, for the needs of this project
+// this should be sufficient.
+function clone (obj) {
+  var cloned;
+
+  if (isType(obj, 'Array')) {
+    cloned = [];
+
+    obj.forEach(function (value, index) {
+      cloned[index] = clone(value);
+    });
+  } else if (isType(obj, 'Object')) {
+    cloned = {};
+
+    Object.keys(obj).forEach(function (key) {
+      cloned[key] = clone(obj[key]);
+    });
+  } else {
+    cloned = obj;
+  }
+
+  return cloned;
+}
 
 function combinePaths (p1, p2) {
   var combined = [];
@@ -86,7 +112,7 @@ function combineURIs (u1, u2) {
   var u1Details;
   var combinedDetails;
 
-  if (u2Details.reference === 'absolute') {
+  if (u2Details.reference === 'absolute' || u2Details.reference === 'uri') {
     combinedDetails = u2Details;
   } else {
     u1Details = isType(u1, 'Undefined') ? undefined : URI.parse(u1);
@@ -114,6 +140,30 @@ function decodeSegment (seg) {
   return seg.replace(/~0/g, '~').replace(/~1/g, '/');
 }
 
+function encodeSegment (seg) {
+  if (!isType(seg, 'String')) {
+    seg = JSON.stringify(seg);
+  }
+
+  return seg.replace(/~/g, '~0').replace(/\//g, '~1');
+}
+
+function filterRefs (options, refs) {
+  var refFilter = makeRefFilter(options);
+  var filtered = {};
+  var subDocPrefix = pathToPtr(makeSubDocPath(options));
+
+  Object.keys(refs).forEach(function (refPtr) {
+    var refDetails = refs[refPtr];
+
+    if (refFilter(refDetails, pathFromPtr(refPtr)) === true && refPtr.indexOf(subDocPrefix) > -1) {
+      filtered[refPtr] = refDetails;
+    }
+  });
+
+  return filtered;
+}
+
 function findAncestors (obj, path) {
   var ancestors = [];
   var node = obj;
@@ -129,61 +179,36 @@ function findAncestors (obj, path) {
   return ancestors;
 }
 
-function findValue (obj, path) {
+function findValue (obj, path, ignore) {
   var value = obj;
 
-  path.forEach(function (seg) {
-    if (seg in value) {
-      value = value[seg];
+  try {
+    path.forEach(function (seg) {
+      if (seg in value) {
+        value = value[seg];
+      } else {
+        throw Error('JSON Pointer points to missing location: ' + pathToPtr(path));
+      }
+    });
+  } catch (err) {
+    if (ignore === true) {
+      value = undefined;
     } else {
-      throw Error('JSON Pointer points to missing location: ' + pathToPtr(path));
+      throw err;
     }
-  });
+  }
 
   return value;
 }
 
-function isType (obj, type) {
-  // A PhantomJS bug (https://github.com/ariya/phantomjs/issues/11722) prohibits us from using the same approach for
-  // undefined checking that we use for other types.
-  if (type === 'Undefined') {
-    return typeof obj === 'undefined';
-  } else {
-    return Object.prototype.toString.call(obj) === '[object ' + type + ']';
-  }
-}
+function getExtraRefKeys (ref) {
+  return Object.keys(ref).reduce(function (extras, key) {
+    if (key !== '$ref') {
+      extras.push(key);
+    }
 
-// This is a very simplistic clone function that does not take into account non-JSON types.  For these types the
-// original value is used as the clone.  So while it's not a complete deep clone, for the needs of this project
-// this should be sufficient.
-function clone (obj) {
-  var cloned;
-
-  if (isType(obj, 'Array')) {
-    cloned = [];
-
-    obj.forEach(function (value, index) {
-      cloned[index] = clone(value);
-    });
-  } else if (isType(obj, 'Object')) {
-    cloned = {};
-
-    Object.keys(obj).forEach(function (key) {
-      cloned[key] = clone(obj[key]);
-    });
-  } else {
-    cloned = obj;
-  }
-
-  return cloned;
-}
-
-function encodeSegment (seg) {
-  if (!isType(seg, 'String')) {
-    seg = JSON.stringify(seg);
-  }
-
-  return seg.replace(/~/g, '~0').replace(/\//g, '~1');
+    return extras;
+  }, []);
 }
 
 function getRemoteDocument (url, options) {
@@ -203,17 +228,25 @@ function getRemoteDocument (url, options) {
     allTasks = pathLoader.load(url, loaderOptions);
 
     // Update the cache
-    allTasks = allTasks.then(function (res) {
-      remoteCache[url] = {
-        response: res
-      };
+    allTasks = allTasks
+      .then(function (res) {
+        remoteCache[url] = {
+          value: res
+        };
 
-      return res;
-    });
+        return res;
+      })
+      .catch(function (err) {
+        remoteCache[url] = {
+          error: err
+        };
+
+        throw err;
+      });
   } else {
     // Return the cached version
     allTasks = allTasks.then(function () {
-      return cacheEntry.response;
+      return cacheEntry.value;
     });
   }
 
@@ -229,14 +262,50 @@ function isRefLike (obj) {
   return isType(obj, 'Object') && isType(obj.$ref, 'String');
 }
 
-function getExtraRefKeys (ref) {
-  return Object.keys(ref).reduce(function (extras, key) {
-    if (key !== '$ref') {
-      extras.push(key);
-    }
+function isType (obj, type) {
+  // A PhantomJS bug (https://github.com/ariya/phantomjs/issues/11722) prohibits us from using the same approach for
+  // undefined checking that we use for other types.
+  if (type === 'Undefined') {
+    return typeof obj === 'undefined';
+  } else {
+    return Object.prototype.toString.call(obj) === '[object ' + type + ']';
+  }
+}
 
-    return extras;
-  }, []);
+function makeRefFilter (options) {
+  var refFilter;
+
+  if (isType(options.filter, 'Array') || isType(options.filter, 'String')) {
+    refFilter = function (refDetails) {
+      var validTypes = isType(options.filter, 'String') ? [options.filter] : options.filter;
+
+      return validTypes.indexOf(refDetails.type) > -1;
+    };
+  } else if (isType(options.filter, 'Function')) {
+    refFilter = options.filter;
+  } else {
+    refFilter = function () {
+      return true;
+    };
+  }
+
+  return refFilter;
+}
+
+function makeSubDocPath (options) {
+  var fromPath = [];
+
+  if (isType(options.subDocPath, 'Array')) {
+    fromPath = options.subDocPath;
+  } else if (isType(options.subDocPath, 'String')) {
+    fromPath = pathFromPtr(options.subDocPath);
+  }
+
+  return fromPath;
+}
+
+function setValue (obj, refPath, value) {
+  findValue(obj, refPath.slice(0, refPath.length - 1))[refPath[refPath.length - 1]] = value;
 }
 
 function walk (ancestors, node, path, fn) {
@@ -305,17 +374,16 @@ function validateOptions (options) {
  *
  * @typedef {object} JsonRefsOptions
  *
- * @param {string} [relativeBase] - The base location to use when resolving relative references *(Only useful for APIs
- * that do remote reference resolution.  If this value is not defined,
- * {@link https://github.com/whitlockjc/path-loader|path-loader} will use `window.location.href` for the browser and
- * `process.cwd()` for Node.js.)*
  * @param {string|string[]|function} [filter=[]] - The filter to use when gathering JSON References *(If this value is
  * a single string or an array of strings, the value(s) are expected to be the `type(s)` you are interested in
  * collecting as described in {@link module:JsonRefs.getRefDetails}.  If it is a function, it is expected that the
  * function behaves like {@link module:JsonRefs~RefDetailsFilter}.)*
  * @param {object} [loaderOptions] - The options to pass to
  * {@link https://github.com/whitlockjc/path-loader/blob/master/docs/API.md#module_PathLoader.load|PathLoader~load}.
- * @param {string} [relativeBase] - The location to resolve relative references from
+ * @param {string} [options.relativeBase] - The base location to use when resolving relative references *(Only useful
+ * for APIs that do remote reference resolution.  If this value is not defined,
+ * {@link https://github.com/whitlockjc/path-loader|path-loader} will use `window.location.href` for the browser and
+ * `process.cwd()` for Node.js.)*
  * @param {string|string[]} [options.subDocPath=[]] - The JSON Pointer or array of path segments to the sub document
  * location to search from
  *
@@ -327,12 +395,50 @@ function validateOptions (options) {
  *
  * @typedef {function} RefDetailsFilter
  *
- * @param {module:JsonRefs~UnresolvedRefDetails} refDetails - The JSON Reference Details to test
+ * @param {module:JsonRefs~UnresolvedRefDetails} refDetails - The JSON Reference details to test
  * @param {string[]} path - The path to the JSON Reference
  *
  * @returns {boolean} whether the JSON Reference should be filtered *(out)* or not
  *
  * @alias module:JsonRefs~RefDetailsFilter
+ */
+
+/**
+ * Detailed information about resolved JSON References.
+ *
+ * @typedef {module:JsonRefs~UnresolvedRefDetails} ResolvedRefDetails
+ *
+ * @property {boolean} [circular] - Whether or not the JSON Reference is circular *(Will not be set if the JSON
+ * Reference is not circular)*
+ * @property {boolean} [missing] - Whether or not the referenced value was missing or not *(Will not be set if the
+ * referenced value is not missing)*
+ * @property {*} [value] - The referenced value *(Will not be set if the referenced value is missing)*
+ *
+ * @alias module:JsonRefs~ResolvedRefDetails
+ */
+
+/**
+ * The results of resolving the JSON References of an array/object.
+ *
+ * @typedef {object} ResolvedResults
+ *
+ * @property {module:JsonRefs~ResolvedRefDetails} refs - An object whose keys are JSON Pointers *(fragment version)*
+ * to where the JSON Reference is defined and whose values are {@link module:JsonRefs~ResolvedRefDetails}
+ * @property {object} value - The array/object with its JSON References fully resolved
+ *
+ * @alias module:JsonRefs~ResolvedRefsResults
+ */
+
+/**
+ * An object containing the retrieved document and detailed information about its JSON References.
+ *
+ * @typedef {object} RetrievedRefsResults
+ *
+ * @property {module:JsonRefs~UnresolvedRefDetails} refs - An object whose keys are JSON Pointers *(fragment version)*
+ * to where the JSON Reference is defined and whose values are {@link module:JsonRefs~UnresolvedRefDetails}
+ * @property {object} value - The retrieved document
+ *
+ * @alias module:JsonRefs~RetrievedRefsResults
  */
 
 /**
@@ -342,7 +448,7 @@ function validateOptions (options) {
  *
  * @property {object} def - The JSON Reference definition
  * @property {string} [error] - The error information for invalid JSON Reference definition *(Only present when the
- * JSON Reference definition is invalid)*
+ * JSON Reference definition is invalid or there was a problem retrieving a remote reference during resolution)*
  * @property {string} uri - The URI portion of the JSON Reference
  * @property {object} uriDetails - Detailed information about the URI as provided by
  * {@link https://github.com/garycourt/uri-js|URI.parse}.
@@ -553,26 +659,10 @@ function findRefs (obj, options) {
   validateOptions(options);
 
   // Convert from to a pointer
-  if (isType(options.subDocPath, 'Array')) {
-    fromPath = options.subDocPath;
-  } else if (isType(options.subDocPath, 'String')) {
-    fromPath = pathFromPtr(options.subDocPath);
-  }
+  fromPath = makeSubDocPath(options);
 
   // Convert options.filter from an Array/String to a Function
-  if (isType(options.filter, 'Array') || isType(options.filter, 'String')) {
-    refFilter = function (refDetails) {
-      var validTypes = isType(options.filter, 'String') ? [options.filter] : options.filter;
-
-      return validTypes.indexOf(refDetails.type) > -1;
-    };
-  } else if (isType(options.filter, 'Function')) {
-    refFilter = options.filter;
-  } else {
-    refFilter = function () {
-      return true;
-    };
-  }
+  refFilter = makeRefFilter(options);
 
   if (fromPath.length > 0) {
     ancestors = findAncestors(obj, fromPath);
@@ -614,8 +704,7 @@ function findRefs (obj, options) {
  * {@link module:JsonRefs~JsonRefsOptions|options documentation} to see how relative references are handled.)*
  * @param {module:JsonRefs~JsonRefsOptions} [options] - The JsonRefs options
  *
- * @returns {Promise} a promise that resolves an object whose keys are JSON Pointers *(fragment version)* to where the
- * JSON Reference is defined and whose values are {@link module:JsonRefs~UnresolvedRefDetails}.
+ * @returns {Promise} a promise that resolves a {@link module:JsonRefs~RetrievedRefsResults}
  *
  * @alias module:JsonRefs.findRefsAt
  */
@@ -624,6 +713,8 @@ function findRefsAt (location, options) {
 
   allTasks = allTasks
     .then(function () {
+      var cOptions;
+
       // Validate the provided location
       if (!isType(location, 'String')) {
         throw new TypeError('location must be a string');
@@ -637,14 +728,270 @@ function findRefsAt (location, options) {
       // Validate options (Doing this here for a quick)
       validateOptions(options);
 
+      cOptions = clone(options);
+
       // Combine the location and the optional relative base
       location = combineURIs(options.relativeBase, location);
-    })
-    .then(function () {
-      return getRemoteDocument(location, options);
+
+      // Set the new relative reference location
+      cOptions.relativeBase = location.substring(0, location.lastIndexOf('/'));
+
+      return getRemoteDocument(location, cOptions);
     })
     .then(function (res) {
-      return findRefs(res, options);
+      var cacheEntry = clone(remoteCache[location]);
+      var cOptions;
+
+      if (isType(cacheEntry.refs, 'Undefined')) {
+        cOptions = clone(options);
+
+        // Do not filter any references so the cache is complete
+        delete cOptions.filter;
+        delete cOptions.subDocPath;
+
+        remoteCache[location].refs = findRefs(res, cOptions);
+
+        // Filter out the references based on options.filter and options.subDocPath
+        cacheEntry.refs = filterRefs(options, remoteCache[location].refs);
+      }
+
+      return cacheEntry;
+    });
+
+  return allTasks;
+}
+
+// Should this be its own exported API?
+
+function findAllRefs (obj, options, parents, parentPath, documents) {
+  var allTasks = Promise.resolve();
+  var refs = findRefs(obj, options);
+
+  Object.keys(refs).forEach(function (refPtr) {
+    var refDetails = refs[refPtr];
+    var refPath = pathFromPtr(refPtr);
+    var location;
+    var parentIndex;
+
+    // Only process remote references
+    if (remoteTypes.indexOf(refDetails.type) > -1) {
+      location = combineURIs(options.relativeBase, refDetails.uri);
+      parentIndex = parents.indexOf(location);
+
+      if (parentIndex === -1) {
+        allTasks = allTasks
+          .then(function () {
+            var rParentPath = parentPath.concat(refPath);
+            var rOptions = clone(options);
+
+            // Remove the sub document path
+            delete rOptions.subDocPath;
+
+            // Update the relativeBase based on the new location to retrieve
+            rOptions.relativeBase = location.substring(0, location.lastIndexOf('/'));
+
+            return findRefsAt(refDetails.uri, options)
+              .then(function (rRefs) {
+                // Record the location for circular reference identification
+                rRefs.location = location;
+
+                if (refDetails.uriDetails.fragment) {
+                  // If the remote reference was for a fragment, do not include the reference details
+                  rRefs.refs = {};
+
+                  // Record the remote document
+                  documents[pathToPtr(rParentPath)] = rRefs;
+
+                  return rRefs;
+                } else {
+                  // Record the location in the document where the parent document was resolved
+                  Object.keys(rRefs.refs).forEach(function (refPtr) {
+                    rRefs.refs[refPtr].parentLocation = pathToPtr(rParentPath);
+                  });
+
+                  // Record the remote document
+                  documents[pathToPtr(rParentPath)] = rRefs;
+
+                  // Find all important references within the document
+                  return findAllRefs(rRefs.value, rOptions, parents.concat(location), rParentPath, documents);
+                }
+              });
+          });
+      } else {
+        // Mark seen ancestors as circular
+        parents.slice(parentIndex).forEach(function (parent) {
+          Object.keys(documents).forEach(function (cRefPtr) {
+            var document = documents[cRefPtr];
+
+            if (document.location === parent) {
+              document.circular = true;
+            }
+          });
+        });
+
+        // Mark self as circular
+        documents[pathToPtr(parentPath)].refs[refPtr].circular = true;
+      }
+    }
+  });
+
+  allTasks = allTasks
+    .then(function () {
+      // Only collapse the documents when we're back at the top of the promise stack
+      if (parentPath.length === 0) {
+        // Collapse all references together into one list
+        Object.keys(documents).forEach(function (refPtr) {
+          var document = documents[refPtr];
+
+          // Merge each reference into the root document's references
+          Object.keys(document.refs).forEach(function (cRefPtr) {
+            var fPtr = pathToPtr(pathFromPtr(refPtr).concat(pathFromPtr(cRefPtr)));
+            var refDetails = refs[fPtr];
+
+            if (isType(refDetails, 'Undefined')) {
+              refs[fPtr] = document.refs[cRefPtr];
+            }
+          });
+
+          // Record the value of the remote reference
+          refs[refPtr].value = document.value;
+
+          // Mark the remote reference itself as circular
+          if (document.circular) {
+            refs[refPtr].circular = true;
+          }
+        });
+      }
+
+      return refs;
+    });
+
+  return allTasks;
+}
+
+/**
+ * Finds JSON References defined within the provided array/object and resolves them.
+ *
+ * @param {array|object} obj - The structure to find JSON References within
+ * @param {module:JsonRefs~JsonRefsOptions} [options] - The JsonRefs options
+ *
+ * @returns {Promise} a promise that resolves a {@link module:JsonRefs~ResolvedRefsResults}
+ *
+ * @alias module:JsonRefs.resolveRefs
+ */
+function resolveRefs (obj, options) {
+  var allTasks = Promise.resolve();
+
+  allTasks = allTasks
+    .then(function () {
+      // Validate the provided document
+      if (!isType(obj, 'Array') && !isType(obj, 'Object')) {
+        throw new TypeError('obj must be an Array or an Object');
+      }
+
+      // Set default for options
+      if (isType(options, 'Undefined')) {
+        options = {};
+      }
+
+      // Validate options
+      validateOptions(options);
+    })
+    .then(function () {
+      // Find all references recursively
+      return findAllRefs(obj, options, [], [], {});
+    })
+    .then(function (aRefs) {
+      var cloned = clone(obj);
+      var parentLocations = [];
+
+      // Replace remote references first
+      Object.keys(aRefs).forEach(function (refPtr) {
+        var refDetails = aRefs[refPtr];
+        var value;
+
+        if (remoteTypes.indexOf(refDetails.type) > -1) {
+          if (isType(refDetails.error, 'Undefined')) {
+            try {
+              value = findValue(refDetails.value || {},
+                                refDetails.uriDetails.fragment ?
+                                pathFromPtr(refDetails.uriDetails.fragment) :
+                                  []);
+              setValue(cloned, pathFromPtr(refPtr), value);
+
+              // The reference includes a fragment so update the reference details
+              if (!isType(refDetails.value, 'Undefined')) {
+                refDetails.value = value;
+              } else if (refDetails.circular) {
+                // If there is no value and it's circular, set its value to an empty value
+                refDetails.value = {};
+              }
+            } catch (err) {
+              refDetails.error = err;
+              refDetails.missing = true;
+            }
+          } else {
+            refDetails.missing = true;
+          }
+        }
+      });
+
+      // Replace local references
+      Object.keys(aRefs).forEach(function (refPtr) {
+        var refDetails = aRefs[refPtr];
+        var parentLocation = refDetails.parentLocation;
+        var value;
+
+        // Record that this reference has parent location details so we can clean it up later
+        if (!isType(parentLocation, 'Undefined') && parentLocations.indexOf(refPtr) === -1) {
+          parentLocations.push(refPtr);
+        }
+
+        if (remoteTypes.indexOf(refDetails.type) === -1) {
+          if (isType(refDetails.error, 'Undefined')) {
+            if (refPtr.indexOf(refDetails.uri) > -1) {
+              refDetails.circular = true;
+              value = {};
+            } else {
+              if (!isType(parentLocation, 'Undefined')) {
+                // Attempt to get the referenced value from the remote document first
+                value = findValue(findValue(cloned, pathFromPtr(parentLocation)),
+                                  refDetails.uriDetails.fragment ?
+                                    pathFromPtr(refDetails.uriDetails.fragment) :
+                                    [], true);
+              }
+            }
+
+            try {
+              if (isType(value, 'Undefined')) {
+                value = findValue(cloned,
+                                  refDetails.uriDetails.fragment ?
+                                  pathFromPtr(refDetails.uriDetails.fragment) :
+                                    []);
+              }
+
+              setValue(cloned, pathFromPtr(refPtr), value);
+
+              refDetails.value = value;
+            } catch (err) {
+              refDetails.error = err;
+              refDetails.missing = true;
+            }
+          } else {
+            refDetails.missing = true;
+          }
+        }
+      });
+
+      // Remove all parentLocation values
+      parentLocations.forEach(function (refPtr) {
+        delete aRefs[refPtr].parentLocation;
+      });
+
+      return {
+        refs: aRefs,
+        resolved: cloned
+      };
     });
 
   return allTasks;
@@ -658,3 +1005,4 @@ module.exports.isPtr = isPtr;
 module.exports.isRef = isRef;
 module.exports.pathFromPtr = pathFromPtr;
 module.exports.pathToPtr = pathToPtr;
+module.exports.resolveRefs = resolveRefs;

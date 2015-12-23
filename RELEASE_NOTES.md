@@ -14,6 +14,7 @@ child properties of JSON Reference objects and to use an *options* object *(See 
 * Updated `#isJsonPtr` to validate the `$ref` value is a URI instead of treating all string values as valid
 * Updated `#pathToPtr` to take an optional second argment to allow for returning both hash-based *(default)* and
 slash-based JSON Pointers
+* Updated `#resolveRefs` to work with the new `options` object *(Removes `options.depth`)*
 
 ### v1.3.0 (2015-11-19)
 

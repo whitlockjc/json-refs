@@ -1,0 +1,9 @@
+name: documents/nested/test-nested-1.yaml
+ancestor:
+  $ref: ../test-document-1.yaml
+local:
+  $ref: '#/name'
+deferred:
+  $ref: '#/project/name'
+missing:
+  $ref: '#/some/missing/path'

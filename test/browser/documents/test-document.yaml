@@ -41,6 +41,9 @@ invalid:
 local:
   $ref: '#/project/name'
 
+missing:
+  $ref: '#/some/missing/path'
+
 # Remote references
 remote:
   absolute:
@@ -48,9 +51,9 @@ remote:
   absolute-with-hash:
     $ref: 'https://rawgit.com/whitlockjc/json-refs/master/package.json#/name'
   relative:
-    $ref: '../../package.json'
+    $ref: './nested/test-nested.yaml'
   relative-with-hash:
-    $ref: '../../package.json#/name'
+    $ref: './nested/test-nested.yaml#/name'
 
 # A reference with extra properties that should produce a warning
 warning:

@@ -5,18 +5,22 @@ JSON Pointers *(https://tools.ietf.org/html/rfc6901)*.
 
 
 * [JsonRefs](#module_JsonRefs)
-  * _inner_
-    * [~JsonRefsOptions](#module_JsonRefs..JsonRefsOptions) : <code>object</code>
-    * [~RefDetailsFilter](#module_JsonRefs..RefDetailsFilter) ⇒ <code>boolean</code>
-    * [~UnresolvedRefDetails](#module_JsonRefs..UnresolvedRefDetails) : <code>object</code>
-  * _static_
-    * [.findRefs(obj, [options])](#module_JsonRefs.findRefs) ⇒ <code>object</code>
-    * [.findRefsAt(location, [options])](#module_JsonRefs.findRefsAt) ⇒ <code>Promise</code>
-    * [.getRefDetails(obj)](#module_JsonRefs.getRefDetails) ⇒ <code>[UnresolvedRefDetails](#module_JsonRefs..UnresolvedRefDetails)</code>
-    * [.isPtr(ptr)](#module_JsonRefs.isPtr) ⇒ <code>boolean</code>
-    * [.isRef(obj)](#module_JsonRefs.isRef) ⇒ <code>boolean</code>
-    * [.pathFromPtr(ptr)](#module_JsonRefs.pathFromPtr) ⇒ <code>Array.&lt;string&gt;</code>
-    * [.pathToPtr(path, [hashPrefix])](#module_JsonRefs.pathToPtr) ⇒ <code>string</code>
+    * _inner_
+        * [~JsonRefsOptions](#module_JsonRefs..JsonRefsOptions) : <code>object</code>
+        * [~RefDetailsFilter](#module_JsonRefs..RefDetailsFilter) ⇒ <code>boolean</code>
+        * [~ResolvedRefDetails](#module_JsonRefs..ResolvedRefDetails) : <code>[UnresolvedRefDetails](#module_JsonRefs..UnresolvedRefDetails)</code>
+        * [~ResolvedResults](#module_JsonRefs..ResolvedResults) : <code>object</code>
+        * [~RetrievedRefsResults](#module_JsonRefs..RetrievedRefsResults) : <code>object</code>
+        * [~UnresolvedRefDetails](#module_JsonRefs..UnresolvedRefDetails) : <code>object</code>
+    * _static_
+        * [.findRefs(obj, [options])](#module_JsonRefs.findRefs) ⇒ <code>object</code>
+        * [.findRefsAt(location, [options])](#module_JsonRefs.findRefsAt) ⇒ <code>Promise</code>
+        * [.getRefDetails(obj)](#module_JsonRefs.getRefDetails) ⇒ <code>[UnresolvedRefDetails](#module_JsonRefs..UnresolvedRefDetails)</code>
+        * [.isPtr(ptr)](#module_JsonRefs.isPtr) ⇒ <code>boolean</code>
+        * [.isRef(obj)](#module_JsonRefs.isRef) ⇒ <code>boolean</code>
+        * [.pathFromPtr(ptr)](#module_JsonRefs.pathFromPtr) ⇒ <code>Array.&lt;string&gt;</code>
+        * [.pathToPtr(path, [hashPrefix])](#module_JsonRefs.pathToPtr) ⇒ <code>string</code>
+        * [.resolveRefs(obj, [options])](#module_JsonRefs.resolveRefs) ⇒ <code>Promise</code>
 
 <a name="module_JsonRefs..JsonRefsOptions"></a>
 ### JsonRefs~JsonRefsOptions : <code>object</code>
@@ -26,10 +30,9 @@ The options used for various JsonRefs APIs.
 
 | Param | Type | Default | Description |
 | --- | --- | --- | --- |
-| [relativeBase] | <code>string</code> |  | The base location to use when resolving relative references *(Only useful for APIs that do remote reference resolution.  If this value is not defined, [path-loader](https://github.com/whitlockjc/path-loader) will use `window.location.href` for the browser and `process.cwd()` for Node.js.)* |
 | [filter] | <code>string</code> &#124; <code>Array.&lt;string&gt;</code> &#124; <code>function</code> | <code>&quot;[]&quot;</code> | The filter to use when gathering JSON References *(If this value is a single string or an array of strings, the value(s) are expected to be the `type(s)` you are interested in collecting as described in [getRefDetails](#module_JsonRefs.getRefDetails).  If it is a function, it is expected that the function behaves like [RefDetailsFilter](#module_JsonRefs..RefDetailsFilter).)* |
 | [loaderOptions] | <code>object</code> |  | The options to pass to [PathLoader~load](https://github.com/whitlockjc/path-loader/blob/master/docs/API.md#module_PathLoader.load). |
-| [relativeBase] | <code>string</code> |  | The location to resolve relative references from |
+| [options.relativeBase] | <code>string</code> |  | The base location to use when resolving relative references *(Only useful for APIs that do remote reference resolution.  If this value is not defined, [path-loader](https://github.com/whitlockjc/path-loader) will use `window.location.href` for the browser and `process.cwd()` for Node.js.)* |
 | [options.subDocPath] | <code>string</code> &#124; <code>Array.&lt;string&gt;</code> | <code>&quot;[]&quot;</code> | The JSON Pointer or array of path segments to the sub document location to search from |
 
 <a name="module_JsonRefs..RefDetailsFilter"></a>
@@ -41,8 +44,45 @@ Simple function used to filter our JSON References.
 
 | Param | Type | Description |
 | --- | --- | --- |
-| refDetails | <code>[UnresolvedRefDetails](#module_JsonRefs..UnresolvedRefDetails)</code> | The JSON Reference Details to test |
+| refDetails | <code>[UnresolvedRefDetails](#module_JsonRefs..UnresolvedRefDetails)</code> | The JSON Reference details to test |
 | path | <code>Array.&lt;string&gt;</code> | The path to the JSON Reference |
+
+<a name="module_JsonRefs..ResolvedRefDetails"></a>
+### JsonRefs~ResolvedRefDetails : <code>[UnresolvedRefDetails](#module_JsonRefs..UnresolvedRefDetails)</code>
+Detailed information about resolved JSON References.
+
+**Kind**: inner typedef of <code>[JsonRefs](#module_JsonRefs)</code>  
+**Properties**
+
+| Name | Type | Description |
+| --- | --- | --- |
+| circular | <code>boolean</code> | Whether or not the JSON Reference is circular *(Will not be set if the JSON Reference is not circular)* |
+| missing | <code>boolean</code> | Whether or not the referenced value was missing or not *(Will not be set if the referenced value is not missing)* |
+| value | <code>\*</code> | The referenced value *(Will not be set if the referenced value is missing)* |
+
+<a name="module_JsonRefs..ResolvedResults"></a>
+### JsonRefs~ResolvedResults : <code>object</code>
+The results of resolving the JSON References of an array/object.
+
+**Kind**: inner typedef of <code>[JsonRefs](#module_JsonRefs)</code>  
+**Properties**
+
+| Name | Type | Description |
+| --- | --- | --- |
+| refs | <code>[ResolvedRefDetails](#module_JsonRefs..ResolvedRefDetails)</code> | An object whose keys are JSON Pointers *(fragment version)* to where the JSON Reference is defined and whose values are [ResolvedRefDetails](#module_JsonRefs..ResolvedRefDetails) |
+| value | <code>object</code> | The array/object with its JSON References fully resolved |
+
+<a name="module_JsonRefs..RetrievedRefsResults"></a>
+### JsonRefs~RetrievedRefsResults : <code>object</code>
+An object containing the retrieved document and detailed information about its JSON References.
+
+**Kind**: inner typedef of <code>[JsonRefs](#module_JsonRefs)</code>  
+**Properties**
+
+| Name | Type | Description |
+| --- | --- | --- |
+| refs | <code>[UnresolvedRefDetails](#module_JsonRefs..UnresolvedRefDetails)</code> | An object whose keys are JSON Pointers *(fragment version)* to where the JSON Reference is defined and whose values are [UnresolvedRefDetails](#module_JsonRefs..UnresolvedRefDetails) |
+| value | <code>object</code> | The retrieved document |
 
 <a name="module_JsonRefs..UnresolvedRefDetails"></a>
 ### JsonRefs~UnresolvedRefDetails : <code>object</code>
@@ -54,7 +94,7 @@ Detailed information about unresolved JSON References.
 | Name | Type | Description |
 | --- | --- | --- |
 | def | <code>object</code> | The JSON Reference definition |
-| error | <code>string</code> | The error information for invalid JSON Reference definition *(Only present when the JSON Reference definition is invalid)* |
+| error | <code>string</code> | The error information for invalid JSON Reference definition *(Only present when the JSON Reference definition is invalid or there was a problem retrieving a remote reference during resolution)* |
 | uri | <code>string</code> | The URI portion of the JSON Reference |
 | uriDetails | <code>object</code> | Detailed information about the URI as provided by [URI.parse](https://github.com/garycourt/uri-js). |
 | type | <code>string</code> | The JSON Reference type *(This value can be one of the following: `invalid`, `local`, `relative` or `remote`.)* |
@@ -85,8 +125,7 @@ This API is identical to [findRefs](#module_JsonRefs.findRefs) except this API w
 return the result of [findRefs](#module_JsonRefs.findRefs) on the retrieved document.
 
 **Kind**: static method of <code>[JsonRefs](#module_JsonRefs)</code>  
-**Returns**: <code>Promise</code> - a promise that resolves an object whose keys are JSON Pointers *(fragment version)* to where the
-JSON Reference is defined and whose values are [UnresolvedRefDetails](#module_JsonRefs..UnresolvedRefDetails).  
+**Returns**: <code>Promise</code> - a promise that resolves a [RetrievedRefsResults](#module_JsonRefs..RetrievedRefsResults)  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -171,4 +210,16 @@ Returns a JSON Pointer for the provided array of path segments.
 | --- | --- | --- | --- |
 | path | <code>Array.&lt;string&gt;</code> |  | The array of path segments |
 | [hashPrefix] | <code>boolean</code> | <code>true</code> | Whether or not create a hash-prefixed JSON Pointer |
+
+<a name="module_JsonRefs.resolveRefs"></a>
+### JsonRefs.resolveRefs(obj, [options]) ⇒ <code>Promise</code>
+Finds JSON References defined within the provided array/object and resolves them.
+
+**Kind**: static method of <code>[JsonRefs](#module_JsonRefs)</code>  
+**Returns**: <code>Promise</code> - a promise that resolves a [module:JsonRefs~ResolvedRefsResults](module:JsonRefs~ResolvedRefsResults)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| obj | <code>array</code> &#124; <code>object</code> | The structure to find JSON References within |
+| [options] | <code>[JsonRefsOptions](#module_JsonRefs..JsonRefsOptions)</code> | The JsonRefs options |
 
