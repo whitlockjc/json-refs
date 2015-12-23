@@ -11,6 +11,7 @@ JSON Pointers *(https://tools.ietf.org/html/rfc6901)*.
         * [~ResolvedRefDetails](#module_JsonRefs..ResolvedRefDetails) : <code>[UnresolvedRefDetails](#module_JsonRefs..UnresolvedRefDetails)</code>
         * [~ResolvedResults](#module_JsonRefs..ResolvedResults) : <code>object</code>
         * [~RetrievedRefsResults](#module_JsonRefs..RetrievedRefsResults) : <code>object</code>
+        * [~RetrievedResolvedRefsResults](#module_JsonRefs..RetrievedResolvedRefsResults) : <code>object</code>
         * [~UnresolvedRefDetails](#module_JsonRefs..UnresolvedRefDetails) : <code>object</code>
     * _static_
         * [.findRefs(obj, [options])](#module_JsonRefs.findRefs) ⇒ <code>object</code>
@@ -21,6 +22,7 @@ JSON Pointers *(https://tools.ietf.org/html/rfc6901)*.
         * [.pathFromPtr(ptr)](#module_JsonRefs.pathFromPtr) ⇒ <code>Array.&lt;string&gt;</code>
         * [.pathToPtr(path, [hashPrefix])](#module_JsonRefs.pathToPtr) ⇒ <code>string</code>
         * [.resolveRefs(obj, [options])](#module_JsonRefs.resolveRefs) ⇒ <code>Promise</code>
+        * [.resolveRefsAt(location, [options])](#module_JsonRefs.resolveRefsAt) ⇒ <code>Promise</code>
 
 <a name="module_JsonRefs..JsonRefsOptions"></a>
 ### JsonRefs~JsonRefsOptions : <code>object</code>
@@ -82,6 +84,20 @@ An object containing the retrieved document and detailed information about its J
 | Name | Type | Description |
 | --- | --- | --- |
 | refs | <code>[UnresolvedRefDetails](#module_JsonRefs..UnresolvedRefDetails)</code> | An object whose keys are JSON Pointers *(fragment version)* to where the JSON Reference is defined and whose values are [UnresolvedRefDetails](#module_JsonRefs..UnresolvedRefDetails) |
+| value | <code>object</code> | The retrieved document |
+
+<a name="module_JsonRefs..RetrievedResolvedRefsResults"></a>
+### JsonRefs~RetrievedResolvedRefsResults : <code>object</code>
+An object containing the retrieved document, the document with its references resolved and  detailed information
+about its JSON References.
+
+**Kind**: inner typedef of <code>[JsonRefs](#module_JsonRefs)</code>  
+**Properties**
+
+| Name | Type | Description |
+| --- | --- | --- |
+| refs | <code>[UnresolvedRefDetails](#module_JsonRefs..UnresolvedRefDetails)</code> | An object whose keys are JSON Pointers *(fragment version)* to where the JSON Reference is defined and whose values are [UnresolvedRefDetails](#module_JsonRefs..UnresolvedRefDetails) |
+|  | <code>module:JsonRefs~ResolvedRefsResults</code> | An object whose keys are JSON Pointers *(fragment version)* to where the JSON Reference is defined and whose values are [ResolvedRefDetails](#module_JsonRefs..ResolvedRefDetails) |
 | value | <code>object</code> | The retrieved document |
 
 <a name="module_JsonRefs..UnresolvedRefDetails"></a>
@@ -221,5 +237,20 @@ Finds JSON References defined within the provided array/object and resolves them
 | Param | Type | Description |
 | --- | --- | --- |
 | obj | <code>array</code> &#124; <code>object</code> | The structure to find JSON References within |
+| [options] | <code>[JsonRefsOptions](#module_JsonRefs..JsonRefsOptions)</code> | The JsonRefs options |
+
+<a name="module_JsonRefs.resolveRefsAt"></a>
+### JsonRefs.resolveRefsAt(location, [options]) ⇒ <code>Promise</code>
+Resolves JSON References defined within the document at the provided location.
+
+This API is identical to [resolveRefs](#module_JsonRefs.resolveRefs) except this API will retrieve a remote document and then
+return the result of [resolveRefs](#module_JsonRefs.resolveRefs) on the retrieved document.
+
+**Kind**: static method of <code>[JsonRefs](#module_JsonRefs)</code>  
+**Returns**: <code>Promise</code> - a promise that resolves a [RetrievedResolvedRefsResults](#module_JsonRefs..RetrievedResolvedRefsResults)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| location | <code>string</code> | The location to retrieve *(Can be relative or absolute, just make sure you look at the [options documentation](#module_JsonRefs..JsonRefsOptions) to see how relative references are handled.)* |
 | [options] | <code>[JsonRefsOptions](#module_JsonRefs..JsonRefsOptions)</code> | The JsonRefs options |
 

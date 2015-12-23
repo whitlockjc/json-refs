@@ -5,6 +5,7 @@
 * Added `#findRefsAt` to allow you to retrieve a remote document and then find its references
 * Added `#getRefDetails` to centralize the code used to generate reference metadata *(Also allows you to see why an
 object you expect to be returned by `#findRefs` is not returned.)*
+* Added `#resolveRefsAt` to allow you to retrieve a remote document and then resolve its references
 * Renamed `#isJsonPointer` to `#isJsonPtr`
 * Renamed `#isJsonReference` to `#isJsonRef`
 * Renamed `#pathFromPointer` to `#pathFromPtr`

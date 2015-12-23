@@ -179,6 +179,113 @@ function findAncestors (obj, path) {
   return ancestors;
 }
 
+// Should this be its own exported API?
+function findAllRefs (obj, options, parents, parentPath, documents) {
+  var allTasks = Promise.resolve();
+  var refs = findRefs(obj, options);
+
+  Object.keys(refs).forEach(function (refPtr) {
+    var refDetails = refs[refPtr];
+    var refPath = pathFromPtr(refPtr);
+    var location;
+    var parentIndex;
+
+    // Only process remote references
+    if (remoteTypes.indexOf(refDetails.type) > -1) {
+      location = combineURIs(options.relativeBase, refDetails.uri);
+      parentIndex = parents.indexOf(location);
+
+      if (parentIndex === -1) {
+        allTasks = allTasks
+          .then(function () {
+            var rParentPath = parentPath.concat(refPath);
+            var rOptions = clone(options);
+
+            // Remove the sub document path
+            delete rOptions.subDocPath;
+
+            // Update the relativeBase based on the new location to retrieve
+            rOptions.relativeBase = location.substring(0, location.lastIndexOf('/'));
+
+            return findRefsAt(refDetails.uri, options)
+              .then(function (rRefs) {
+                // Record the location for circular reference identification
+                rRefs.location = location;
+
+                if (refDetails.uriDetails.fragment) {
+                  // If the remote reference was for a fragment, do not include the reference details
+                  rRefs.refs = {};
+
+                  // Record the remote document
+                  documents[pathToPtr(rParentPath)] = rRefs;
+
+                  return rRefs;
+                } else {
+                  // Record the location in the document where the parent document was resolved
+                  Object.keys(rRefs.refs).forEach(function (refPtr) {
+                    rRefs.refs[refPtr].parentLocation = pathToPtr(rParentPath);
+                  });
+
+                  // Record the remote document
+                  documents[pathToPtr(rParentPath)] = rRefs;
+
+                  // Find all important references within the document
+                  return findAllRefs(rRefs.value, rOptions, parents.concat(location), rParentPath, documents);
+                }
+              });
+          });
+      } else {
+        // Mark seen ancestors as circular
+        parents.slice(parentIndex).forEach(function (parent) {
+          Object.keys(documents).forEach(function (cRefPtr) {
+            var document = documents[cRefPtr];
+
+            if (document.location === parent) {
+              document.circular = true;
+            }
+          });
+        });
+
+        // Mark self as circular
+        documents[pathToPtr(parentPath)].refs[refPtr].circular = true;
+      }
+    }
+  });
+
+  allTasks = allTasks
+    .then(function () {
+      // Only collapse the documents when we're back at the top of the promise stack
+      if (parentPath.length === 0) {
+        // Collapse all references together into one list
+        Object.keys(documents).forEach(function (refPtr) {
+          var document = documents[refPtr];
+
+          // Merge each reference into the root document's references
+          Object.keys(document.refs).forEach(function (cRefPtr) {
+            var fPtr = pathToPtr(pathFromPtr(refPtr).concat(pathFromPtr(cRefPtr)));
+            var refDetails = refs[fPtr];
+
+            if (isType(refDetails, 'Undefined')) {
+              refs[fPtr] = document.refs[cRefPtr];
+            }
+          });
+
+          // Record the value of the remote reference
+          refs[refPtr].value = document.value;
+
+          // Mark the remote reference itself as circular
+          if (document.circular) {
+            refs[refPtr].circular = true;
+          }
+        });
+      }
+
+      return refs;
+    });
+
+  return allTasks;
+}
+
 function findValue (obj, path, ignore) {
   var value = obj;
 
@@ -439,6 +546,21 @@ function validateOptions (options) {
  * @property {object} value - The retrieved document
  *
  * @alias module:JsonRefs~RetrievedRefsResults
+ */
+
+/**
+ * An object containing the retrieved document, the document with its references resolved and  detailed information
+ * about its JSON References.
+ *
+ * @typedef {object} RetrievedResolvedRefsResults
+ *
+ * @property {module:JsonRefs~UnresolvedRefDetails} refs - An object whose keys are JSON Pointers *(fragment version)*
+ * to where the JSON Reference is defined and whose values are {@link module:JsonRefs~UnresolvedRefDetails}
+ * @property {module:JsonRefs~ResolvedRefsResults} - An object whose keys are JSON Pointers *(fragment version)*
+ * to where the JSON Reference is defined and whose values are {@link module:JsonRefs~ResolvedRefDetails}
+ * @property {object} value - The retrieved document
+ *
+ * @alias module:JsonRefs~RetrievedResolvedRefsResults
  */
 
 /**
@@ -761,114 +883,6 @@ function findRefsAt (location, options) {
   return allTasks;
 }
 
-// Should this be its own exported API?
-
-function findAllRefs (obj, options, parents, parentPath, documents) {
-  var allTasks = Promise.resolve();
-  var refs = findRefs(obj, options);
-
-  Object.keys(refs).forEach(function (refPtr) {
-    var refDetails = refs[refPtr];
-    var refPath = pathFromPtr(refPtr);
-    var location;
-    var parentIndex;
-
-    // Only process remote references
-    if (remoteTypes.indexOf(refDetails.type) > -1) {
-      location = combineURIs(options.relativeBase, refDetails.uri);
-      parentIndex = parents.indexOf(location);
-
-      if (parentIndex === -1) {
-        allTasks = allTasks
-          .then(function () {
-            var rParentPath = parentPath.concat(refPath);
-            var rOptions = clone(options);
-
-            // Remove the sub document path
-            delete rOptions.subDocPath;
-
-            // Update the relativeBase based on the new location to retrieve
-            rOptions.relativeBase = location.substring(0, location.lastIndexOf('/'));
-
-            return findRefsAt(refDetails.uri, options)
-              .then(function (rRefs) {
-                // Record the location for circular reference identification
-                rRefs.location = location;
-
-                if (refDetails.uriDetails.fragment) {
-                  // If the remote reference was for a fragment, do not include the reference details
-                  rRefs.refs = {};
-
-                  // Record the remote document
-                  documents[pathToPtr(rParentPath)] = rRefs;
-
-                  return rRefs;
-                } else {
-                  // Record the location in the document where the parent document was resolved
-                  Object.keys(rRefs.refs).forEach(function (refPtr) {
-                    rRefs.refs[refPtr].parentLocation = pathToPtr(rParentPath);
-                  });
-
-                  // Record the remote document
-                  documents[pathToPtr(rParentPath)] = rRefs;
-
-                  // Find all important references within the document
-                  return findAllRefs(rRefs.value, rOptions, parents.concat(location), rParentPath, documents);
-                }
-              });
-          });
-      } else {
-        // Mark seen ancestors as circular
-        parents.slice(parentIndex).forEach(function (parent) {
-          Object.keys(documents).forEach(function (cRefPtr) {
-            var document = documents[cRefPtr];
-
-            if (document.location === parent) {
-              document.circular = true;
-            }
-          });
-        });
-
-        // Mark self as circular
-        documents[pathToPtr(parentPath)].refs[refPtr].circular = true;
-      }
-    }
-  });
-
-  allTasks = allTasks
-    .then(function () {
-      // Only collapse the documents when we're back at the top of the promise stack
-      if (parentPath.length === 0) {
-        // Collapse all references together into one list
-        Object.keys(documents).forEach(function (refPtr) {
-          var document = documents[refPtr];
-
-          // Merge each reference into the root document's references
-          Object.keys(document.refs).forEach(function (cRefPtr) {
-            var fPtr = pathToPtr(pathFromPtr(refPtr).concat(pathFromPtr(cRefPtr)));
-            var refDetails = refs[fPtr];
-
-            if (isType(refDetails, 'Undefined')) {
-              refs[fPtr] = document.refs[cRefPtr];
-            }
-          });
-
-          // Record the value of the remote reference
-          refs[refPtr].value = document.value;
-
-          // Mark the remote reference itself as circular
-          if (document.circular) {
-            refs[refPtr].circular = true;
-          }
-        });
-      }
-
-      return refs;
-    });
-
-  return allTasks;
-}
-
 /**
  * Finds JSON References defined within the provided array/object and resolves them.
  *
@@ -997,6 +1011,64 @@ function resolveRefs (obj, options) {
   return allTasks;
 }
 
+/**
+ * Resolves JSON References defined within the document at the provided location.
+ *
+ * This API is identical to {@link module:JsonRefs.resolveRefs} except this API will retrieve a remote document and then
+ * return the result of {@link module:JsonRefs.resolveRefs} on the retrieved document.
+ *
+ * @param {string} location - The location to retrieve *(Can be relative or absolute, just make sure you look at the
+ * {@link module:JsonRefs~JsonRefsOptions|options documentation} to see how relative references are handled.)*
+ * @param {module:JsonRefs~JsonRefsOptions} [options] - The JsonRefs options
+ *
+ * @returns {Promise} a promise that resolves a {@link module:JsonRefs~RetrievedResolvedRefsResults}
+ *
+ * @alias module:JsonRefs.resolveRefsAt
+ */
+function resolveRefsAt (location, options) {
+  var allTasks = Promise.resolve();
+
+  allTasks = allTasks
+    .then(function () {
+      var cOptions;
+
+      // Validate the provided location
+      if (!isType(location, 'String')) {
+        throw new TypeError('location must be a string');
+      }
+
+      // Set default for options
+      if (isType(options, 'Undefined')) {
+        options = {};
+      }
+
+      // Validate options (Doing this here for a quick)
+      validateOptions(options);
+
+      cOptions = clone(options);
+
+      // Combine the location and the optional relative base
+      location = combineURIs(options.relativeBase, location);
+
+      // Set the new relative reference location
+      cOptions.relativeBase = location.substring(0, location.lastIndexOf('/'));
+
+      return getRemoteDocument(location, cOptions);
+    })
+    .then(function (res) {
+      return resolveRefs(res, options)
+        .then(function (res2) {
+          return {
+            refs: res2.refs,
+            resolved: res2.resolved,
+            value: res
+          };
+        });
+    });
+
+  return allTasks;
+}
+
 /* Export the module members */
 module.exports.findRefs = findRefs;
 module.exports.findRefsAt = findRefsAt;
@@ -1006,3 +1078,4 @@ module.exports.isRef = isRef;
 module.exports.pathFromPtr = pathFromPtr;
 module.exports.pathToPtr = pathToPtr;
 module.exports.resolveRefs = resolveRefs;
+module.exports.resolveRefsAt = resolveRefsAt;
