@@ -15,7 +15,6 @@
     "**/.*",
     "node_modules",
     "bower_components",
-    "browser/*-standalone*.js",
     "gulpfile.js",
     "index.js",
     "package.json",
