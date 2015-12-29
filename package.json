@@ -11,6 +11,10 @@
     "email": "jwhitlock@apache.org",
     "url": "https://github.com/whitlockjc"
   },
+  "contributors": [],
+  "engines": {
+     "node": ">=0.8"
+  },
   "bugs": {
     "url": "https://github.com/whitlockjc/json-refs/issues"
   },

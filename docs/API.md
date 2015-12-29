@@ -40,7 +40,7 @@ The options used for various JsonRefs APIs.
 
 <a name="module_JsonRefs..RefDetailsFilter"></a>
 ### JsonRefs~RefDetailsFilter ⇒ <code>boolean</code>
-Simple function used to filter our JSON References.
+Simple function used to filter out JSON References.
 
 **Kind**: inner typedef of <code>[JsonRefs](#module_JsonRefs)</code>  
 **Returns**: <code>boolean</code> - whether the JSON Reference should be filtered *(out)* or not  
