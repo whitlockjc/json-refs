@@ -498,7 +498,7 @@ function validateOptions (options) {
  */
 
 /**
- * Simple function used to filter our JSON References.
+ * Simple function used to filter out JSON References.
  *
  * @typedef {function} RefDetailsFilter
  *
