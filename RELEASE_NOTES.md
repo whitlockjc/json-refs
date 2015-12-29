@@ -1,6 +1,6 @@
 ## Release Notes
 
-## v2.0.0 (TBD)
+### v2.0.0 (TBD)
 
 * Added `#clearCache` to allow you to clear the remote document cache and its JSON References details
 * Added `#findRefsAt` to allow you to retrieve a remote document and then find its references
@@ -22,7 +22,7 @@ slash-based JSON Pointers
 
 * Added `#resolveLocalRefs` to avoid forcing consumers only resolving local references to use a callback/Promise based
 API *(`#resolveRefs`)*
-* Update reference metdata to record when a reference is remote
+* Update reference metadata to record when a reference is remote
 
 ### v1.2.1 (2015-11-18)
 

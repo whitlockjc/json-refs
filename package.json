@@ -4,12 +4,16 @@
   "description": "Various utilities for JSON References (http://tools.ietf.org/html/draft-pbryan-zyp-json-ref-03).",
   "main": "index.js",
   "scripts": {
-    "test": "./node_modules/gulp/bin/gulp.js"
+    "test": "node ./node_modules/gulp/bin/gulp.js test"
   },
   "author": {
     "name": "Jeremy Whitlock",
     "email": "jwhitlock@apache.org",
     "url": "https://github.com/whitlockjc"
+  },
+  "contributors": [],
+  "engines": {
+     "node": ">=0.8"
   },
   "bugs": {
     "url": "https://github.com/whitlockjc/json-refs/issues"

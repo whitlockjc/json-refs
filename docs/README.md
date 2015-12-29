@@ -10,7 +10,7 @@ https://github.com/whitlockjc/json-refs/blob/master/docs/API.md
 
 Right now we are working on `2.0.0`.  *(For more details on its development, please view [Issue #42][issue-42]).  That
 being said, the `master` branch for this project is currently for `2.0.0` development and is in an incomplete state.  I
-would not suggest using `master` until this dislcaimer is removed from the homepage and/or `2.0.0` is released.
+would not suggest using `master` until this dislcaimer is removed from the homepage and/or `2.0.0` is released.*
 
 Should you need to use a working version, all `1.x` releases are tagged and should be installable via Bower/NPM without
 issue.
