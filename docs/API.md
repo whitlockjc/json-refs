@@ -9,7 +9,7 @@ JSON Pointers *(https://tools.ietf.org/html/rfc6901)*.
         * [~JsonRefsOptions](#module_JsonRefs..JsonRefsOptions) : <code>object</code>
         * [~RefDetailsFilter](#module_JsonRefs..RefDetailsFilter) ⇒ <code>boolean</code>
         * [~ResolvedRefDetails](#module_JsonRefs..ResolvedRefDetails) : <code>[UnresolvedRefDetails](#module_JsonRefs..UnresolvedRefDetails)</code>
-        * [~ResolvedResults](#module_JsonRefs..ResolvedResults) : <code>object</code>
+        * [~ResolvedRefsResults](#module_JsonRefs..ResolvedRefsResults) : <code>object</code>
         * [~RetrievedRefsResults](#module_JsonRefs..RetrievedRefsResults) : <code>object</code>
         * [~RetrievedResolvedRefsResults](#module_JsonRefs..RetrievedResolvedRefsResults) : <code>object</code>
         * [~UnresolvedRefDetails](#module_JsonRefs..UnresolvedRefDetails) : <code>object</code>
@@ -33,7 +33,7 @@ The options used for various JsonRefs APIs.
 
 | Param | Type | Default | Description |
 | --- | --- | --- | --- |
-| [filter] | <code>string</code> &#124; <code>Array.&lt;string&gt;</code> &#124; <code>function</code> | <code>&quot;[]&quot;</code> | The filter to use when gathering JSON References *(If this value is a single string or an array of strings, the value(s) are expected to be the `type(s)` you are interested in collecting as described in [getRefDetails](#module_JsonRefs.getRefDetails).  If it is a function, it is expected that the function behaves like [RefDetailsFilter](#module_JsonRefs..RefDetailsFilter).)* |
+| [filter] | <code>string</code> &#124; <code>Array.&lt;string&gt;</code> &#124; <code>function</code> | <code>&quot;function () {return true;}&quot;</code> | The filter to use when gathering JSON References *(If this value is a single string or an array of strings, the value(s) are expected to be the `type(s)` you are interested in collecting as described in [getRefDetails](#module_JsonRefs.getRefDetails).  If it is a function, it is expected that the function behaves like [RefDetailsFilter](#module_JsonRefs..RefDetailsFilter).)* |
 | [loaderOptions] | <code>object</code> |  | The options to pass to [PathLoader~load](https://github.com/whitlockjc/path-loader/blob/master/docs/API.md#module_PathLoader.load). |
 | [options.relativeBase] | <code>string</code> |  | The base location to use when resolving relative references *(Only useful for APIs that do remote reference resolution.  If this value is not defined, [path-loader](https://github.com/whitlockjc/path-loader) will use `window.location.href` for the browser and `process.cwd()` for Node.js.)* |
 | [options.subDocPath] | <code>string</code> &#124; <code>Array.&lt;string&gt;</code> | <code>&quot;[]&quot;</code> | The JSON Pointer or array of path segments to the sub document location to search from |
@@ -63,8 +63,8 @@ Detailed information about resolved JSON References.
 | missing | <code>boolean</code> | Whether or not the referenced value was missing or not *(Will not be set if the referenced value is not missing)* |
 | value | <code>\*</code> | The referenced value *(Will not be set if the referenced value is missing)* |
 
-<a name="module_JsonRefs..ResolvedResults"></a>
-### JsonRefs~ResolvedResults : <code>object</code>
+<a name="module_JsonRefs..ResolvedRefsResults"></a>
+### JsonRefs~ResolvedRefsResults : <code>object</code>
 The results of resolving the JSON References of an array/object.
 
 **Kind**: inner typedef of <code>[JsonRefs](#module_JsonRefs)</code>  
@@ -98,7 +98,7 @@ about its JSON References.
 | Name | Type | Description |
 | --- | --- | --- |
 | refs | <code>[UnresolvedRefDetails](#module_JsonRefs..UnresolvedRefDetails)</code> | An object whose keys are JSON Pointers *(fragment version)* to where the JSON Reference is defined and whose values are [UnresolvedRefDetails](#module_JsonRefs..UnresolvedRefDetails) |
-|  | <code>module:JsonRefs~ResolvedRefsResults</code> | An object whose keys are JSON Pointers *(fragment version)* to where the JSON Reference is defined and whose values are [ResolvedRefDetails](#module_JsonRefs..ResolvedRefDetails) |
+|  | <code>[ResolvedRefsResults](#module_JsonRefs..ResolvedRefsResults)</code> | An object whose keys are JSON Pointers *(fragment version)* to where the JSON Reference is defined and whose values are [ResolvedRefDetails](#module_JsonRefs..ResolvedRefDetails) |
 | value | <code>object</code> | The retrieved document |
 
 <a name="module_JsonRefs..UnresolvedRefDetails"></a>
@@ -131,7 +131,7 @@ Finds JSON References defined within the provided array/object.
 and whose values are [UnresolvedRefDetails](#module_JsonRefs..UnresolvedRefDetails).  
 **Throws**:
 
-- <code>Error</code> if `from` is not a valid JSON Pointer
+- <code>Error</code> if `obj` is not an object or array
 
 
 | Param | Type | Description |
@@ -148,6 +148,10 @@ return the result of [findRefs](#module_JsonRefs.findRefs) on the retrieved docu
 
 **Kind**: static method of <code>[JsonRefs](#module_JsonRefs)</code>  
 **Returns**: <code>Promise</code> - a promise that resolves a [RetrievedRefsResults](#module_JsonRefs..RetrievedRefsResults)  
+**Throws**:
+
+- <code>Error</code> if the provided `location` argument is not a string
+
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -223,7 +227,7 @@ Returns an array of path segments for the provided JSON Pointer.
 **Returns**: <code>Array.&lt;string&gt;</code> - the path segments  
 **Throws**:
 
-- <code>Error</code> if the provided argument is not a JSON Pointer
+- <code>Error</code> if the provided `ptr` argument is not a JSON Pointer
 
 
 | Param | Type | Description |
@@ -240,7 +244,7 @@ Returns a JSON Pointer for the provided array of path segments.
 **Returns**: <code>string</code> - the corresponding JSON Pointer  
 **Throws**:
 
-- <code>Error</code> if the argument is not an array
+- <code>Error</code> if the `path` argument is not an array
 
 
 | Param | Type | Default | Description |
@@ -253,7 +257,11 @@ Returns a JSON Pointer for the provided array of path segments.
 Finds JSON References defined within the provided array/object and resolves them.
 
 **Kind**: static method of <code>[JsonRefs](#module_JsonRefs)</code>  
-**Returns**: <code>Promise</code> - a promise that resolves a [module:JsonRefs~ResolvedRefsResults](module:JsonRefs~ResolvedRefsResults)  
+**Returns**: <code>Promise</code> - a promise that resolves a [ResolvedRefsResults](#module_JsonRefs..ResolvedRefsResults)  
+**Throws**:
+
+- <code>Error</code> if `obj` is not an object or array
+
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -263,7 +271,7 @@ Finds JSON References defined within the provided array/object and resolves them
 **Example**  
 ```js
 // Example that only resolves relative and remote references
-JsonRefs.resolveRefsAt(swaggerObj, {
+JsonRefs.resolveRefs(swaggerObj, {
     filter: ['relative', 'remote']
   })
   .then(function (res) {
@@ -284,6 +292,10 @@ return the result of [resolveRefs](#module_JsonRefs.resolveRefs) on the retrieve
 
 **Kind**: static method of <code>[JsonRefs](#module_JsonRefs)</code>  
 **Returns**: <code>Promise</code> - a promise that resolves a [RetrievedResolvedRefsResults](#module_JsonRefs..RetrievedResolvedRefsResults)  
+**Throws**:
+
+- <code>Error</code> if the provided `location` argument is not a string
+
 
 | Param | Type | Description |
 | --- | --- | --- |
