@@ -131,7 +131,7 @@ Finds JSON References defined within the provided array/object.
 and whose values are [UnresolvedRefDetails](#module_JsonRefs..UnresolvedRefDetails).  
 **Throws**:
 
-- <code>Error</code> if `from` is not a valid JSON Pointer
+- <code>Error</code> if `obj` is not an object or array
 
 
 | Param | Type | Description |
@@ -148,6 +148,10 @@ return the result of [findRefs](#module_JsonRefs.findRefs) on the retrieved docu
 
 **Kind**: static method of <code>[JsonRefs](#module_JsonRefs)</code>  
 **Returns**: <code>Promise</code> - a promise that resolves a [RetrievedRefsResults](#module_JsonRefs..RetrievedRefsResults)  
+**Throws**:
+
+- <code>Error</code> if the provided `location` argument is not a string
+
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -223,7 +227,7 @@ Returns an array of path segments for the provided JSON Pointer.
 **Returns**: <code>Array.&lt;string&gt;</code> - the path segments  
 **Throws**:
 
-- <code>Error</code> if the provided argument is not a JSON Pointer
+- <code>Error</code> if the provided `ptr` argument is not a JSON Pointer
 
 
 | Param | Type | Description |
@@ -240,7 +244,7 @@ Returns a JSON Pointer for the provided array of path segments.
 **Returns**: <code>string</code> - the corresponding JSON Pointer  
 **Throws**:
 
-- <code>Error</code> if the argument is not an array
+- <code>Error</code> if the `path` argument is not an array
 
 
 | Param | Type | Default | Description |
@@ -254,6 +258,10 @@ Finds JSON References defined within the provided array/object and resolves them
 
 **Kind**: static method of <code>[JsonRefs](#module_JsonRefs)</code>  
 **Returns**: <code>Promise</code> - a promise that resolves a [ResolvedRefsResults](#module_JsonRefs..ResolvedRefsResults)  
+**Throws**:
+
+- <code>Error</code> if `obj` is not an object or array
+
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -284,6 +292,10 @@ return the result of [resolveRefs](#module_JsonRefs.resolveRefs) on the retrieve
 
 **Kind**: static method of <code>[JsonRefs](#module_JsonRefs)</code>  
 **Returns**: <code>Promise</code> - a promise that resolves a [RetrievedResolvedRefsResults](#module_JsonRefs..RetrievedResolvedRefsResults)  
+**Throws**:
+
+- <code>Error</code> if the provided `location` argument is not a string
+
 
 | Param | Type | Description |
 | --- | --- | --- |

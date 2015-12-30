@@ -713,7 +713,7 @@ function isRef (obj) {
  *
  * @returns {string[]} the path segments
  *
- * @throws {Error} if the provided argument is not a JSON Pointer
+ * @throws {Error} if the provided `ptr` argument is not a JSON Pointer
  *
  * @alias module:JsonRefs.pathFromPtr
  */
@@ -743,7 +743,7 @@ function pathFromPtr (ptr) {
  *
  * @returns {string} the corresponding JSON Pointer
  *
- * @throws {Error} if the argument is not an array
+ * @throws {Error} if the `path` argument is not an array
  *
  * @alias module:JsonRefs.pathToPtr
  */
@@ -765,7 +765,7 @@ function pathToPtr (path, hashPrefix) {
  * @returns {object} an object whose keys are JSON Pointers *(fragment version)* to where the JSON Reference is defined
  * and whose values are {@link module:JsonRefs~UnresolvedRefDetails}.
  *
- * @throws {Error} if `from` is not a valid JSON Pointer
+ * @throws {Error} if `obj` is not an object or array
  *
  * @alias module:JsonRefs.findRefs
  */
@@ -836,6 +836,8 @@ function findRefs (obj, options) {
  * @param {module:JsonRefs~JsonRefsOptions} [options] - The JsonRefs options
  *
  * @returns {Promise} a promise that resolves a {@link module:JsonRefs~RetrievedRefsResults}
+ *
+ * @throws {Error} if the provided `location` argument is not a string
  *
  * @alias module:JsonRefs.findRefsAt
  *
@@ -913,6 +915,8 @@ function findRefsAt (location, options) {
  * @param {module:JsonRefs~JsonRefsOptions} [options] - The JsonRefs options
  *
  * @returns {Promise} a promise that resolves a {@link module:JsonRefs~ResolvedRefsResults}
+ *
+ * @throws {Error} if `obj` is not an object or array
  *
  * @alias module:JsonRefs.resolveRefs
  *
@@ -1059,6 +1063,8 @@ function resolveRefs (obj, options) {
  * @param {module:JsonRefs~JsonRefsOptions} [options] - The JsonRefs options
  *
  * @returns {Promise} a promise that resolves a {@link module:JsonRefs~RetrievedResolvedRefsResults}
+ *
+ * @throws {Error} if the provided `location` argument is not a string
  *
  * @alias module:JsonRefs.resolveRefsAt
  *
