@@ -9,6 +9,7 @@
 * Added `#getRefDetails` to centralize the code used to generate reference metadata *(Also allows you to see why an
 object you expect to be returned by `#findRefs` is not returned.)*
 * Added `#resolveRefsAt` to allow you to retrieve a remote document and then resolve its references
+* Fixed a bug where Windows paths containing `\` were not processed properly *(Issue #48)*
 * Renamed `#isJsonPointer` to `#isPtr`
 * Renamed `#isJsonReference` to `#isRef`
 * Renamed `#pathFromPointer` to `#pathFromPtr`

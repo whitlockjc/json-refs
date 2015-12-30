@@ -33,6 +33,7 @@
 
 var pathLoader = require('path-loader');
 var qs = require('querystring');
+var slash = require('slash');
 var URI = require('uri-js');
 
 var ptrTokenRegex = /[~].?/g;
@@ -110,6 +111,15 @@ function combineQueryParams (qs1, qs2) {
 }
 
 function combineURIs (u1, u2) {
+  // Convert Windows paths
+  if (isType(u1, 'String')) {
+    u1 = slash(u1);
+  }
+
+  if (isType(u2, 'String')) {
+    u2 = slash(u2);
+  }
+
   var u2Details = URI.parse(isType(u2, 'Undefined') ? '' : u2);
   var u1Details;
   var combinedDetails;

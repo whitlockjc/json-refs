@@ -13,7 +13,7 @@
   },
   "contributors": [],
   "engines": {
-     "node": ">=0.8"
+    "node": ">=0.8"
   },
   "bugs": {
     "url": "https://github.com/whitlockjc/json-refs/issues"
@@ -63,6 +63,7 @@
   "dependencies": {
     "native-promise-only": "^0.8.1",
     "path-loader": "^1.0.1",
+    "slash": "^1.0.0",
     "uri-js": "^2.1.1"
   }
 }
