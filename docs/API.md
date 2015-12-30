@@ -33,10 +33,10 @@ The options used for various JsonRefs APIs.
 
 | Param | Type | Default | Description |
 | --- | --- | --- | --- |
-| [filter] | <code>string</code> &#124; <code>Array.&lt;string&gt;</code> &#124; <code>function</code> | <code>&quot;[]&quot;</code> | The filter to use when gathering JSON References *(If this value is a single string or an array of strings, the value(s) are expected to be the `type(s)` you are interested in collecting as described in [getRefDetails](#module_JsonRefs.getRefDetails).  If it is a function, it is expected that the function behaves like [RefDetailsFilter](#module_JsonRefs..RefDetailsFilter).)* |
+| [filter] | <code>string</code> &#124; <code>Array.&lt;string&gt;</code> &#124; <code>function</code> | <code>function () {return true;}</code> | The filter to use when gathering JSON References *(If this value is a single string or an array of strings, the value(s) are expected to be the `type(s)` you are interested in collecting as described in [getRefDetails](#module_JsonRefs.getRefDetails).  If it is a function, it is expected that the function behaves like [RefDetailsFilter](#module_JsonRefs..RefDetailsFilter).)* |
 | [loaderOptions] | <code>object</code> |  | The options to pass to [PathLoader~load](https://github.com/whitlockjc/path-loader/blob/master/docs/API.md#module_PathLoader.load). |
 | [options.relativeBase] | <code>string</code> |  | The base location to use when resolving relative references *(Only useful for APIs that do remote reference resolution.  If this value is not defined, [path-loader](https://github.com/whitlockjc/path-loader) will use `window.location.href` for the browser and `process.cwd()` for Node.js.)* |
-| [options.subDocPath] | <code>string</code> &#124; <code>Array.&lt;string&gt;</code> | <code>&quot;[]&quot;</code> | The JSON Pointer or array of path segments to the sub document location to search from |
+| [options.subDocPath] | <code>string</code> &#124; <code>Array.&lt;string&gt;</code> | <code>[]</code> | The JSON Pointer or array of path segments to the sub document location to search from |
 
 <a name="module_JsonRefs..RefDetailsFilter"></a>
 ### JsonRefs~RefDetailsFilter ⇒ <code>boolean</code>
