@@ -138,18 +138,6 @@ function combineURIs (u1, u2) {
   return URI.serialize(combinedDetails);
 }
 
-function decodeSegment (seg) {
-  return seg.replace(/~0/g, '~').replace(/~1/g, '/');
-}
-
-function encodeSegment (seg) {
-  if (!isType(seg, 'String')) {
-    seg = JSON.stringify(seg);
-  }
-
-  return seg.replace(/~/g, '~0').replace(/\//g, '~1');
-}
-
 function filterRefs (options, refs) {
   var refFilter = makeRefFilter(options);
   var filtered = {};
@@ -594,177 +582,57 @@ function clearCache () {
 }
 
 /**
- * Returns detailed information about the JSON Reference.
+ * Takes an array of path segments and decodes the JSON Pointer tokens in them.
  *
- * @param {object} obj - The JSON Reference definition
+ * @param {string[]} path - The array of path segments
  *
- * @returns {module:JsonRefs~UnresolvedRefDetails} the detailed information
+ * @returns {string} the array of path segments with their JSON Pointer tokens decoded
  *
- * @alias module:JsonRefs.getRefDetails
- */
-function getRefDetails (obj) {
-  var details = {
-    def: obj
-  };
-  var cacheKey;
-  var extraKeys;
-  var uriDetails;
-
-  if (isRefLike(obj)) {
-    cacheKey = obj.$ref;
-    uriDetails = uriDetailsCache[cacheKey];
-
-    if (isType(uriDetails, 'Undefined')) {
-      uriDetails =  uriDetailsCache[cacheKey] = URI.parse(obj.$ref);
-    }
-
-    details.uri = cacheKey;
-    details.uriDetails = uriDetails;
-
-    if (isType(uriDetails.error, 'Undefined')) {
-      // Convert the URI reference to one of our types
-      switch (uriDetails.reference) {
-        case 'absolute':
-        case 'uri':
-          details.type = 'remote';
-          break;
-        case 'same-document':
-          details.type = 'local';
-          break;
-        default:
-          details.type = uriDetails.reference;
-      }
-    } else {
-      details.error = details.uriDetails.error;
-      details.type = 'invalid';
-    }
-
-    // Identify warning
-    extraKeys = getExtraRefKeys(obj);
-
-    if (extraKeys.length > 0) {
-      details.warning = 'Extra JSON Reference properties will be ignored: ' + extraKeys.join(', ');
-    }
-  } else {
-    details.type = 'invalid';
-  }
-
-  return details;
-}
-
-/**
- * Returns whether the argument represents a JSON Pointer.
- *
- * A string is a JSON Pointer if the following are all true:
- *
- *   * The string is of type `String`
- *   * The string must be empty or start with a `/` or `#/`
- *
- * @param {string} ptr - The string to check
- *
- * @returns {boolean} the result of the check
+ * @throws {Error} if the path is not an `Array`
  *
  * @see {@link https://tools.ietf.org/html/rfc6901#section-3}
  *
- * @alias module:JsonRefs.isPtr
+ * @alias module:JsonRefs.decodePath
  */
-function isPtr (ptr) {
-  var valid = isType(ptr, 'String');
-  var firstChar;
-  var tokens;
+function decodePath (path) {
+  if (!isType(path, 'Array')) {
+    throw new TypeError('path must be an array');
+  }
 
-  if (valid) {
-    if (ptr !== '') {
-      firstChar = ptr.charAt(0);
-
-      if (['#', '/'].indexOf(firstChar) === -1) {
-        valid = false;
-      } else if (firstChar === '#' && ptr !== '#' && ptr.charAt(1) !== '/') {
-        valid = false;
-      } else {
-        tokens = ptr.match(ptrTokenRegex);
-
-        if (isType(tokens, 'Array')) {
-          valid = tokens.every(function (token) {
-            return ptrTokens.indexOf(token.split('~')[1]) > -1;
-          });
-        }
-      }
+  return path.map(function (seg) {
+    if (!isType(seg, 'String')) {
+      seg = JSON.stringify(seg);
     }
-  }
 
-  return valid;
+    return seg.replace(/~1/g, '/').replace(/~0/g, '~');
+  });
 }
 
 /**
- * Returns whether the argument represents a JSON Reference.
- *
- * An object is a JSON Reference only if the following are all true:
- *
- *   * The object is of type `Object`
- *   * The object has a `$ref` property
- *   * The `$ref` property is a valid URI
- *
- * @param {object} obj - The object to check
- *
- * @returns {boolean} the result of the check
- *
- * @see {@link http://tools.ietf.org/html/draft-pbryan-zyp-json-ref-03#section-3}
- *
- * @alias module:JsonRefs.isRef
- */
-function isRef (obj) {
-  return isRefLike(obj) && getRefDetails(obj).type !== 'invalid';
-}
-
-/**
- * Returns an array of path segments for the provided JSON Pointer.
- *
- * @param {string} ptr - The JSON Pointer
- *
- * @returns {string[]} the path segments
- *
- * @throws {Error} if the provided `ptr` argument is not a JSON Pointer
- *
- * @alias module:JsonRefs.pathFromPtr
- */
-function pathFromPtr (ptr) {
-  if (!isPtr(ptr)) {
-    throw new Error('ptr must be a JSON Pointer');
-  }
-
-  var segments = ptr.split('/');
-
-  // Remove the first segment
-  segments.shift();
-
-  // Decode each segment
-  segments = segments.map(decodeSegment);
-
-  return segments;
-}
-
-/**
- * Returns a JSON Pointer for the provided array of path segments.
- *
- * **Note:** If a path segment in `path` is not a `String`, it will be converted to one using `JSON.stringify`.
+ * Takes an array of path segments and encodes the special JSON Pointer characters in them.
  *
  * @param {string[]} path - The array of path segments
- * @param {boolean} [hashPrefix=true] - Whether or not create a hash-prefixed JSON Pointer
  *
- * @returns {string} the corresponding JSON Pointer
+ * @returns {string} the array of path segments with their JSON Pointer tokens encoded
  *
- * @throws {Error} if the `path` argument is not an array
+ * @throws {Error} if the path is not an `Array`
  *
- * @alias module:JsonRefs.pathToPtr
+ * @see {@link https://tools.ietf.org/html/rfc6901#section-3}
+ *
+ * @alias module:JsonRefs.encodePath
  */
-function pathToPtr (path, hashPrefix) {
+function encodePath (path) {
   if (!isType(path, 'Array')) {
-    throw new Error('path must be an Array');
+    throw new TypeError('path must be an array');
   }
 
-  // Encode each segment and return
-  return (hashPrefix !== false ? '#' : '') + (path.length > 0 ? '/' : '') + path.map(encodeSegment).join('/');
+  return path.map(function (seg) {
+    if (!isType(seg, 'String')) {
+      seg = JSON.stringify(seg);
+    }
+
+    return seg.replace(/~/g, '~0').replace(/\//g, '~1');
+  });
 }
 
 /**
@@ -916,6 +784,177 @@ function findRefsAt (location, options) {
     });
 
   return allTasks;
+}
+
+/**
+ * Returns detailed information about the JSON Reference.
+ *
+ * @param {object} obj - The JSON Reference definition
+ *
+ * @returns {module:JsonRefs~UnresolvedRefDetails} the detailed information
+ *
+ * @alias module:JsonRefs.getRefDetails
+ */
+function getRefDetails (obj) {
+  var details = {
+    def: obj
+  };
+  var cacheKey;
+  var extraKeys;
+  var uriDetails;
+
+  if (isRefLike(obj)) {
+    cacheKey = obj.$ref;
+    uriDetails = uriDetailsCache[cacheKey];
+
+    if (isType(uriDetails, 'Undefined')) {
+      uriDetails =  uriDetailsCache[cacheKey] = URI.parse(obj.$ref);
+    }
+
+    details.uri = cacheKey;
+    details.uriDetails = uriDetails;
+
+    if (isType(uriDetails.error, 'Undefined')) {
+      // Convert the URI reference to one of our types
+      switch (uriDetails.reference) {
+        case 'absolute':
+        case 'uri':
+          details.type = 'remote';
+          break;
+        case 'same-document':
+          details.type = 'local';
+          break;
+        default:
+          details.type = uriDetails.reference;
+      }
+    } else {
+      details.error = details.uriDetails.error;
+      details.type = 'invalid';
+    }
+
+    // Identify warning
+    extraKeys = getExtraRefKeys(obj);
+
+    if (extraKeys.length > 0) {
+      details.warning = 'Extra JSON Reference properties will be ignored: ' + extraKeys.join(', ');
+    }
+  } else {
+    details.type = 'invalid';
+  }
+
+  return details;
+}
+
+/**
+ * Returns whether the argument represents a JSON Pointer.
+ *
+ * A string is a JSON Pointer if the following are all true:
+ *
+ *   * The string is of type `String`
+ *   * The string must be empty or start with a `/` or `#/`
+ *
+ * @param {string} ptr - The string to check
+ *
+ * @returns {boolean} the result of the check
+ *
+ * @see {@link https://tools.ietf.org/html/rfc6901#section-3}
+ *
+ * @alias module:JsonRefs.isPtr
+ */
+function isPtr (ptr) {
+  var valid = isType(ptr, 'String');
+  var firstChar;
+  var tokens;
+
+  if (valid) {
+    if (ptr !== '') {
+      firstChar = ptr.charAt(0);
+
+      if (['#', '/'].indexOf(firstChar) === -1) {
+        valid = false;
+      } else if (firstChar === '#' && ptr !== '#' && ptr.charAt(1) !== '/') {
+        valid = false;
+      } else {
+        tokens = ptr.match(ptrTokenRegex);
+
+        if (isType(tokens, 'Array')) {
+          valid = tokens.every(function (token) {
+            return ptrTokens.indexOf(token.split('~')[1]) > -1;
+          });
+        }
+      }
+    }
+  }
+
+  return valid;
+}
+
+/**
+ * Returns whether the argument represents a JSON Reference.
+ *
+ * An object is a JSON Reference only if the following are all true:
+ *
+ *   * The object is of type `Object`
+ *   * The object has a `$ref` property
+ *   * The `$ref` property is a valid URI
+ *
+ * @param {object} obj - The object to check
+ *
+ * @returns {boolean} the result of the check
+ *
+ * @see {@link http://tools.ietf.org/html/draft-pbryan-zyp-json-ref-03#section-3}
+ *
+ * @alias module:JsonRefs.isRef
+ */
+function isRef (obj) {
+  return isRefLike(obj) && getRefDetails(obj).type !== 'invalid';
+}
+
+/**
+ * Returns an array of path segments for the provided JSON Pointer.
+ *
+ * @param {string} ptr - The JSON Pointer
+ *
+ * @returns {string[]} the path segments
+ *
+ * @throws {Error} if the provided `ptr` argument is not a JSON Pointer
+ *
+ * @alias module:JsonRefs.pathFromPtr
+ */
+function pathFromPtr (ptr) {
+  if (!isPtr(ptr)) {
+    throw new Error('ptr must be a JSON Pointer');
+  }
+
+  var segments = ptr.split('/');
+
+  // Remove the first segment
+  segments.shift();
+
+  return decodePath(segments);
+}
+
+/**
+ * Returns a JSON Pointer for the provided array of path segments.
+ *
+ * **Note:** If a path segment in `path` is not a `String`, it will be converted to one using `JSON.stringify`.
+ *
+ * @param {string[]} path - The array of path segments
+ * @param {boolean} [hashPrefix=true] - Whether or not create a hash-prefixed JSON Pointer
+ *
+ * @returns {string} the corresponding JSON Pointer
+ *
+ * @throws {Error} if the `path` argument is not an array
+ *
+ * @alias module:JsonRefs.pathToPtr
+ */
+function pathToPtr (path, hashPrefix) {
+  if (!isType(path, 'Array')) {
+    throw new Error('path must be an Array');
+  }
+
+  // Encode each segment and return
+  return (hashPrefix !== false ? '#' : '') + (path.length > 0 ? '/' : '') + encodePath(path).join('/');
 }
 
 /**
@@ -1135,6 +1174,8 @@ function resolveRefsAt (location, options) {
 
 /* Export the module members */
 module.exports.clearCache = clearCache;
+module.exports.decodePath = decodePath;
+module.exports.encodePath = encodePath;
 module.exports.findRefs = findRefs;
 module.exports.findRefsAt = findRefsAt;
 module.exports.getRefDetails = getRefDetails;

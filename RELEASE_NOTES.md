@@ -3,6 +3,8 @@
 ### v2.0.0 (TBD)
 
 * Added `#clearCache` to allow you to clear the remote document cache and its JSON References details
+* Added `#decodePath` to allow you to take an array of path segments and decode their JSON Pointer tokens *(Issue #47)*
+* Added `#encodePath` to allow you to take an array of path segments and encode the special JSON Pointer characters *(Issue #47)*
 * Added `#findRefsAt` to allow you to retrieve a remote document and then find its references
 * Added `#getRefDetails` to centralize the code used to generate reference metadata *(Also allows you to see why an
 object you expect to be returned by `#findRefs` is not returned.)*

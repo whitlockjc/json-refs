@@ -456,6 +456,46 @@ describe('json-refs', function () {
       .then(done, done);
   });
 
+  describe('#decodePath', function () {
+    it('should throw an error for invalid arguments', function () {
+      try {
+        JsonRefs.decodePath('wrongType');
+
+        assert.fail('Should had failed');
+      } catch (err) {
+        assert.equal(err.message, 'path must be an array');
+      }
+    });
+
+    it('should return the proper path segments', function () {
+      runTestScenarios([
+        [[[]], []],
+        [[[1, '2']], ['1', '2']],
+        [[['some', '~0', '~1', '~01']], ['some', '~', '/', '~1']]
+      ], JsonRefs.decodePath);
+    });
+  });
+
+  describe('#encodePath', function () {
+    it('should throw an error for invalid arguments', function () {
+      try {
+        JsonRefs.encodePath('wrongType');
+
+        assert.fail('Should had failed');
+      } catch (err) {
+        assert.equal(err.message, 'path must be an array');
+      }
+    });
+
+    it('should return the proper path segments', function () {
+      runTestScenarios([
+        [[[]], []],
+        [[[1, '2']], ['1', '2']],
+        [[['some', '~', '/', '~1']], ['some', '~0', '~1', '~01']]
+      ], JsonRefs.encodePath);
+    });
+  });
+
   describe('#findRefs', function () {
     it('should throw an error for invalid arguments', function () {
       runTestScenarios([
@@ -690,6 +730,17 @@ describe('json-refs', function () {
   });
 
   describe('#resolveRefs', function () {
+    it('should throw an error for invalid arguments', function (done) {
+      JsonRefs.resolveRefs('wrongType')
+        .then(function () {
+          throw new Error('Should had failed');
+        })
+        .catch(function (err) {
+          assert.equal(err.message, 'obj must be an Array or an Object');
+        })
+        .then(done, done);
+    });
+
     it('should return the expected value', function (done) {
       JsonRefs.resolveRefs(testDocument, {
         loaderOptions: {
@@ -847,6 +898,17 @@ describe('json-refs', function () {
   });
 
   describe('#resolveRefsAt', function () {
+    it('should throw an error for invalid arguments', function (done) {
+      JsonRefs.resolveRefsAt({})
+        .then(function () {
+          throw new Error('Should had failed');
+        })
+        .catch(function (err) {
+          assert.equal(err.message, 'location must be a string');
+        })
+        .then(done, done);
+    });
+
     it('should return the expected value', function (done) {
       JsonRefs.resolveRefsAt('./test-document.yaml', {
         loaderOptions: {

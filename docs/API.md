@@ -15,6 +15,8 @@ JSON Pointers *(https://tools.ietf.org/html/rfc6901)*.
         * [~UnresolvedRefDetails](#module_JsonRefs..UnresolvedRefDetails) : <code>object</code>
     * _static_
         * [.clearCache()](#module_JsonRefs.clearCache)
+        * [.decodePath(path)](#module_JsonRefs.decodePath) ⇒ <code>string</code>
+        * [.encodePath(path)](#module_JsonRefs.encodePath) ⇒ <code>string</code>
         * [.findRefs(obj, [options])](#module_JsonRefs.findRefs) ⇒ <code>object</code>
         * [.findRefsAt(location, [options])](#module_JsonRefs.findRefsAt) ⇒ <code>Promise</code>
         * [.getRefDetails(obj)](#module_JsonRefs.getRefDetails) ⇒ <code>[UnresolvedRefDetails](#module_JsonRefs..UnresolvedRefDetails)</code>
@@ -122,6 +124,38 @@ Detailed information about unresolved JSON References.
 Clears the internal cache of remote documents, reference details, etc.
 
 **Kind**: static method of <code>[JsonRefs](#module_JsonRefs)</code>  
+<a name="module_JsonRefs.decodePath"></a>
+### JsonRefs.decodePath(path) ⇒ <code>string</code>
+Takes an array of path segments and decodes the JSON Pointer tokens in them.
+
+**Kind**: static method of <code>[JsonRefs](#module_JsonRefs)</code>  
+**Returns**: <code>string</code> - the array of path segments with their JSON Pointer tokens decoded  
+**Throws**:
+
+- <code>Error</code> if the path is not an `Array`
+
+**See**: [https://tools.ietf.org/html/rfc6901#section-3](https://tools.ietf.org/html/rfc6901#section-3)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| path | <code>Array.&lt;string&gt;</code> | The array of path segments |
+
+<a name="module_JsonRefs.encodePath"></a>
+### JsonRefs.encodePath(path) ⇒ <code>string</code>
+Takes an array of path segments and encodes the special JSON Pointer characters in them.
+
+**Kind**: static method of <code>[JsonRefs](#module_JsonRefs)</code>  
+**Returns**: <code>string</code> - the array of path segments with their JSON Pointer tokens encoded  
+**Throws**:
+
+- <code>Error</code> if the path is not an `Array`
+
+**See**: [https://tools.ietf.org/html/rfc6901#section-3](https://tools.ietf.org/html/rfc6901#section-3)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| path | <code>Array.&lt;string&gt;</code> | The array of path segments |
+
 <a name="module_JsonRefs.findRefs"></a>
 ### JsonRefs.findRefs(obj, [options]) ⇒ <code>object</code>
 Finds JSON References defined within the provided array/object.
