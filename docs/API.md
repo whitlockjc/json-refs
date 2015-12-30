@@ -147,11 +147,8 @@ This API is identical to [findRefs](#module_JsonRefs.findRefs) except this API w
 return the result of [findRefs](#module_JsonRefs.findRefs) on the retrieved document.
 
 **Kind**: static method of <code>[JsonRefs](#module_JsonRefs)</code>  
-**Returns**: <code>Promise</code> - a promise that resolves a [RetrievedRefsResults](#module_JsonRefs..RetrievedRefsResults)  
-**Throws**:
-
-- <code>Error</code> if the provided `location` argument is not a string
-
+**Returns**: <code>Promise</code> - a promise that resolves a [RetrievedRefsResults](#module_JsonRefs..RetrievedRefsResults) and rejects with an
+`Error` when the input arguments fail validation  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -257,11 +254,8 @@ Returns a JSON Pointer for the provided array of path segments.
 Finds JSON References defined within the provided array/object and resolves them.
 
 **Kind**: static method of <code>[JsonRefs](#module_JsonRefs)</code>  
-**Returns**: <code>Promise</code> - a promise that resolves a [ResolvedRefsResults](#module_JsonRefs..ResolvedRefsResults)  
-**Throws**:
-
-- <code>Error</code> if `obj` is not an object or array
-
+**Returns**: <code>Promise</code> - a promise that resolves a [ResolvedRefsResults](#module_JsonRefs..ResolvedRefsResults) and rejects with an
+`Error` when the input arguments fail validation  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -291,11 +285,8 @@ This API is identical to [resolveRefs](#module_JsonRefs.resolveRefs) except this
 return the result of [resolveRefs](#module_JsonRefs.resolveRefs) on the retrieved document.
 
 **Kind**: static method of <code>[JsonRefs](#module_JsonRefs)</code>  
-**Returns**: <code>Promise</code> - a promise that resolves a [RetrievedResolvedRefsResults](#module_JsonRefs..RetrievedResolvedRefsResults)  
-**Throws**:
-
-- <code>Error</code> if the provided `location` argument is not a string
-
+**Returns**: <code>Promise</code> - a promise that resolves a [RetrievedResolvedRefsResults](#module_JsonRefs..RetrievedResolvedRefsResults) and rejects with an
+`Error` when the input arguments fail validation  
 
 | Param | Type | Description |
 | --- | --- | --- |

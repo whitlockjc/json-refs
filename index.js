@@ -835,9 +835,8 @@ function findRefs (obj, options) {
  * {@link module:JsonRefs~JsonRefsOptions|options documentation} to see how relative references are handled.)*
  * @param {module:JsonRefs~JsonRefsOptions} [options] - The JsonRefs options
  *
- * @returns {Promise} a promise that resolves a {@link module:JsonRefs~RetrievedRefsResults}
- *
- * @throws {Error} if the provided `location` argument is not a string
+ * @returns {Promise} a promise that resolves a {@link module:JsonRefs~RetrievedRefsResults} and rejects with an
+ * `Error` when the input arguments fail validation
  *
  * @alias module:JsonRefs.findRefsAt
  *
@@ -914,9 +913,8 @@ function findRefsAt (location, options) {
  * @param {array|object} obj - The structure to find JSON References within
  * @param {module:JsonRefs~JsonRefsOptions} [options] - The JsonRefs options
  *
- * @returns {Promise} a promise that resolves a {@link module:JsonRefs~ResolvedRefsResults}
- *
- * @throws {Error} if `obj` is not an object or array
+ * @returns {Promise} a promise that resolves a {@link module:JsonRefs~ResolvedRefsResults} and rejects with an
+ * `Error` when the input arguments fail validation
  *
  * @alias module:JsonRefs.resolveRefs
  *
@@ -1062,9 +1060,8 @@ function resolveRefs (obj, options) {
  * {@link module:JsonRefs~JsonRefsOptions|options documentation} to see how relative references are handled.)*
  * @param {module:JsonRefs~JsonRefsOptions} [options] - The JsonRefs options
  *
- * @returns {Promise} a promise that resolves a {@link module:JsonRefs~RetrievedResolvedRefsResults}
- *
- * @throws {Error} if the provided `location` argument is not a string
+ * @returns {Promise} a promise that resolves a {@link module:JsonRefs~RetrievedResolvedRefsResults} and rejects with an
+ * `Error` when the input arguments fail validation
  *
  * @alias module:JsonRefs.resolveRefsAt
  *
