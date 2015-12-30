@@ -619,7 +619,8 @@ describe('json-refs', function () {
         [['some/path'], false],
         [['#some/path'], false],
         [['http://localhost#/some/path'], false],
-        [['./some/path'], false]
+        [['./some/path'], false],
+        [['#/some/invalid/~token'], false]
       ], JsonRefs.isPtr);
     });
   });
@@ -635,7 +636,8 @@ describe('json-refs', function () {
         [['someId#/name'], true],
         [['./models.json'], true],
         [['https://rawgit.com/whitlockjc/json-refs/master/package.json'], true],
-        [['https://rawgit.com/whitlockjc/json-refs/master/package.json#/name'], true]
+        [['https://rawgit.com/whitlockjc/json-refs/master/package.json#/name'], true],
+        [['#/some/valid/token/~0/~1'], true]
       ].map(function (scenario) {
         scenario[0][0] = {$ref: scenario[0][0]};
         return scenario;

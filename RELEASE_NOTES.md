@@ -14,6 +14,7 @@ object you expect to be returned by `#findRefs` is not returned.)*
 * Updated `#findRefs` to no longer use [js-traverse](https://github.com/substack/js-traverse), to no longer process
 child properties of JSON Reference objects and to use an *options* object *(See API documentation for details)*
 * Updated `#isPtr` to validate the `$ref` value is a URI instead of treating all string values as valid
+* Updated `#isPtr` to validate the the [tokens](http://tools.ietf.org/html/rfc6901#section-4) *(Issue #47)*
 * Updated `#pathToPtr` to take an optional second argument to allow for returning both hash-based *(default)* and
 slash-based JSON Pointers
 * Updated `#resolveRefs` to work with the new `options` object *(Removes `options.depth`)*
