@@ -481,7 +481,7 @@ function validateOptions (options) {
  *
  * @typedef {object} JsonRefsOptions
  *
- * @param {string|string[]|function} [filter=[]] - The filter to use when gathering JSON References *(If this value is
+ * @param {string|string[]|function} [filter=function () {return true;}] - The filter to use when gathering JSON References *(If this value is
  * a single string or an array of strings, the value(s) are expected to be the `type(s)` you are interested in
  * collecting as described in {@link module:JsonRefs.getRefDetails}.  If it is a function, it is expected that the
  * function behaves like {@link module:JsonRefs~RefDetailsFilter}.)*
@@ -527,7 +527,7 @@ function validateOptions (options) {
 /**
  * The results of resolving the JSON References of an array/object.
  *
- * @typedef {object} ResolvedResults
+ * @typedef {object} ResolvedRefsResults
  *
  * @property {module:JsonRefs~ResolvedRefDetails} refs - An object whose keys are JSON Pointers *(fragment version)*
  * to where the JSON Reference is defined and whose values are {@link module:JsonRefs~ResolvedRefDetails}
@@ -918,7 +918,7 @@ function findRefsAt (location, options) {
  *
  * @example
  * // Example that only resolves relative and remote references
- * JsonRefs.resolveRefsAt(swaggerObj, {
+ * JsonRefs.resolveRefs(swaggerObj, {
  *     filter: ['relative', 'remote']
  *   })
  *   .then(function (res) {
