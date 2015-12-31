@@ -36,8 +36,7 @@ var qs = require('querystring');
 var slash = require('slash');
 var URI = require('uri-js');
 
-var ptrTokenRegex = /[~].?/g;
-var ptrTokens = ['0', '1'];
+var badPtrTokenRegex = /~(?:[^01]|$)/g;
 var remoteCache = {};
 var remoteTypes = ['relative', 'remote'];
 var uriDetailsCache = {};
@@ -870,7 +869,6 @@ function getRefDetails (obj) {
 function isPtr (ptr) {
   var valid = isType(ptr, 'String');
   var firstChar;
-  var tokens;
 
   if (valid) {
     if (ptr !== '') {
@@ -881,13 +879,7 @@ function isPtr (ptr) {
       } else if (firstChar === '#' && ptr !== '#' && ptr.charAt(1) !== '/') {
         valid = false;
       } else {
-        tokens = ptr.match(ptrTokenRegex);
-
-        if (isType(tokens, 'Array')) {
-          valid = tokens.every(function (token) {
-            return ptrTokens.indexOf(token.split('~')[1]) > -1;
-          });
-        }
+        valid = !ptr.match(badPtrTokenRegex);
       }
     }
   }
