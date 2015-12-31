@@ -308,13 +308,9 @@ function findValue (obj, path, ignore) {
 }
 
 function getExtraRefKeys (ref) {
-  return Object.keys(ref).reduce(function (extras, key) {
-    if (key !== '$ref') {
-      extras.push(key);
-    }
-
-    return extras;
-  }, []);
+  return Object.keys(ref).filter(function (key) {
+    return key !== '$ref';
+  });
 }
 
 function getRemoteDocument (url, options) {
