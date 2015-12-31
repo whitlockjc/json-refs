@@ -660,7 +660,8 @@ describe('json-refs', function () {
         [['#some/path'], false],
         [['http://localhost#/some/path'], false],
         [['./some/path'], false],
-        [['#/some/invalid/~token'], false]
+        [['#/some/invalid/~token'], false],
+        [['#/another/invalid/token/~'], false]
       ], JsonRefs.isPtr);
     });
   });
