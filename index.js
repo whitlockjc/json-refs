@@ -720,7 +720,7 @@ function findRefs (obj, options) {
  * @param {module:JsonRefs~JsonRefsOptions} [options] - The JsonRefs options
  *
  * @returns {Promise} a promise that resolves a {@link module:JsonRefs~RetrievedRefsResults} and rejects with an
- * `Error` when the input arguments fail validation
+ * `Error` when the input arguments fail validation or if the location argument points to an unloadable resource
  *
  * @alias module:JsonRefs.findRefsAt
  *
@@ -1109,7 +1109,7 @@ function resolveRefs (obj, options) {
  * @param {module:JsonRefs~JsonRefsOptions} [options] - The JsonRefs options
  *
  * @returns {Promise} a promise that resolves a {@link module:JsonRefs~RetrievedResolvedRefsResults} and rejects with an
- * `Error` when the input arguments fail validation
+ * `Error` when the input arguments fail validation or if the location argument points to an unloadable resource
  *
  * @alias module:JsonRefs.resolveRefsAt
  *

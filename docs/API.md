@@ -182,7 +182,7 @@ return the result of [findRefs](#module_JsonRefs.findRefs) on the retrieved docu
 
 **Kind**: static method of <code>[JsonRefs](#module_JsonRefs)</code>  
 **Returns**: <code>Promise</code> - a promise that resolves a [RetrievedRefsResults](#module_JsonRefs..RetrievedRefsResults) and rejects with an
-`Error` when the input arguments fail validation  
+`Error` when the input arguments fail validation or if the location argument points to an unloadable resource  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -320,7 +320,7 @@ return the result of [resolveRefs](#module_JsonRefs.resolveRefs) on the retrieve
 
 **Kind**: static method of <code>[JsonRefs](#module_JsonRefs)</code>  
 **Returns**: <code>Promise</code> - a promise that resolves a [RetrievedResolvedRefsResults](#module_JsonRefs..RetrievedResolvedRefsResults) and rejects with an
-`Error` when the input arguments fail validation  
+`Error` when the input arguments fail validation or if the location argument points to an unloadable resource  
 
 | Param | Type | Description |
 | --- | --- | --- |
