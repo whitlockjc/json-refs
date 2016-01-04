@@ -20,8 +20,8 @@ JSON Pointers *(https://tools.ietf.org/html/rfc6901)*.
         * [.findRefs(obj, [options])](#module_JsonRefs.findRefs) ⇒ <code>object</code>
         * [.findRefsAt(location, [options])](#module_JsonRefs.findRefsAt) ⇒ <code>Promise</code>
         * [.getRefDetails(obj)](#module_JsonRefs.getRefDetails) ⇒ <code>[UnresolvedRefDetails](#module_JsonRefs..UnresolvedRefDetails)</code>
-        * [.isPtr(ptr)](#module_JsonRefs.isPtr) ⇒ <code>boolean</code>
-        * [.isRef(obj)](#module_JsonRefs.isRef) ⇒ <code>boolean</code>
+        * [.isPtr(ptr, [throwWithDetails])](#module_JsonRefs.isPtr) ⇒ <code>boolean</code>
+        * [.isRef(obj, [throwWithDetails])](#module_JsonRefs.isRef) ⇒ <code>boolean</code>
         * [.pathFromPtr(ptr)](#module_JsonRefs.pathFromPtr) ⇒ <code>Array.&lt;string&gt;</code>
         * [.pathToPtr(path, [hashPrefix])](#module_JsonRefs.pathToPtr) ⇒ <code>string</code>
         * [.resolveRefs(obj, [options])](#module_JsonRefs.resolveRefs) ⇒ <code>Promise</code>
@@ -216,24 +216,29 @@ Returns detailed information about the JSON Reference.
 | obj | <code>object</code> | The JSON Reference definition |
 
 <a name="module_JsonRefs.isPtr"></a>
-### JsonRefs.isPtr(ptr) ⇒ <code>boolean</code>
+### JsonRefs.isPtr(ptr, [throwWithDetails]) ⇒ <code>boolean</code>
 Returns whether the argument represents a JSON Pointer.
 
 A string is a JSON Pointer if the following are all true:
 
   * The string is of type `String`
-  * The string must be empty or start with a `/` or `#/`
+  * The string must be empty, `#` or start with a `/` or `#/`
 
 **Kind**: static method of <code>[JsonRefs](#module_JsonRefs)</code>  
 **Returns**: <code>boolean</code> - the result of the check  
+**Throws**:
+
+- <code>error</code> when the provided value is invalid and the `throwWithDetails` argument is `true`
+
 **See**: [https://tools.ietf.org/html/rfc6901#section-3](https://tools.ietf.org/html/rfc6901#section-3)  
 
-| Param | Type | Description |
-| --- | --- | --- |
-| ptr | <code>string</code> | The string to check |
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| ptr | <code>string</code> |  | The string to check |
+| [throwWithDetails] | <code>boolean</code> | <code>false</code> | Whether or not to throw an `Error` with the details as to why the value provided is invalid |
 
 <a name="module_JsonRefs.isRef"></a>
-### JsonRefs.isRef(obj) ⇒ <code>boolean</code>
+### JsonRefs.isRef(obj, [throwWithDetails]) ⇒ <code>boolean</code>
 Returns whether the argument represents a JSON Reference.
 
 An object is a JSON Reference only if the following are all true:
@@ -244,11 +249,16 @@ An object is a JSON Reference only if the following are all true:
 
 **Kind**: static method of <code>[JsonRefs](#module_JsonRefs)</code>  
 **Returns**: <code>boolean</code> - the result of the check  
+**Throws**:
+
+- <code>error</code> when the provided value is invalid and the `throwWithDetails` argument is `true`
+
 **See**: [http://tools.ietf.org/html/draft-pbryan-zyp-json-ref-03#section-3](http://tools.ietf.org/html/draft-pbryan-zyp-json-ref-03#section-3)  
 
-| Param | Type | Description |
-| --- | --- | --- |
-| obj | <code>object</code> | The object to check |
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| obj | <code>object</code> |  | The object to check |
+| [throwWithDetails] | <code>boolean</code> | <code>false</code> | Whether or not to throw an `Error` with the details as to why the value provided is invalid |
 
 <a name="module_JsonRefs.pathFromPtr"></a>
 ### JsonRefs.pathFromPtr(ptr) ⇒ <code>Array.&lt;string&gt;</code>

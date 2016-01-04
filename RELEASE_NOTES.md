@@ -15,9 +15,14 @@ object you expect to be returned by `#findRefs` is not returned.)*
 * Renamed `#pathFromPointer` to `#pathFromPtr`
 * Renamed `#pathToPointer` to `#pathToPtr`
 * Updated `#findRefs` to no longer use [js-traverse](https://github.com/substack/js-traverse), to no longer process
-child properties of JSON Reference objects and to use an *options* object *(See API documentation for details)*
+child properties of JSON Reference objects, to use an *options* object and to have an option to include JSON Reference
+like objects that fail validation so that you can identify invalid JSON References easier *(See API documentation for details)*
 * Updated `#isPtr` to validate the `$ref` value is a URI instead of treating all string values as valid
 * Updated `#isPtr` to validate the [tokens](http://tools.ietf.org/html/rfc6901#section-4) *(Issue #47)*
+* Updated `#isPtr` to have an optional second argument which dictates whether or not to throw an `Error` for invalid JSON
+Pointer values *(The `Error` would have the details as to why the provided value is not a JSON Pointer)* *(Issue #47)
+* Updated `#isRef` to have an optional second argument which dictates whether or not to throw an `Error` for invalid JSON
+Reference values *(The `Error` would have the details as to why the provided value is not a JSON Reference)* *(Issue #47)
 * Updated `#pathToPtr` to take an optional second argument to allow for returning both hash-based *(default)* and
 slash-based JSON Pointers
 * Updated `#resolveRefs` to work with the new `options` object *(Removes `options.depth`)*

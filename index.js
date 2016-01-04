@@ -155,7 +155,8 @@ function filterRefs (options, refs) {
   Object.keys(refs).forEach(function (refPtr) {
     var refDetails = refs[refPtr];
 
-    if (refFilter(refDetails, pathFromPtr(refPtr)) === true && refPtr.indexOf(subDocPrefix) > -1) {
+    if (refFilter(refDetails, pathFromPtr(refPtr)) === true &&
+        refPtr.indexOf(subDocPrefix) > -1) {
       filtered[refPtr] = refDetails;
     }
   });
@@ -360,8 +361,24 @@ function getRemoteDocument (url, options) {
   return allTasks;
 }
 
-function isRefLike (obj) {
-  return isType(obj, 'Object') && isType(obj.$ref, 'String');
+function isRefLike (obj, throwWithDetails) {
+  var refLike = true;
+
+  try {
+    if (!isType(obj, 'Object')) {
+      throw new Error('obj is not an Object');
+    } else if (!isType(obj.$ref, 'String')) {
+      throw new Error('obj.$ref is not a String');
+    }
+  } catch (err) {
+    if (throwWithDetails) {
+      throw err;
+    }
+
+    refLike = false;
+  }
+
+  return refLike;
 }
 
 function isType (obj, type) {
@@ -476,10 +493,10 @@ function validateOptions (options) {
  *
  * @typedef {object} JsonRefsOptions
  *
- * @param {string|string[]|function} [filter=function () {return true;}] - The filter to use when gathering JSON References *(If this value is
- * a single string or an array of strings, the value(s) are expected to be the `type(s)` you are interested in
- * collecting as described in {@link module:JsonRefs.getRefDetails}.  If it is a function, it is expected that the
- * function behaves like {@link module:JsonRefs~RefDetailsFilter}.)*
+ * @param {string|string[]|function} [filter=function () {return true;}] - The filter to use when gathering JSON
+ * References *(If this value is a single string or an array of strings, the value(s) are expected to be the `type(s)`
+ * you are interested in collecting as described in {@link module:JsonRefs.getRefDetails}.  If it is a function, it is
+ * expected that the function behaves like {@link module:JsonRefs~RefDetailsFilter}.)*
  * @param {object} [loaderOptions] - The options to pass to
  * {@link https://github.com/whitlockjc/path-loader/blob/master/docs/API.md#module_PathLoader.load|PathLoader~load}.
  * @param {string} [options.relativeBase] - The base location to use when resolving relative references *(Only useful
@@ -689,17 +706,19 @@ function findRefs (obj, options) {
     var processChildren = true;
     var refDetails;
 
-    if (isRef(node)) {
+    if (isRefLike(node)) {
       refDetails = getRefDetails(node);
 
-      if (refFilter(refDetails, path) === true) {
-        refs[pathToPtr(path)] = refDetails;
-      }
+      if (refDetails.type !== 'invalid') {
+        if (refFilter(refDetails, path) === true) {
+          refs[pathToPtr(path)] = refDetails;
+        }
 
-      // Whenever a JSON Reference has extra children, its children should be ignored so we want to stop processing.
-      //   See: http://tools.ietf.org/html/draft-pbryan-zyp-json-ref-03#section-3
-      if (getExtraRefKeys(node).length > 0) {
-        processChildren = false;
+        // Whenever a JSON Reference has extra children, its children should be ignored so we want to stop processing.
+        //   See: http://tools.ietf.org/html/draft-pbryan-zyp-json-ref-03#section-3
+        if (getExtraRefKeys(node).length > 0) {
+          processChildren = false;
+        }
       }
     }
 
@@ -808,20 +827,21 @@ function getRefDetails (obj) {
   var extraKeys;
   var uriDetails;
 
-  if (isRefLike(obj)) {
-    cacheKey = obj.$ref;
-    uriDetails = uriDetailsCache[cacheKey];
+  try {
+    if (isRefLike(obj, true)) {
+      cacheKey = obj.$ref;
+      uriDetails = uriDetailsCache[cacheKey];
 
-    if (isType(uriDetails, 'Undefined')) {
-      uriDetails =  uriDetailsCache[cacheKey] = URI.parse(obj.$ref);
-    }
+      if (isType(uriDetails, 'Undefined')) {
+        uriDetails = uriDetailsCache[cacheKey] = URI.parse(cacheKey);
+      }
 
-    details.uri = cacheKey;
-    details.uriDetails = uriDetails;
+      details.uri = cacheKey;
+      details.uriDetails = uriDetails;
 
-    if (isType(uriDetails.error, 'Undefined')) {
-      // Convert the URI reference to one of our types
-      switch (uriDetails.reference) {
+      if (isType(uriDetails.error, 'Undefined')) {
+        // Convert the URI reference to one of our types
+        switch (uriDetails.reference) {
         case 'absolute':
         case 'uri':
           details.type = 'remote';
@@ -831,19 +851,23 @@ function getRefDetails (obj) {
           break;
         default:
           details.type = uriDetails.reference;
+        }
+      } else {
+        details.error = details.uriDetails.error;
+        details.type = 'invalid';
+      }
+
+      // Identify warning
+      extraKeys = getExtraRefKeys(obj);
+
+      if (extraKeys.length > 0) {
+        details.warning = 'Extra JSON Reference properties will be ignored: ' + extraKeys.join(', ');
       }
     } else {
-      details.error = details.uriDetails.error;
       details.type = 'invalid';
     }
-
-    // Identify warning
-    extraKeys = getExtraRefKeys(obj);
-
-    if (extraKeys.length > 0) {
-      details.warning = 'Extra JSON Reference properties will be ignored: ' + extraKeys.join(', ');
-    }
-  } else {
+  } catch (err) {
+    details.error = err.message;
     details.type = 'invalid';
   }
 
@@ -856,32 +880,46 @@ function getRefDetails (obj) {
  * A string is a JSON Pointer if the following are all true:
  *
  *   * The string is of type `String`
- *   * The string must be empty or start with a `/` or `#/`
+ *   * The string must be empty, `#` or start with a `/` or `#/`
  *
  * @param {string} ptr - The string to check
+ * @param {boolean} [throwWithDetails=false] - Whether or not to throw an `Error` with the details as to why the value
+ * provided is invalid
  *
  * @returns {boolean} the result of the check
+ *
+ * @throws {error} when the provided value is invalid and the `throwWithDetails` argument is `true`
  *
  * @see {@link https://tools.ietf.org/html/rfc6901#section-3}
  *
  * @alias module:JsonRefs.isPtr
  */
-function isPtr (ptr) {
-  var valid = isType(ptr, 'String');
+function isPtr (ptr, throwWithDetails) {
+  var valid = true;
   var firstChar;
 
-  if (valid) {
-    if (ptr !== '') {
-      firstChar = ptr.charAt(0);
+  try {
+    if (isType(ptr, 'String')) {
+      if (ptr !== '') {
+        firstChar = ptr.charAt(0);
 
-      if (['#', '/'].indexOf(firstChar) === -1) {
-        valid = false;
-      } else if (firstChar === '#' && ptr !== '#' && ptr.charAt(1) !== '/') {
-        valid = false;
-      } else {
-        valid = !ptr.match(badPtrTokenRegex);
+        if (['#', '/'].indexOf(firstChar) === -1) {
+          throw new Error('ptr must start with a / or #/');
+        } else if (firstChar === '#' && ptr !== '#' && ptr.charAt(1) !== '/') {
+          throw new Error('ptr must start with a / or #/');
+        } else if (ptr.match(badPtrTokenRegex)) {
+          throw new Error('ptr has invalid token(s)');
+        }
       }
+    } else {
+      throw new Error('ptr is not a String');
     }
+  } catch (err) {
+    if (throwWithDetails === true) {
+      throw err;
+    }
+
+    valid = false;
   }
 
   return valid;
@@ -897,15 +935,19 @@ function isPtr (ptr) {
  *   * The `$ref` property is a valid URI
  *
  * @param {object} obj - The object to check
+ * @param {boolean} [throwWithDetails=false] - Whether or not to throw an `Error` with the details as to why the value
+ * provided is invalid
  *
  * @returns {boolean} the result of the check
+ *
+ * @throws {error} when the provided value is invalid and the `throwWithDetails` argument is `true`
  *
  * @see {@link http://tools.ietf.org/html/draft-pbryan-zyp-json-ref-03#section-3}
  *
  * @alias module:JsonRefs.isRef
  */
-function isRef (obj) {
-  return isRefLike(obj) && getRefDetails(obj).type !== 'invalid';
+function isRef (obj, throwWithDetails) {
+  return isRefLike(obj, throwWithDetails) && getRefDetails(obj, throwWithDetails).type !== 'invalid';
 }
 
 /**
@@ -1012,7 +1054,7 @@ function resolveRefs (obj, options) {
         var value;
 
         if (remoteTypes.indexOf(refDetails.type) > -1) {
-          if (isType(refDetails.error, 'Undefined')) {
+          if (isType(refDetails.error, 'Undefined') && refDetails.type !== 'invalid') {
             try {
               value = findValue(refDetails.value || {},
                                 refDetails.uriDetails.fragment ?
@@ -1028,7 +1070,7 @@ function resolveRefs (obj, options) {
                 refDetails.value = {};
               }
             } catch (err) {
-              refDetails.error = err;
+              refDetails.error = err.message;
               refDetails.missing = true;
             }
           } else {
@@ -1048,7 +1090,7 @@ function resolveRefs (obj, options) {
           parentLocations.push(refPtr);
         }
 
-        if (remoteTypes.indexOf(refDetails.type) === -1) {
+        if (remoteTypes.indexOf(refDetails.type) === -1 && refDetails.type !== 'invalid') {
           if (isType(refDetails.error, 'Undefined')) {
             if (refPtr.indexOf(refDetails.uri) > -1) {
               refDetails.circular = true;

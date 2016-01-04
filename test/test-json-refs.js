@@ -169,8 +169,13 @@ function validateUnresolvedRefDetails (actual, defPtr, def) {
   if (_.isUndefined(uriDetails)) {
     assert.ok(_.isUndefined(actual.uri));
     assert.ok(_.isUndefined(actual.uriDetails));
-    assert.ok(_.isUndefined(actual.error));
     assert.ok(_.isUndefined(actual.warning));
+
+    if (defPtr === '#/project') {
+      assert.equal(actual.error, 'obj.$ref is not a String');
+    } else {
+      assert.ok(_.isUndefined(actual.error));
+    }
   } else {
     assert.equal(actual.uri, def.$ref);
     assert.deepEqual(actual.uriDetails, uriDetails);
@@ -197,6 +202,8 @@ function validateUnresolvedRefDetails (actual, defPtr, def) {
 
   if (defPtr === '#/warning') {
     assert.equal(actual.warning, 'Extra JSON Reference properties will be ignored: ignored');
+  } else if (defPtr === '#/invalid') {
+    assert.equal(actual.error, 'URI is not strictly valid.');
   }
 }
 
@@ -232,7 +239,7 @@ describe('json-refs', function () {
     deferred: testDocument.project.name,
     missing: testNestedDocument.missing
   };
-  var expectedAllRefs;
+  var expectedValidResolveRefs;
   var expectedFullyResolved;
   var remotePkgJson;
 
@@ -240,7 +247,7 @@ describe('json-refs', function () {
     JsonRefs.findRefsAt('https://rawgit.com/whitlockjc/json-refs/master/package.json')
       .then(function (refs) {
         remotePkgJson = refs.value;
-        expectedAllRefs = {
+        expectedValidResolveRefs = {
           '#/array/0': {
             def: testDocument.array[0],
             uri: testDocument.array[0].$ref,
@@ -497,6 +504,22 @@ describe('json-refs', function () {
   });
 
   describe('#findRefs', function () {
+    var expectedAllReferences = {
+      '#/array/0': testDocument.array[0],
+      '#/array/1': testDocument.array[1],
+      '#/circular/root': testDocument.circular.root,
+      '#/circular/ancestor': testDocument.circular.ancestor,
+      '#/definitions/Person/properties/name': testDocument.definitions.Person.properties.name,
+      '#/invalid': testDocument.invalid,
+      '#/local': testDocument.local,
+      '#/missing': testDocument.missing,
+      '#/remote/absolute': testDocument.remote.absolute,
+      '#/remote/absolute-with-hash': testDocument.remote['absolute-with-hash'],
+      '#/remote/relative': testDocument.remote.relative,
+      '#/remote/relative-with-hash': testDocument.remote['relative-with-hash'],
+      '#/warning': testDocument.warning
+    };
+
     it('should throw an error for invalid arguments', function () {
       runTestScenarios([
         [[], objTypeError],
@@ -517,21 +540,12 @@ describe('json-refs', function () {
           });
         });
 
-        it('option input (no options)', function () {
-          runRefDetailsTestScenarios(JsonRefs.findRefs(testDocument), {
-            '#/array/0': testDocument.array[0],
-            '#/array/1': testDocument.array[1],
-            '#/circular/root': testDocument.circular.root,
-            '#/circular/ancestor': testDocument.circular.ancestor,
-            '#/definitions/Person/properties/name': testDocument.definitions.Person.properties.name,
-            '#/local': testDocument.local,
-            '#/missing': testDocument.missing,
-            '#/remote/absolute': testDocument.remote.absolute,
-            '#/remote/absolute-with-hash': testDocument.remote['absolute-with-hash'],
-            '#/remote/relative': testDocument.remote.relative,
-            '#/remote/relative-with-hash': testDocument.remote['relative-with-hash'],
-            '#/warning': testDocument.warning
-          });
+        it('object input (no options)', function () {
+          var expectedAllValidRefs = _.cloneDeep(expectedAllReferences);
+
+          delete expectedAllValidRefs['#/invalid'];
+
+          runRefDetailsTestScenarios(JsonRefs.findRefs(testDocument), expectedAllValidRefs);
         });
       });
 
@@ -664,6 +678,21 @@ describe('json-refs', function () {
         [['#/another/invalid/token/~'], false]
       ], JsonRefs.isPtr);
     });
+
+    it('should support throwWithDetails argument', function () {
+      var btError = new Error('ptr has invalid token(s)');
+      var wsError = new Error('ptr must start with a / or #/');
+      var wtError = new Error('ptr is not a String');
+
+      runTestScenarios([
+        [[undefined, true], wtError],
+        [[1, true], wtError],
+        [['some/path', true], wsError],
+        [['#some/path', true], wsError],
+        [['/some/invalid/~token', true], btError],
+        [['/some/invalid/token/~', true], btError]
+      ], JsonRefs.isPtr);
+    });
   });
 
   describe('#isRef', function () {
@@ -754,7 +783,7 @@ describe('json-refs', function () {
         assert.deepEqual(res.resolved, expectedFullyResolved);
 
         // Validate the reference metadata
-        validateResolvedRefDetails(res.refs, expectedAllRefs);
+        validateResolvedRefDetails(res.refs, expectedValidResolveRefs);
       })
       .then(done, done);
     });
@@ -925,7 +954,7 @@ describe('json-refs', function () {
         assert.deepEqual(res.resolved, expectedFullyResolved);
 
         // Validate the reference metadata
-        validateResolvedRefDetails(res.refs, expectedAllRefs);
+        validateResolvedRefDetails(res.refs, expectedValidResolveRefs);
       })
       .then(done, done);
     });
