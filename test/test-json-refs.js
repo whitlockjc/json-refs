@@ -525,6 +525,7 @@ describe('json-refs', function () {
         [[], objTypeError],
         [['wrongType'], objTypeError],
         [[{}, 1], optionsTypeError],
+        [[{}, {includeInvalid: 'wrongType'}], new TypeError('options.includeInvalid must be a Boolean')],
         [[[], {subDocPath: 1}], osdpTypeError],
         [[{}, {subDocPath: '#/missing'}], osdpMissingError],
         [[{}, {filter: 1}], ofTypeError]
@@ -571,6 +572,10 @@ describe('json-refs', function () {
             '#/remote/relative-with-hash'
           ]);
         });
+      });
+
+      it('options.includeInvalid', function () {
+        runRefDetailsTestScenarios(JsonRefs.findRefs(testDocument, {includeInvalid: true}), expectedAllReferences);
       });
 
       describe('options.subDocPath', function () {
@@ -924,6 +929,34 @@ describe('json-refs', function () {
         });
       })
       .then(done, done);
+    });
+
+    it('should support options.includeInvalid', function (done) {
+      JsonRefs.resolveRefs(testDocument, {
+        includeInvalid: true,
+        loaderOptions: {
+          processContent: yamlContentProcessor
+        },
+        relativeBase: relativeBase
+      })
+        .then(function (res) {
+          var expectedAllResolvedRefs = _.cloneDeep(expectedValidResolveRefs);
+
+          expectedAllResolvedRefs['#/invalid'] = {
+            def: testDocument.invalid,
+            uri: testDocument.invalid.$ref,
+            uriDetails: URI.parse(testDocument.invalid.$ref),
+            error: 'URI is not strictly valid.',
+            type: 'invalid'
+          };
+
+          // Validate the resolved document is the same as when options.includeInvalid is false
+          assert.deepEqual(res.resolved, expectedFullyResolved);
+
+          // Validate the reference metadata includes the invalid reference details
+          validateResolvedRefDetails(res.refs, expectedAllResolvedRefs);
+        })
+        .then(done, done);
     });
   });
 

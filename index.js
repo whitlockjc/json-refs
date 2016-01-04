@@ -156,7 +156,8 @@ function filterRefs (options, refs) {
     var refDetails = refs[refPtr];
 
     if (refFilter(refDetails, pathFromPtr(refPtr)) === true &&
-        refPtr.indexOf(subDocPrefix) > -1) {
+        refPtr.indexOf(subDocPrefix) > -1 &&
+        (refDetails.type !== 'invalid' || options.includeInvalid === true)) {
       filtered[refPtr] = refDetails;
     }
   });
@@ -475,6 +476,9 @@ function validateOptions (options) {
                !isType(options.filter, 'Function') &&
                !isType(options.filter, 'String')) {
       throw new TypeError('options.filter must be an Array, a Function of a String');
+    } else if (!isType(options.includeInvalid, 'Undefined') &&
+               !isType(options.includeInvalid, 'Boolean')) {
+      throw new TypeError('options.includeInvalid must be a Boolean');
     }
   }
 }
@@ -497,6 +501,11 @@ function validateOptions (options) {
  * References *(If this value is a single string or an array of strings, the value(s) are expected to be the `type(s)`
  * you are interested in collecting as described in {@link module:JsonRefs.getRefDetails}.  If it is a function, it is
  * expected that the function behaves like {@link module:JsonRefs~RefDetailsFilter}.)*
+ * @param {boolean} [includeInvalid=false] - Whether or not to include invalid JSON Reference details *(This will make
+ * it so that objects that are like JSON Reference objects, as in they are an `Object` and the have a `$ref` property,
+ * but fail validation will be included.  This is very useful for when you want to know if you have invalid JSON
+ * Reference definitions.  This will not mean that APIs will process invalid JSON References but the reasons as to why
+ * the JSON References are invalid will be included in the returned metadata.)*
  * @param {object} [loaderOptions] - The options to pass to
  * {@link https://github.com/whitlockjc/path-loader/blob/master/docs/API.md#module_PathLoader.load|PathLoader~load}.
  * @param {string} [options.relativeBase] - The base location to use when resolving relative references *(Only useful
@@ -709,7 +718,7 @@ function findRefs (obj, options) {
     if (isRefLike(node)) {
       refDetails = getRefDetails(node);
 
-      if (refDetails.type !== 'invalid') {
+      if (refDetails.type !== 'invalid' || options.includeInvalid === true) {
         if (refFilter(refDetails, path) === true) {
           refs[pathToPtr(path)] = refDetails;
         }
@@ -797,6 +806,8 @@ function findRefsAt (location, options) {
         // Do not filter any references so the cache is complete
         delete cOptions.filter;
         delete cOptions.subDocPath;
+
+        cOptions.includeInvalid = true;
 
         remoteCache[location].refs = findRefs(res, cOptions);
 
