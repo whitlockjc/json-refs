@@ -14,8 +14,12 @@ object you expect to be returned by `#findRefs` is not returned.)*
 * Renamed `#isJsonReference` to `#isRef`
 * Renamed `#pathFromPointer` to `#pathFromPtr`
 * Renamed `#pathToPointer` to `#pathToPtr`
-* Updated `#findRefs` to no longer use [js-traverse](https://github.com/substack/js-traverse), to no longer process
-child properties of JSON Reference objects, to use an *options* object and to have an option to include JSON Reference
+* Updated `#findRefs` to no longer process child properties of JSON Reference objects
+* Updated `#findRefs` to no longer use [js-traverse](https://github.com/substack/js-traverse)
+* Updated `#findRefs` to use an *options* object
+    * `options.filter` allows you to filter references
+    * `options.includeInvalid` allows you to include JSON Reference details for invalid references
+    * `options.subDocPath` allows you to find JSON References at/below a certain location in the document
 like objects that fail validation so that you can identify invalid JSON References easier *(See API documentation for details)*
 * Updated `#isPtr` to validate the `$ref` value is a URI instead of treating all string values as valid
 * Updated `#isPtr` to validate the [tokens](http://tools.ietf.org/html/rfc6901#section-4) *(Issue #47)*
@@ -25,7 +29,14 @@ Pointer values *(The `Error` would have the details as to why the provided value
 Reference values *(The `Error` would have the details as to why the provided value is not a JSON Reference)* *(Issue #47)
 * Updated `#pathToPtr` to take an optional second argument to allow for returning both hash-based *(default)* and
 slash-based JSON Pointers
-* Updated `#resolveRefs` to work with the new `options` object *(Removes `options.depth`)*
+* Updated `#resolveRefs` to work with the new `options` object
+    * `options.depth` was removed
+    * `options.loaderOptions` is now used for the options passed to [path-loader](https://github.com/whitlockjc/path-loader)
+    * `options.prepareRequest` was removed *(Now available at `options.loaderOptions.prepareRequest`)
+    * `options.processContent` was removed *(Now available at `options.loaderOptions.processContent`)
+    * `options.location` was removed *(Now available at `options.relativeBase`)*
+    * `options.relativeBase` is used to specify the root location to resolve relative references from
+    * All `options` used by `#findRefs` are supported here
 
 ### v1.3.0 (2015-11-19)
 
