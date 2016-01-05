@@ -466,11 +466,6 @@ function validateOptions (options) {
   if (!isType(options, 'Undefined')) {
     if (!isType(options, 'Object')) {
       throw new TypeError('options must be an Object');
-    } else if (!isType(options.subDocPath, 'Undefined') &&
-               !isType(options.subDocPath, 'Array') &&
-               !isPtr(options.subDocPath)) {
-      // If a pointer is provided, throw an error if it's not the proper type
-      throw new TypeError('options.subDocPath must be an Array of path segments or a valid JSON Pointer');
     } else if (!isType(options.filter, 'Undefined') &&
                !isType(options.filter, 'Array') &&
                !isType(options.filter, 'Function') &&
@@ -479,6 +474,17 @@ function validateOptions (options) {
     } else if (!isType(options.includeInvalid, 'Undefined') &&
                !isType(options.includeInvalid, 'Boolean')) {
       throw new TypeError('options.includeInvalid must be a Boolean');
+    } else if (!isType(options.refPreProcessor, 'Undefined') &&
+               !isType(options.refPreProcessor, 'Function')) {
+      throw new TypeError('options.refPreProcessor must be a Function');
+    } else if (!isType(options.refPostProcessor, 'Undefined') &&
+               !isType(options.refPostProcessor, 'Function')) {
+      throw new TypeError('options.refPostProcessor must be a Function');
+    } else if (!isType(options.subDocPath, 'Undefined') &&
+               !isType(options.subDocPath, 'Array') &&
+               !isPtr(options.subDocPath)) {
+      // If a pointer is provided, throw an error if it's not the proper type
+      throw new TypeError('options.subDocPath must be an Array of path segments or a valid JSON Pointer');
     }
   }
 }
@@ -507,7 +513,11 @@ function validateOptions (options) {
  * Reference definitions.  This will not mean that APIs will process invalid JSON References but the reasons as to why
  * the JSON References are invalid will be included in the returned metadata.)*
  * @param {object} [loaderOptions] - The options to pass to
- * {@link https://github.com/whitlockjc/path-loader/blob/master/docs/API.md#module_PathLoader.load|PathLoader~load}.
+ * {@link https://github.com/whitlockjc/path-loader/blob/master/docs/API.md#module_PathLoader.load|PathLoader~load}
+ * @param {module:JsonRefs~RefPreProcessor} [refPreProcessor] - The callback used to pre-process a JSON Reference like
+ * object *(This is called prior to validating the JSON Reference like object and getting its details)*
+ * @param {module:JsonRefs~RefPostProcessor} [refPostProcessor] - The callback used to post-process the JSON Reference
+ * metadata *(This is called prior filtering the references)*
  * @param {string} [options.relativeBase] - The base location to use when resolving relative references *(Only useful
  * for APIs that do remote reference resolution.  If this value is not defined,
  * {@link https://github.com/whitlockjc/path-loader|path-loader} will use `window.location.href` for the browser and
@@ -529,6 +539,32 @@ function validateOptions (options) {
  * @returns {boolean} whether the JSON Reference should be filtered *(out)* or not
  *
  * @alias module:JsonRefs~RefDetailsFilter
+ */
+
+/**
+ * Simple function used to pre-process a JSON Reference like object.
+ *
+ * @typedef {function} RefPreProcessor
+ *
+ * @param {object} obj - The JSON Reference like object
+ * @param {string[]} path - The path to the JSON Reference like object
+ *
+ * @returns {object} the processed JSON Reference like object
+ *
+ * @alias module:JsonRefs~RefPreProcessor
+ */
+
+/**
+ * Simple function used to post-process a JSON Reference details.
+ *
+ * @typedef {function} RefPostProcessor
+ *
+ * @param {module:JsonRefs~UnresolvedRefDetails} refDetails - The JSON Reference details to test
+ * @param {string[]} path - The path to the JSON Reference
+ *
+ * @returns {object} the processed JSON Reference details object
+ *
+ * @alias module:JsonRefs~RefPostProcessor
  */
 
 /**
@@ -724,10 +760,20 @@ function findRefs (obj, options) {
     var refDetails;
 
     if (isRefLike(node)) {
+      // Pre-process the node when necessary
+      if (!isType(options.refPreProcessor, 'Undefined')) {
+        node = options.refPreProcessor(node, path);
+      }
+
       refDetails = getRefDetails(node);
 
       if (refDetails.type !== 'invalid' || options.includeInvalid === true) {
         if (refFilter(refDetails, path) === true) {
+          // Post-process the reference details when necessary
+          if (!isType(options.refPostProcessor, 'Undefined')) {
+            refDetails = options.refPostProcessor(refDetails, path);
+          }
+
           refs[pathToPtr(path)] = refDetails;
         }
 

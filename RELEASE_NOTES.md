@@ -20,6 +20,10 @@ object you expect to be returned by `#findRefs` is not returned.)*
 * Updated `#findRefs` to use an *options* object
     * `options.filter` allows you to filter references
     * `options.includeInvalid` allows you to include JSON Reference details for invalid references
+    * `options.refPreProcessor` allows you to take a JSON Reference like object and process it prior to `#isRef` being
+    called against it
+    * `options.refPostProcessor` allows you to take the JSON Reference details/metadata and process it *(This runs prior
+    to `options.filter`)*
     * `options.subDocPath` allows you to find JSON References at/below a certain location in the document
 like objects that fail validation so that you can identify invalid JSON References easier *(See API documentation for details)*
 * Updated `#isPtr` to validate the `$ref` value is a URI instead of treating all string values as valid

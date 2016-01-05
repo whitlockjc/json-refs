@@ -526,6 +526,8 @@ describe('json-refs', function () {
         [['wrongType'], objTypeError],
         [[{}, 1], optionsTypeError],
         [[{}, {includeInvalid: 'wrongType'}], new TypeError('options.includeInvalid must be a Boolean')],
+        [[{}, {refPreProcessor: 'wrongType'}], new TypeError('options.refPreProcessor must be a Function')],
+        [[{}, {refPostProcessor: 'wrongType'}], new TypeError('options.refPostProcessor must be a Function')],
         [[[], {subDocPath: 1}], osdpTypeError],
         [[{}, {subDocPath: '#/missing'}], osdpMissingError],
         [[{}, {filter: 1}], ofTypeError]
@@ -576,6 +578,50 @@ describe('json-refs', function () {
 
       it('options.includeInvalid', function () {
         runRefDetailsTestScenarios(JsonRefs.findRefs(testDocument, {includeInvalid: true}), expectedAllReferences);
+      });
+
+      it('options.refPreProcessor', function () {
+        var doc = {
+          project: testDocument.project,
+          ref: {
+            $ref: '/file[/].html'
+          }
+        };
+        var refs = JsonRefs.findRefs(doc);
+
+        assert.equal(Object.keys(refs).length, 0);
+
+        refs = JsonRefs.findRefs(doc, {
+          refPreProcessor: function () {
+            return {
+              $ref: '#/project/name'
+            };
+          }
+        });
+
+        assert.equal(Object.keys(refs).length, 1);
+      });
+
+      it('options.refPreProcessor', function () {
+        var doc = {
+          project: testDocument.project,
+          ref: {
+            $ref: '#/project/name'
+          }
+        };
+        var refs = JsonRefs.findRefs(doc);
+
+        assert.ok(!_.has(refs['#/ref'], 'extra'));
+
+        refs = JsonRefs.findRefs(doc, {
+          refPostProcessor: function (refDetails) {
+            refDetails.extra = 'An extra piece of metadata';
+
+            return refDetails;
+          }
+        });
+
+        assert.ok(_.has(refs['#/ref'], 'extra'));
       });
 
       describe('options.subDocPath', function () {
