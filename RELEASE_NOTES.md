@@ -10,6 +10,7 @@
 object you expect to be returned by `#findRefs` is not returned.)*
 * Added `#resolveRefsAt` to allow you to retrieve a remote document and then resolve its references
 * Fixed a bug where Windows paths containing `\` were not processed properly *(Issue #48)*
+* Removed `#resolveLocalRefs`
 * Renamed `#isJsonPointer` to `#isPtr`
 * Renamed `#isJsonReference` to `#isRef`
 * Renamed `#pathFromPointer` to `#pathFromPtr`

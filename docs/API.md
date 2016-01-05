@@ -166,7 +166,7 @@ Finds JSON References defined within the provided array/object.
 and whose values are [UnresolvedRefDetails](#module_JsonRefs..UnresolvedRefDetails).  
 **Throws**:
 
-- <code>Error</code> if `obj` is not an object or array
+- <code>Error</code> when the input arguments fail validation or if `options.subDocPath` points to an invalid location
 
 
 | Param | Type | Description |
@@ -174,6 +174,15 @@ and whose values are [UnresolvedRefDetails](#module_JsonRefs..UnresolvedRefDetai
 | obj | <code>array</code> &#124; <code>object</code> | The structure to find JSON References within |
 | [options] | <code>[JsonRefsOptions](#module_JsonRefs..JsonRefsOptions)</code> | The JsonRefs options |
 
+**Example**  
+```js
+// Finding all valid references
+var allRefs = JsonRefs.findRefs(obj);
+// Finding all remote references
+var remoteRefs = JsonRefs.findRefs(obj, {filter: ['relative', 'remote']});
+// Finding all invalid references
+var invalidRefs = JsonRefs.findRefs(obj, {filter: 'invalid', includeInvalid: true});
+```
 <a name="module_JsonRefs.findRefsAt"></a>
 ### JsonRefs.findRefsAt(location, [options]) ⇒ <code>Promise</code>
 Finds JSON References defined within the document at the provided location.
@@ -183,7 +192,8 @@ return the result of [findRefs](#module_JsonRefs.findRefs) on the retrieved docu
 
 **Kind**: static method of <code>[JsonRefs](#module_JsonRefs)</code>  
 **Returns**: <code>Promise</code> - a promise that resolves a [RetrievedRefsResults](#module_JsonRefs..RetrievedRefsResults) and rejects with an
-`Error` when the input arguments fail validation or if the location argument points to an unloadable resource  
+`Error` when the input arguments fail validation, when `options.subDocPath` points to an invalid location or when
+ the location argument points to an unloadable resource  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -238,6 +248,20 @@ A string is a JSON Pointer if the following are all true:
 | ptr | <code>string</code> |  | The string to check |
 | [throwWithDetails] | <code>boolean</code> | <code>false</code> | Whether or not to throw an `Error` with the details as to why the value provided is invalid |
 
+**Example**  
+```js
+// Separating the different ways to invoke isPtr for demonstration purposes
+if (isPtr(str)) {
+  // Handle a valid JSON Pointer
+} else {
+  // Get the reason as to why the value is not a JSON Pointer so you can fix/report it
+  try {
+    isPtr(str, true);
+  } catch (err) {
+    // The error message contains the details as to why the provided value is not a JSON Pointer
+  }
+}
+```
 <a name="module_JsonRefs.isRef"></a>
 ### JsonRefs.isRef(obj, [throwWithDetails]) ⇒ <code>boolean</code>
 Returns whether the argument represents a JSON Reference.
@@ -261,6 +285,20 @@ An object is a JSON Reference only if the following are all true:
 | obj | <code>object</code> |  | The object to check |
 | [throwWithDetails] | <code>boolean</code> | <code>false</code> | Whether or not to throw an `Error` with the details as to why the value provided is invalid |
 
+**Example**  
+```js
+// Separating the different ways to invoke isRef for demonstration purposes
+if (isRef(obj)) {
+  // Handle a valid JSON Reference
+} else {
+  // Get the reason as to why the value is not a JSON Reference so you can fix/report it
+  try {
+    isRef(str, true);
+  } catch (err) {
+    // The error message contains the details as to why the provided value is not a JSON Reference
+  }
+}
+```
 <a name="module_JsonRefs.pathFromPtr"></a>
 ### JsonRefs.pathFromPtr(ptr) ⇒ <code>Array.&lt;string&gt;</code>
 Returns an array of path segments for the provided JSON Pointer.
@@ -300,7 +338,8 @@ Finds JSON References defined within the provided array/object and resolves them
 
 **Kind**: static method of <code>[JsonRefs](#module_JsonRefs)</code>  
 **Returns**: <code>Promise</code> - a promise that resolves a [ResolvedRefsResults](#module_JsonRefs..ResolvedRefsResults) and rejects with an
-`Error` when the input arguments fail validation  
+`Error` when the input arguments fail validation, when `options.subDocPath` points to an invalid location or when
+ the location argument points to an unloadable resource  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -331,7 +370,8 @@ return the result of [resolveRefs](#module_JsonRefs.resolveRefs) on the retrieve
 
 **Kind**: static method of <code>[JsonRefs](#module_JsonRefs)</code>  
 **Returns**: <code>Promise</code> - a promise that resolves a [RetrievedResolvedRefsResults](#module_JsonRefs..RetrievedResolvedRefsResults) and rejects with an
-`Error` when the input arguments fail validation or if the location argument points to an unloadable resource  
+`Error` when the input arguments fail validation, when `options.subDocPath` points to an invalid location or when
+ the location argument points to an unloadable resource  
 
 | Param | Type | Description |
 | --- | --- | --- |

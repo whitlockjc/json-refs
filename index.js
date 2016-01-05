@@ -675,9 +675,17 @@ function encodePath (path) {
  * @returns {object} an object whose keys are JSON Pointers *(fragment version)* to where the JSON Reference is defined
  * and whose values are {@link module:JsonRefs~UnresolvedRefDetails}.
  *
- * @throws {Error} if `obj` is not an object or array
+ * @throws {Error} when the input arguments fail validation or if `options.subDocPath` points to an invalid location
  *
  * @alias module:JsonRefs.findRefs
+ *
+ * @example
+ * // Finding all valid references
+ * var allRefs = JsonRefs.findRefs(obj);
+ * // Finding all remote references
+ * var remoteRefs = JsonRefs.findRefs(obj, {filter: ['relative', 'remote']});
+ * // Finding all invalid references
+ * var invalidRefs = JsonRefs.findRefs(obj, {filter: 'invalid', includeInvalid: true});
  */
 function findRefs (obj, options) {
   var ancestors = [];
@@ -748,7 +756,8 @@ function findRefs (obj, options) {
  * @param {module:JsonRefs~JsonRefsOptions} [options] - The JsonRefs options
  *
  * @returns {Promise} a promise that resolves a {@link module:JsonRefs~RetrievedRefsResults} and rejects with an
- * `Error` when the input arguments fail validation or if the location argument points to an unloadable resource
+ * `Error` when the input arguments fail validation, when `options.subDocPath` points to an invalid location or when
+ *  the location argument points to an unloadable resource
  *
  * @alias module:JsonRefs.findRefsAt
  *
@@ -904,6 +913,19 @@ function getRefDetails (obj) {
  * @see {@link https://tools.ietf.org/html/rfc6901#section-3}
  *
  * @alias module:JsonRefs.isPtr
+ *
+ * @example
+ * // Separating the different ways to invoke isPtr for demonstration purposes
+ * if (isPtr(str)) {
+ *   // Handle a valid JSON Pointer
+ * } else {
+ *   // Get the reason as to why the value is not a JSON Pointer so you can fix/report it
+ *   try {
+ *     isPtr(str, true);
+ *   } catch (err) {
+ *     // The error message contains the details as to why the provided value is not a JSON Pointer
+ *   }
+ * }
  */
 function isPtr (ptr, throwWithDetails) {
   var valid = true;
@@ -956,6 +978,19 @@ function isPtr (ptr, throwWithDetails) {
  * @see {@link http://tools.ietf.org/html/draft-pbryan-zyp-json-ref-03#section-3}
  *
  * @alias module:JsonRefs.isRef
+ *
+ * @example
+ * // Separating the different ways to invoke isRef for demonstration purposes
+ * if (isRef(obj)) {
+ *   // Handle a valid JSON Reference
+ * } else {
+ *   // Get the reason as to why the value is not a JSON Reference so you can fix/report it
+ *   try {
+ *     isRef(str, true);
+ *   } catch (err) {
+ *     // The error message contains the details as to why the provided value is not a JSON Reference
+ *   }
+ * }
  */
 function isRef (obj, throwWithDetails) {
   return isRefLike(obj, throwWithDetails) && getRefDetails(obj, throwWithDetails).type !== 'invalid';
@@ -1015,7 +1050,8 @@ function pathToPtr (path, hashPrefix) {
  * @param {module:JsonRefs~JsonRefsOptions} [options] - The JsonRefs options
  *
  * @returns {Promise} a promise that resolves a {@link module:JsonRefs~ResolvedRefsResults} and rejects with an
- * `Error` when the input arguments fail validation
+ * `Error` when the input arguments fail validation, when `options.subDocPath` points to an invalid location or when
+ *  the location argument points to an unloadable resource
  *
  * @alias module:JsonRefs.resolveRefs
  *
@@ -1162,7 +1198,8 @@ function resolveRefs (obj, options) {
  * @param {module:JsonRefs~JsonRefsOptions} [options] - The JsonRefs options
  *
  * @returns {Promise} a promise that resolves a {@link module:JsonRefs~RetrievedResolvedRefsResults} and rejects with an
- * `Error` when the input arguments fail validation or if the location argument points to an unloadable resource
+ * `Error` when the input arguments fail validation, when `options.subDocPath` points to an invalid location or when
+ *  the location argument points to an unloadable resource
  *
  * @alias module:JsonRefs.resolveRefsAt
  *
