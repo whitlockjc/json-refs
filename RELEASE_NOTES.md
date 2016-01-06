@@ -1,5 +1,9 @@
 ## Release Notes
 
+### v2.0.1 (2016-01-06)
+
+* Fix a consistency issue with error handling
+
 ### v2.0.0 (2016-01-06)
 
 * Added `#clearCache` to allow you to clear the remote document cache and its JSON References details

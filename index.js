@@ -1210,7 +1210,7 @@ function resolveRefs (obj, options) {
 
               refDetails.value = value;
             } catch (err) {
-              refDetails.error = err;
+              refDetails.error = err.message;
               refDetails.missing = true;
             }
           } else {

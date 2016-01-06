@@ -150,7 +150,7 @@ function validateResolvedRefDetails (actual, expected) {
       var eValue = eRefDetails[key];
 
       if (_.isError(eValue)) {
-        assert.equal(aValue.message, eValue.message);
+        assert.equal(aValue, eValue.message);
       } else if (_.isArray(eValue) || _.isPlainObject(eValue)) {
         assert.deepEqual(aValue, eValue);
       } else {
