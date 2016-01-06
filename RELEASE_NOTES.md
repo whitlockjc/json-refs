@@ -1,6 +1,6 @@
 ## Release Notes
 
-### v2.0.0 (TBD)
+### v2.0.0 (2016-01-06)
 
 * Added `#clearCache` to allow you to clear the remote document cache and its JSON References details
 * Added `#decodePath` to allow you to take an array of path segments and decode their JSON Pointer tokens *(Issue #47)*
