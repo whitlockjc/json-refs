@@ -29,16 +29,16 @@ like objects that fail validation so that you can identify invalid JSON Referenc
 * Updated `#isPtr` to validate the `$ref` value is a URI instead of treating all string values as valid
 * Updated `#isPtr` to validate the [tokens](http://tools.ietf.org/html/rfc6901#section-4) *(Issue #47)*
 * Updated `#isPtr` to have an optional second argument which dictates whether or not to throw an `Error` for invalid JSON
-Pointer values *(The `Error` would have the details as to why the provided value is not a JSON Pointer)* *(Issue #47)
+Pointer values *(The `Error` would have the details as to why the provided value is not a JSON Pointer)* *(Issue #47)*
 * Updated `#isRef` to have an optional second argument which dictates whether or not to throw an `Error` for invalid JSON
-Reference values *(The `Error` would have the details as to why the provided value is not a JSON Reference)* *(Issue #47)
+Reference values *(The `Error` would have the details as to why the provided value is not a JSON Reference)* *(Issue #47)*
 * Updated `#pathToPtr` to take an optional second argument to allow for returning both hash-based *(default)* and
 slash-based JSON Pointers
 * Updated `#resolveRefs` to work with the new `options` object
     * `options.depth` was removed
     * `options.loaderOptions` is now used for the options passed to [path-loader](https://github.com/whitlockjc/path-loader)
-    * `options.prepareRequest` was removed *(Now available at `options.loaderOptions.prepareRequest`)
-    * `options.processContent` was removed *(Now available at `options.loaderOptions.processContent`)
+    * `options.prepareRequest` was removed *(Now available at `options.loaderOptions.prepareRequest`)*
+    * `options.processContent` was removed *(Now available at `options.loaderOptions.processContent`)*
     * `options.location` was removed *(Now available at `options.relativeBase`)*
     * `options.relativeBase` is used to specify the root location to resolve relative references from
     * All `options` used by `#findRefs` are supported here
