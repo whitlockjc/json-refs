@@ -5,15 +5,6 @@ json-refs is a simple library for interacting with [JSON References][json-refere
 since JSON References are a combination of `Object` structure and a `JSON Pointer`, this library also provides some
 features for JSON Pointers as well.
 
-# Project Status
-
-Right now we are working on `2.0.0`.  *(For more details on its development, please view [Issue #42][issue-42]).  That
-being said, the `master` branch for this project is currently for `2.0.0` development and is in an incomplete state.  I
-would not suggest using `master` until this disclaimer is removed from the homepage and/or `2.0.0` is released.*
-
-Should you need to use a working version, all `1.x` releases are tagged and should be installable via Bower/NPM without
-issue.
-
 ## Project Badges
 
 * Build status: [![Build Status](https://travis-ci.org/whitlockjc/json-refs.svg)](https://travis-ci.org/whitlockjc/json-refs)
