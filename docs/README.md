@@ -6,13 +6,6 @@ features for JSON Pointers as well.
 Feel free to look at the API Documentation located here:
 https://github.com/whitlockjc/json-refs/blob/master/docs/API.md
 
-# Project Status
-
-Right now we are on `2.0.0`.
-
-Should you need to use a previous version, all `1.x` releases are tagged and should be installable via Bower/NPM without
-issue.
-
 ## Installation
 
 json-refs is available for both Node.js and the browser.  Installation instructions for each environment are below.
