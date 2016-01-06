@@ -822,6 +822,44 @@ describe('json-refs', function () {
         .then(done, done);
     });
 
+    it('should handle missing remote reference', function (done) {
+      var doc = {
+        $ref: 'fake.json'
+      };
+
+      JsonRefs.resolveRefs(doc, {
+        loaderOptions: {
+          processContent: yamlContentProcessor
+        },
+        relativeBase: relativeBase
+      })
+        .then(function (res) {
+          var refDetails;
+
+          // Make sure the document is unchanged
+          assert.deepEqual(res.resolved, doc);
+
+          // Make sure there is no error thrown and that the reference details are accurate
+          assert.equal(Object.keys(res.refs).length, 1);
+
+          refDetails = res.refs['#'];
+
+          assert.deepEqual(refDetails.def, doc);
+          assert.equal(refDetails.uri, doc.$ref);
+          assert.deepEqual(refDetails.uriDetails, URI.parse(doc.$ref));
+          assert.equal(refDetails.type, 'relative');
+          assert.ok(refDetails.missing);
+
+          if (typeof window === 'undefined') {
+            assert.ok(refDetails.error.indexOf('ENOENT') > -1);
+            assert.ok(refDetails.error.indexOf('fake.json') > -1);
+          } else {
+            assert.equal(refDetails.error, 'Not Found');
+          }
+        })
+        .then(done, done);
+    });
+
     it('should return the expected value', function (done) {
       JsonRefs.resolveRefs(testDocument, {
         loaderOptions: {

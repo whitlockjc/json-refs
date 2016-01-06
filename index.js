@@ -233,6 +233,9 @@ function findAllRefs (obj, options, parents, parentPath, documents) {
                   // Find all important references within the document
                   return findAllRefs(rRefs.value, rOptions, parents.concat(location), rParentPath, documents);
                 }
+              }, function (err) {
+                refDetails.error = err.message;
+                refDetails.missing = true;
               });
           });
       } else {
