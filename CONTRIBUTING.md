@@ -3,9 +3,12 @@ guide will make contributing to json-refs much simpler.
 
 # Development Process
 
+All of the information below assumes you've installed [Gulp][gulp] globally via `npm install -g gulp-cli`.  If you do
+not want to install Gulp globally, just replace `gulp` with `node node_modules/gulp/bin/gulp.js` in the examples below.
+
 Before contributing to json-refs, it makes sense to understand the development process.  Git of course is a given so
-no time will be spent talking about it.  json-refs uses [Gulp][gulp] as its task runner, which is used to build, lint,
-test, etc. all parts of json-refs.  Below are the gulp tasks:
+no time will be spent talking about it.  json-refs uses Gulp as its task runner, which is used to build, lint, test,
+etc. all parts of json-refs.  Below are the gulp tasks:
 
 * `browserify`: Builds the browser binaries using [Browserify][browserify]
 * `clean`: Removes all development artifacts *(`bower_components`, `coverage`, ...)*
@@ -49,7 +52,8 @@ Your PR should meet the following criteria:
 1. Should include all generated sources
 2. Should pass lint checking and have all tests passing *(We do have [Travis CI][travis-ci] setup to catch failing lint
 checks and failing tests but this is a safety net only)*
-3. Should be squashed into one commit with the commit message being self explanatory
+3. Should *ideally* be squashed into one commit *(Regardless of how many commits, just make sure the commit messages are
+clear)*
 4. Should include tests *(Bug fixes and features should have tests included with them at all times)*
 
 [bower]: http://bower.io/
