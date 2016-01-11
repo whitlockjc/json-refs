@@ -31,6 +31,7 @@
  * @module JsonRefs
  */
 
+var dirname = require('path').dirname;
 var pathLoader = require('path-loader');
 var qs = require('querystring');
 var slash = require('slash');
@@ -205,10 +206,10 @@ function findAllRefs (obj, options, parents, parentPath, documents) {
             // Remove the sub document path
             delete rOptions.subDocPath;
 
-            // Update the relativeBase based on the new location to retrieve
-            rOptions.relativeBase = location.substring(0, location.lastIndexOf('/'));
+            // Remove the relative base
+            delete rOptions.relativeBase;
 
-            return findRefsAt(refDetails.uri, options)
+            return findRefsAt(location, rOptions)
               .then(function (rRefs) {
                 // Record the location for circular reference identification
                 rRefs.location = location;
@@ -229,6 +230,9 @@ function findAllRefs (obj, options, parents, parentPath, documents) {
 
                   // Record the remote document
                   documents[pathToPtr(rParentPath)] = rRefs;
+
+                  // Update the relative base based on the retrieved location
+                  rOptions.relativeBase = dirname(location);
 
                   // Find all important references within the document
                   return findAllRefs(rRefs.value, rOptions, parents.concat(location), rParentPath, documents);
@@ -811,8 +815,6 @@ function findRefsAt (location, options) {
 
   allTasks = allTasks
     .then(function () {
-      var cOptions;
-
       // Validate the provided location
       if (!isType(location, 'String')) {
         throw new TypeError('location must be a string');
@@ -826,15 +828,10 @@ function findRefsAt (location, options) {
       // Validate options (Doing this here for a quick)
       validateOptions(options);
 
-      cOptions = clone(options);
-
       // Combine the location and the optional relative base
       location = combineURIs(options.relativeBase, location);
 
-      // Set the new relative reference location
-      cOptions.relativeBase = location.substring(0, location.lastIndexOf('/'));
-
-      return getRemoteDocument(location, cOptions);
+      return getRemoteDocument(location, options);
     })
     .then(function (res) {
       var cacheEntry = clone(remoteCache[location]);
@@ -1252,8 +1249,6 @@ function resolveRefsAt (location, options) {
 
   allTasks = allTasks
     .then(function () {
-      var cOptions;
-
       // Validate the provided location
       if (!isType(location, 'String')) {
         throw new TypeError('location must be a string');
@@ -1267,18 +1262,18 @@ function resolveRefsAt (location, options) {
       // Validate options (Doing this here for a quick)
       validateOptions(options);
 
-      cOptions = clone(options);
-
       // Combine the location and the optional relative base
       location = combineURIs(options.relativeBase, location);
 
-      // Set the new relative reference location
-      cOptions.relativeBase = location.substring(0, location.lastIndexOf('/'));
-
-      return getRemoteDocument(location, cOptions);
+      return getRemoteDocument(location, options);
     })
     .then(function (res) {
-      return resolveRefs(res, options)
+      var cOptions = clone(options);
+
+      // Update the relative base based on the retrieved location
+      cOptions.relativeBase = dirname(location);
+
+      return resolveRefs(res, cOptions)
         .then(function (res2) {
           return {
             refs: res2.refs,

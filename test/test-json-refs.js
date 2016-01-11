@@ -1056,24 +1056,45 @@ describe('json-refs', function () {
         .then(done, done);
     });
 
-    it('should return the expected value', function (done) {
-      JsonRefs.resolveRefsAt('./test-document.yaml', {
-        loaderOptions: {
-          processContent: yamlContentProcessor
-        },
-        relativeBase: relativeBase
-      })
-      .then(function (res) {
-        // Validate the retrieved document
-        assert.deepEqual(res.value, testDocument);
+    describe('should return the expected value', function () {
+      it('with options.relativeBase', function (done) {
+        JsonRefs.resolveRefsAt('./test-document.yaml', {
+          loaderOptions: {
+            processContent: yamlContentProcessor
+          },
+          relativeBase: relativeBase
+        })
+          .then(function (res) {
+            // Validate the retrieved document
+            assert.deepEqual(res.value, testDocument);
 
-        // Validate the resolved document
-        assert.deepEqual(res.resolved, expectedFullyResolved);
+            // Validate the resolved document
+            assert.deepEqual(res.resolved, expectedFullyResolved);
 
-        // Validate the reference metadata
-        validateResolvedRefDetails(res.refs, expectedValidResolveRefs);
-      })
-      .then(done, done);
+            // Validate the reference metadata
+            validateResolvedRefDetails(res.refs, expectedValidResolveRefs);
+          })
+          .then(done, done);
+      });
+
+      it('without options.relativeBase', function (done) {
+        JsonRefs.resolveRefsAt(path.join(relativeBase, './test-document.yaml'), {
+          loaderOptions: {
+            processContent: yamlContentProcessor
+          }
+        })
+          .then(function (res) {
+            // Validate the retrieved document
+            assert.deepEqual(res.value, testDocument);
+
+            // Validate the resolved document
+            assert.deepEqual(res.resolved, expectedFullyResolved);
+
+            // Validate the reference metadata
+            validateResolvedRefDetails(res.refs, expectedValidResolveRefs);
+          })
+          .then(done, done);
+      });
     });
   });
 });
