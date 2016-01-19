@@ -17,9 +17,9 @@ features for JSON Pointers as well.
 
 ## Documentation
 
-The documentation for this project can be found here: https://github.com/whitlockjc/json-refs/blob/master/docs/README.md .
+The documentation for this project can be found here: <https://github.com/whitlockjc/json-refs/blob/master/docs/README.md>.
 
-The API can be found at https://github.com/whitlockjc/json-refs/blob/master/docs/API.md .
+The API can be found at <https://github.com/whitlockjc/json-refs/blob/master/docs/API.md>.
 
 ## Installation
 
