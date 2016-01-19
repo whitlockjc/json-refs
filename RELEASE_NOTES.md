@@ -1,6 +1,6 @@
 ## Release Notes
 
-### v2.0.4 (2016-01-11)
+### v2.0.3 (2016-01-11)
 
 * Fixed a problem when loading relative paths with relative references
 
