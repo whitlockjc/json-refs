@@ -46,6 +46,8 @@ var testDocument = YAML.safeLoad(fs.readFileSync(path.join(__dirname, 'browser',
                                                  'utf-8'));
 var testDocument1 = YAML.safeLoad(fs.readFileSync(path.join(__dirname, 'browser', 'documents', 'test-document-1.yaml'),
                                                   'utf-8'));
+var testDocumentSame = YAML.safeLoad(fs.readFileSync(path.join(__dirname, 'browser', 'documents', 'test-document-same.yaml'),
+                                                  'utf-8'));
 var testNestedDocument = YAML.safeLoad(fs.readFileSync(path.join(__dirname, 'browser', 'documents', 'nested',
                                                                  'test-nested.yaml'), 'utf-8'));
 var testNestedDocument1 = YAML.safeLoad(fs.readFileSync(path.join(__dirname, 'browser', 'documents', 'nested',
@@ -873,6 +875,17 @@ describe('json-refs', function () {
 
         // Validate the reference metadata
         validateResolvedRefDetails(res.refs, expectedValidResolveRefs);
+      })
+      .then(done, done);
+    });
+
+    it('should handle definition contains the same name as its own', function (done) {
+      JsonRefs.resolveRefs(testDocumentSame)
+      .then(function (res) {
+        assert.deepEqual(
+          res.resolved.definitions.SameNameContain.properties.name,
+          testDocumentSame.definitions.SameName
+        );
       })
       .then(done, done);
     });

@@ -1167,7 +1167,7 @@ function resolveRefs (obj, options) {
 
         if (remoteTypes.indexOf(refDetails.type) === -1 && refDetails.type !== 'invalid') {
           if (isType(refDetails.error, 'Undefined')) {
-            if (refPtr.indexOf(refDetails.uri) > -1) {
+            if (refPtr.indexOf(refDetails.uri + '/') > -1 || refPtr === refDetails.uri) {
               refDetails.circular = true;
               value = {};
             } else {
