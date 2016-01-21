@@ -1,5 +1,11 @@
 ## Release Notes
 
+### v2.0.4 (2016-01-21)
+
+* Fixed a bug where a reference to another object that shares a common pointer could be marked as `circular`
+erroneously *(For example: `#/definitions/Person/properties/name` references `#/definitions/PersonWithName` shares the
+same `#/definitions/Person` base but are to different objects)* *(PR #59)*
+
 ### v2.0.3 (2016-01-11)
 
 * Fixed a problem when loading relative paths with relative references
