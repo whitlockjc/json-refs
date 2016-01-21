@@ -1,0 +1,13 @@
+definitions:
+  SameName:
+    type: object
+    properties:
+      given:
+        type: string
+  SameNameContain:
+    type: object
+    properties:
+      age:
+        type: integer
+      name:
+        $ref: '#/definitions/SameName'
