@@ -758,7 +758,7 @@ function findRefs (obj, options) {
     if (isRefLike(node)) {
       // Pre-process the node when necessary
       if (!isType(options.refPreProcessor, 'Undefined')) {
-        node = options.refPreProcessor(node, path);
+        node = options.refPreProcessor(clone(node), path);
       }
 
       refDetails = getRefDetails(node);
@@ -767,7 +767,7 @@ function findRefs (obj, options) {
         if (refFilter(refDetails, path) === true) {
           // Post-process the reference details when necessary
           if (!isType(options.refPostProcessor, 'Undefined')) {
-            refDetails = options.refPostProcessor(refDetails, path);
+            refDetails = options.refPostProcessor(clone(refDetails), path);
           }
 
           refs[pathToPtr(path)] = refDetails;
@@ -1000,7 +1000,8 @@ function isPtr (ptr, throwWithDetails) {
  *
  *   * The object is of type `Object`
  *   * The object has a `$ref` property
- *   * The `$ref` property is a valid URI
+ *   * The `$ref` property is a valid URI *(We do not require 100% strict URIs and will handle unescaped special
+ *     characters.)*
  *
  * @param {object} obj - The object to check
  * @param {boolean} [throwWithDetails=false] - Whether or not to throw an `Error` with the details as to why the value

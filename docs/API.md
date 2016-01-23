@@ -298,7 +298,8 @@ An object is a JSON Reference only if the following are all true:
 
   * The object is of type `Object`
   * The object has a `$ref` property
-  * The `$ref` property is a valid URI
+  * The `$ref` property is a valid URI *(We do not require 100% strict URIs and will handle unescaped special
+    characters.)*
 
 **Kind**: static method of <code>[JsonRefs](#module_JsonRefs)</code>  
 **Returns**: <code>boolean</code> - the result of the check  

@@ -6,6 +6,8 @@
 characters *(This means that if you have a reference like `#/paths/{petId}`, which is technically invalid, we will not
 mark it as invalid and will process it.  It also means if your reference is escaped, like `#/definitions/My%20Pet`, it
 will also work as expected.)* *(Issue #61)*
+* We now clone the JSON Reference definition and JSON Reference details respectively for `options.refPreProcessor' and
+`options.refPostProcessor` *(Issue #64)*
 
 ### v2.0.4 (2016-01-21)
 
