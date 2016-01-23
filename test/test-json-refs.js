@@ -246,7 +246,7 @@ describe('json-refs API', function () {
   var remotePkgJson;
 
   before(function (done) {
-    JsonRefs.findRefsAt('https://cdn.rawgit.com/whitlockjc/json-refs/master/package.json')
+    JsonRefs.findRefsAt('https://rawgit.com/whitlockjc/json-refs/master/package.json')
       .then(function (refs) {
         remotePkgJson = refs.value;
         expectedValidResolveRefs = {
@@ -657,7 +657,7 @@ describe('json-refs API', function () {
     it('should handle a location to a missing resource', function (done) {
       var location = typeof window === 'undefined' ?
         './missing.json' :
-        'https://cdn.rawgit.com/whitlockjc/json-refs/master/missing.json';
+        'https://rawgit.com/whitlockjc/json-refs/master/missing.json';
 
       JsonRefs.findRefsAt(location)
         .then(function () {
@@ -758,8 +758,8 @@ describe('json-refs API', function () {
         [['someId'], true],
         [['someId#/name'], true],
         [['./models.json'], true],
-        [['https://cdn.rawgit.com/whitlockjc/json-refs/master/package.json'], true],
-        [['https://cdn.rawgit.com/whitlockjc/json-refs/master/package.json#/name'], true],
+        [['https://rawgit.com/whitlockjc/json-refs/master/package.json'], true],
+        [['https://rawgit.com/whitlockjc/json-refs/master/package.json#/name'], true],
         [['#/some/valid/token/~0/~1'], true]
       ].map(function (scenario) {
         scenario[0][0] = {$ref: scenario[0][0]};

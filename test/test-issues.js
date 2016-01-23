@@ -38,7 +38,7 @@ var personDocument = require('./browser/documents/{id}/person.json');
 describe('json-refs Issues', function () {
   describe('Issue #65', function () {
     it('should handle remote references with fragments replacing the whole document', function (done) {
-      var uri = 'https://cdn.rawgit.com/apigee-127/swagger-tools/master/test/browser/people.json';
+      var uri = 'https://rawgit.com/apigee-127/swagger-tools/master/test/browser/people.json';
       var doc = {
         $ref: uri + '#/paths/~1people~1{id}'
       };
@@ -54,7 +54,7 @@ describe('json-refs Issues', function () {
                     uri: doc.$ref,
                     uriDetails: {
                       fragment: '/paths/~1people~1%7Bid%7D',
-                      host: 'cdn.rawgit.com',
+                      host: 'rawgit.com',
                       path: '/apigee-127/swagger-tools/master/test/browser/people.json',
                       port: undefined,
                       query: undefined,

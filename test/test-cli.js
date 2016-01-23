@@ -213,7 +213,7 @@ describe('json-refs CLI', function () {
       });
 
       it('missing http location', function (done) {
-        var location = 'https://cdn.rawgit.com/whitlockjc/json-refs/master/test/browser/documents/missing.yaml';
+        var location = 'https://rawgit.com/whitlockjc/json-refs/master/test/browser/documents/missing.yaml';
 
         executeJsonRefs(['resolve', location], function (stderr, stdout) {
           assert.equal(stderr, [
