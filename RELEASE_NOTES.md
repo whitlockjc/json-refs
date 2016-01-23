@@ -1,5 +1,10 @@
 ## Release Notes
 
+### v2.0.8 (2016-01-23)
+
+* Fixed an issue with options that filter references *(`options.filter` and `options.subDocPath`)* and the internal
+document cache
+
 ### v2.0.7 (2016-01-23)
 
 * Further address issues with lack of encoding in JSON References *(path segments instead of fragments)* *(Issue #61)*

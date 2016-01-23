@@ -876,10 +876,10 @@ function findRefsAt (location, options) {
         cOptions.includeInvalid = true;
 
         remoteCache[location].refs = findRefs(res, cOptions);
-
-        // Filter out the references based on options.filter and options.subDocPath
-        cacheEntry.refs = filterRefs(options, remoteCache[location].refs);
       }
+
+      // Filter out the references based on options.filter and options.subDocPath
+      cacheEntry.refs = filterRefs(options, remoteCache[location].refs);
 
       return cacheEntry;
     });
