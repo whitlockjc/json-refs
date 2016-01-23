@@ -548,9 +548,9 @@ function validateOptions (options) {
  * the JSON References are invalid will be included in the returned metadata.)*
  * @param {object} [loaderOptions] - The options to pass to
  * {@link https://github.com/whitlockjc/path-loader/blob/master/docs/API.md#module_PathLoader.load|PathLoader~load}
- * @param {RefPreProcessor} [refPreProcessor] - The callback used to pre-process a JSON Reference like
+ * @param {module:JsonRefs~RefPreProcessor} [refPreProcessor] - The callback used to pre-process a JSON Reference like
  * object *(This is called prior to validating the JSON Reference like object and getting its details)*
- * @param {RefPostProcessor} [refPostProcessor] - The callback used to post-process the JSON Reference
+ * @param {module:JsonRefs~RefPostProcessor} [refPostProcessor] - The callback used to post-process the JSON Reference
  * metadata *(This is called prior filtering the references)*
  * @param {string} [options.relativeBase] - The base location to use when resolving relative references *(Only useful
  * for APIs that do remote reference resolution.  If this value is not defined,
@@ -565,7 +565,7 @@ function validateOptions (options) {
  *
  * @typedef {function} RefDetailsFilter
  *
- * @param {UnresolvedRefDetails} refDetails - The JSON Reference details to test
+ * @param {module:JsonRefs~UnresolvedRefDetails} refDetails - The JSON Reference details to test
  * @param {string[]} path - The path to the JSON Reference
  *
  * @returns {boolean} whether the JSON Reference should be filtered *(out)* or not
@@ -587,7 +587,7 @@ function validateOptions (options) {
  *
  * @typedef {function} RefPostProcessor
  *
- * @param {UnresolvedRefDetails} refDetails - The JSON Reference details to test
+ * @param {module:JsonRefs~UnresolvedRefDetails} refDetails - The JSON Reference details to test
  * @param {string[]} path - The path to the JSON Reference
  *
  * @returns {object} the processed JSON Reference details object
@@ -610,7 +610,7 @@ function validateOptions (options) {
  *
  * @typedef {object} ResolvedRefsResults
  *
- * @property {ResolvedRefDetails} refs - An object whose keys are JSON Pointers *(fragment version)*
+ * @property {module:JsonRefs~ResolvedRefDetails} refs - An object whose keys are JSON Pointers *(fragment version)*
  * to where the JSON Reference is defined and whose values are {@link module:JsonRefs~ResolvedRefDetails}
  * @property {object} value - The array/object with its JSON References fully resolved
  */
@@ -620,7 +620,7 @@ function validateOptions (options) {
  *
  * @typedef {object} RetrievedRefsResults
  *
- * @property {UnresolvedRefDetails} refs - An object whose keys are JSON Pointers *(fragment version)*
+ * @property {module:JsonRefs~UnresolvedRefDetails} refs - An object whose keys are JSON Pointers *(fragment version)*
  * to where the JSON Reference is defined and whose values are {@link module:JsonRefs~UnresolvedRefDetails}
  * @property {object} value - The retrieved document
  */
@@ -631,7 +631,7 @@ function validateOptions (options) {
  *
  * @typedef {object} RetrievedResolvedRefsResults
  *
- * @property {UnresolvedRefDetails} refs - An object whose keys are JSON Pointers *(fragment version)*
+ * @property {module:JsonRefs~UnresolvedRefDetails} refs - An object whose keys are JSON Pointers *(fragment version)*
  * to where the JSON Reference is defined and whose values are {@link module:JsonRefs~UnresolvedRefDetails}
  * @property {ResolvedRefsResults} - An object whose keys are JSON Pointers *(fragment version)*
  * to where the JSON Reference is defined and whose values are {@link module:JsonRefs~ResolvedRefDetails}
@@ -722,7 +722,7 @@ function encodePath (path) {
  * Finds JSON References defined within the provided array/object.
  *
  * @param {array|object} obj - The structure to find JSON References within
- * @param {JsonRefsOptions} [options] - The JsonRefs options
+ * @param {module:JsonRefs~JsonRefsOptions} [options] - The JsonRefs options
  *
  * @returns {object} an object whose keys are JSON Pointers *(fragment version)* to where the JSON Reference is defined
  * and whose values are {@link module:JsonRefs~UnresolvedRefDetails}.
@@ -815,7 +815,7 @@ function findRefs (obj, options) {
  *
  * @param {string} location - The location to retrieve *(Can be relative or absolute, just make sure you look at the
  * {@link module:JsonRefs~JsonRefsOptions|options documentation} to see how relative references are handled.)*
- * @param {JsonRefsOptions} [options] - The JsonRefs options
+ * @param {module:JsonRefs~JsonRefsOptions} [options] - The JsonRefs options
  *
  * @returns {Promise} a promise that resolves a {@link module:JsonRefs~RetrievedRefsResults} and rejects with an
  * `Error` when the input arguments fail validation, when `options.subDocPath` points to an invalid location or when
@@ -890,7 +890,7 @@ function findRefsAt (location, options) {
  *
  * @param {object} obj - The JSON Reference definition
  *
- * @returns {UnresolvedRefDetails} the detailed information
+ * @returns {module:JsonRefs~UnresolvedRefDetails} the detailed information
  *
  * @alias module:JsonRefs.getRefDetails
  */
@@ -1092,7 +1092,7 @@ function pathToPtr (path, hashPrefix) {
  * Finds JSON References defined within the provided array/object and resolves them.
  *
  * @param {array|object} obj - The structure to find JSON References within
- * @param {JsonRefsOptions} [options] - The JsonRefs options
+ * @param {module:JsonRefs~JsonRefsOptions} [options] - The JsonRefs options
  *
  * @returns {Promise} a promise that resolves a {@link module:JsonRefs~ResolvedRefsResults} and rejects with an
  * `Error` when the input arguments fail validation, when `options.subDocPath` points to an invalid location or when
@@ -1240,7 +1240,7 @@ function resolveRefs (obj, options) {
  *
  * @param {string} location - The location to retrieve *(Can be relative or absolute, just make sure you look at the
  * {@link module:JsonRefs~JsonRefsOptions|options documentation} to see how relative references are handled.)*
- * @param {JsonRefsOptions} [options] - The JsonRefs options
+ * @param {module:JsonRefs~JsonRefsOptions} [options] - The JsonRefs options
  *
  * @returns {Promise} a promise that resolves a {@link module:JsonRefs~RetrievedResolvedRefsResults} and rejects with an
  * `Error` when the input arguments fail validation, when `options.subDocPath` points to an invalid location or when
