@@ -1,5 +1,9 @@
 ## Release Notes
 
+### v2.0.6 (2016-01-22)
+
+* Fix an issue where a JSON Reference at the root of the document was not resolved properly *(Issue #65)*
+
 ### v2.0.5 (2016-01-22)
 
 * Added support to work with URI encoded JSON References and to handle JSON References with unescaped special
@@ -9,7 +13,6 @@ will also work as expected.)* *(Issue #61)*
 * Fix an issue with combining `options.filter` and `options.includeInvalid` *(Issue #63)*
 * We now clone the JSON Reference definition and JSON Reference details respectively for `options.refPreProcessor' and
 `options.refPostProcessor` *(Issue #64)*
-* Fix an issue where a JSON Reference at the root of the document was not resolved properly *(Issue #65)*
 
 ### v2.0.4 (2016-01-21)
 
