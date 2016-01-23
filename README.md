@@ -73,6 +73,14 @@ Installation for Node.js applications can be done via [NPM][npm].
 npm install json-refs --save
 ```
 
+If you plan on using the `json-refs` CLI executable, you can install json-refs globally like this:
+
+```
+npm install json-refs --global
+```
+
+After this, feel free to run `json-refs help` to see what you can do or view the CLI documentation linked above
+
 [bower]: http://bower.io/
 [issue-42]: https://github.com/whitlockjc/json-refs/issues/42
 [npm]: https://www.npmjs.com/
