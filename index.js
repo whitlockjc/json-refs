@@ -324,6 +324,25 @@ function getExtraRefKeys (ref) {
   });
 }
 
+function getRefType (refDetails) {
+  var type;
+
+  // Convert the URI reference to one of our types
+  switch (refDetails.uriDetails.reference) {
+  case 'absolute':
+  case 'uri':
+    type = 'remote';
+    break;
+  case 'same-document':
+    type = 'local';
+    break;
+  default:
+    type = refDetails.uriDetails.reference;
+  }
+
+  return type;
+}
+
 function getRemoteDocument (url, options) {
   var cacheEntry = remoteCache[url];
   var allTasks = Promise.resolve();
@@ -408,7 +427,8 @@ function makeRefFilter (options) {
     refFilter = function (refDetails) {
       var validTypes = isType(options.filter, 'String') ? [options.filter] : options.filter;
 
-      return validTypes.indexOf(refDetails.type) > -1;
+      // Check the exact type or for invalid URIs, check its original type
+      return validTypes.indexOf(refDetails.type) > -1 || validTypes.indexOf(getRefType(refDetails)) > -1;
     };
   } else if (isType(options.filter, 'Function')) {
     refFilter = options.filter;
@@ -895,18 +915,7 @@ function getRefDetails (obj) {
       details.uriDetails = uriDetails;
 
       if (isType(uriDetails.error, 'Undefined')) {
-        // Convert the URI reference to one of our types
-        switch (uriDetails.reference) {
-        case 'absolute':
-        case 'uri':
-          details.type = 'remote';
-          break;
-        case 'same-document':
-          details.type = 'local';
-          break;
-        default:
-          details.type = uriDetails.reference;
-        }
+        details.type = getRefType(details);
       } else {
         details.error = details.uriDetails.error;
         details.type = 'invalid';

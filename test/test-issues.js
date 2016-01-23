@@ -28,8 +28,27 @@
 
 var assert = require('assert');
 var JsonRefs = typeof window === 'undefined' ? require('../') : window.JsonRefs;
+var URI = require('uri-js');
 
 describe('json-refs issues', function () {
+  describe('Issue #63', function () {
+    it('should handle options.filter and options.includeInvalid combination', function () {
+      var doc = {
+        $ref: 'http://:8080'
+      };
+
+      assert.deepEqual(JsonRefs.findRefs(doc, {filter: 'remote', includeInvalid: true}), {
+        '#': {
+          def: doc,
+          uri: doc.$ref,
+          uriDetails: URI.parse(doc.$ref),
+          type: 'invalid',
+          error: 'HTTP URIs must have a host.'
+        }
+      });
+    });
+  });
+
   describe('Issue #61', function () {
     it('should handle references with unescaped URI characters', function (done) {
       var refURI = '#/~1some~1{id}~1hello there';
