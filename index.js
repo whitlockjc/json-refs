@@ -120,14 +120,14 @@ function combineURIs (u1, u2) {
     u2 = slash(u2);
   }
 
-  var u2Details = URI.parse(isType(u2, 'Undefined') ? '' : u2);
+  var u2Details = parseURI(isType(u2, 'Undefined') ? '' : u2);
   var u1Details;
   var combinedDetails;
 
   if (u2Details.reference === 'absolute' || u2Details.reference === 'uri') {
     combinedDetails = u2Details;
   } else {
-    u1Details = isType(u1, 'Undefined') ? undefined : URI.parse(u1);
+    u1Details = isType(u1, 'Undefined') ? undefined : parseURI(u1);
 
     if (!isType(u1Details, 'Undefined')) {
       combinedDetails = u1Details;
@@ -299,6 +299,8 @@ function findValue (obj, path, ignore) {
 
   try {
     path.forEach(function (seg) {
+      seg = decodeURI(seg);
+
       if (seg in value) {
         value = value[seg];
       } else {
@@ -431,8 +433,13 @@ function makeSubDocPath (options) {
   return fromPath;
 }
 
+function parseURI (uri) {
+  // We decode first to avoid doubly encoding
+  return URI.parse(encodeURI(decodeURI(uri)));
+}
+
 function setValue (obj, refPath, value) {
-  findValue(obj, refPath.slice(0, refPath.length - 1))[refPath[refPath.length - 1]] = value;
+  findValue(obj, refPath.slice(0, refPath.length - 1))[decodeURI(refPath[refPath.length - 1])] = value;
 }
 
 function walk (ancestors, node, path, fn) {
@@ -660,7 +667,7 @@ function decodePath (path) {
       seg = JSON.stringify(seg);
     }
 
-    return seg.replace(/~1/g, '/').replace(/~0/g, '~');
+    return decodeURI(seg.replace(/~1/g, '/').replace(/~0/g, '~'));
   });
 }
 
@@ -881,7 +888,7 @@ function getRefDetails (obj) {
       uriDetails = uriDetailsCache[cacheKey];
 
       if (isType(uriDetails, 'Undefined')) {
-        uriDetails = uriDetailsCache[cacheKey] = URI.parse(cacheKey);
+        uriDetails = uriDetailsCache[cacheKey] = parseURI(cacheKey);
       }
 
       details.uri = cacheKey;

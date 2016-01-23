@@ -1,4 +1,4 @@
-/* global before, describe, it */
+/* eslint-env browser, mocha */
 
 /*
  * The MIT License (MIT)
@@ -29,7 +29,7 @@
 var _ = require('lodash');
 var assert = require('assert');
 var fs = require('fs');
-var JsonRefs = require('../');
+var JsonRefs = typeof window === 'undefined' ? require('../') : window.JsonRefs;
 var path = require('path');
 var URI = require('uri-js');
 var YAML = require('js-yaml');
@@ -205,7 +205,7 @@ function validateUnresolvedRefDetails (actual, defPtr, def) {
   if (defPtr === '#/warning') {
     assert.equal(actual.warning, 'Extra JSON Reference properties will be ignored: ignored');
   } else if (defPtr === '#/invalid') {
-    assert.equal(actual.error, 'URI is not strictly valid.');
+    assert.equal(actual.error, 'HTTP URIs must have a host.');
   }
 }
 
@@ -586,7 +586,7 @@ describe('json-refs', function () {
         var doc = {
           project: testDocument.project,
           ref: {
-            $ref: '/file[/].html'
+            $ref: 'http://:8080'
           }
         };
         var refs = JsonRefs.findRefs(doc);
@@ -773,7 +773,7 @@ describe('json-refs', function () {
         [[1], false],
         [[{}], false],
         [[{$ref: 1}], false],
-        [[{$ref: '/file[/].html'}], false]
+        [[{$ref: 'http://:8080'}], false]
       ], JsonRefs.isRef);
     });
   });
@@ -1043,7 +1043,7 @@ describe('json-refs', function () {
             def: testDocument.invalid,
             uri: testDocument.invalid.$ref,
             uriDetails: URI.parse(testDocument.invalid.$ref),
-            error: 'URI is not strictly valid.',
+            error: 'HTTP URIs must have a host.',
             type: 'invalid'
           };
 

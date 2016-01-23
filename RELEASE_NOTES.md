@@ -1,5 +1,12 @@
 ## Release Notes
 
+### v2.0.5 (TBD)
+
+* Added support to work with URI encoded JSON References and to handle JSON References with unescaped special
+characters *(This means that if you have a reference like `#/paths/{petId}`, which is technically invalid, we will not
+mark it as invalid and will process it.  It also means if your reference is escaped, like `#/definitions/My%20Pet`, it
+will also work as expected.)* *(Issue #61)*
+
 ### v2.0.4 (2016-01-21)
 
 * Fixed a bug where a reference to another object that shares a common pointer could be marked as `circular`

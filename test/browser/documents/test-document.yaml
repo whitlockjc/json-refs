@@ -35,7 +35,7 @@ definitions:
 
 # Invalid reference
 invalid:
-  $ref: 'file[/].html'
+  $ref: 'http://:8080'
 
 # Local reference
 local:
