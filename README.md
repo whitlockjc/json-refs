@@ -18,8 +18,10 @@ features for JSON Pointers as well.
 ## Documentation
 
 The documentation for this project can be found at <https://github.com/whitlockjc/json-refs/blob/master/docs/README.md>.
+Specific documentation can be found here:
 
-The API can be found at <https://github.com/whitlockjc/json-refs/blob/master/docs/API.md>.
+* API documentation can be found at <https://github.com/whitlockjc/json-refs/blob/master/docs/API.md>
+* CLI can be found at <https://github.com/whitlockjc/json-refs/blob/master/docs/CLI.md>
 
 ## Installation
 
@@ -31,17 +33,37 @@ Installation for browser applications can be done via [Bower][bower] or by downl
 
 #### Using Bower
 
+Installation is standard fare:
+
 ```
 bower install json-refs --save
+```
+
+To use the Bower install, your HTML includes might look like this:
+
+``` html
+<!-- ... -->
+<script src="bower_components/path-loader/browser/path-loader-min.js"></script>
+<script src="bower_components/json-refs/browser/json-refs-min.js"></script>
+<!-- ... -->
 ```
 
 #### Standalone Binaries
 
 The standalone binaries come in two flavors:
 
-* [json-refs-standalone.js](https://raw.github.com/whitlockjc/json-refs/master/browser/json-refs-standalone.js): _400_, full source source maps
-* [json-refs-standalone-min.js](https://raw.github.com/whitlockjc/json-refs/master/browser/json-refs-standalone-min.js): _44kb_, minified, compressed
+* [json-refs-standalone.js](https://raw.github.com/whitlockjc/json-refs/master/browser/json-refs-standalone.js): _424kb_, full source source maps
+* [json-refs-standalone-min.js](https://raw.github.com/whitlockjc/json-refs/master/browser/json-refs-standalone-min.js): _48kb_, minified, compressed
 and no sourcemap
+
+Of course, these links are for the master builds so feel free to download from the release of your choice.  Once you've
+gotten them downloaded, to use the standalone binaries, your HTML include might look like this:
+
+``` html
+<!-- ... -->
+<script src="json-refs-standalone.js"></script>
+<!-- ... -->
+```
 
 ### Node.js
 
