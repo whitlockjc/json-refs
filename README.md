@@ -21,6 +21,7 @@ The documentation for this project can be found at <https://github.com/whitlockj
 Specific documentation can be found here:
 
 * API documentation can be found at <https://github.com/whitlockjc/json-refs/blob/master/docs/API.md>
+* CLI can be found at <https://github.com/whitlockjc/json-refs/blob/master/docs/CLI.md>
 
 ## Installation
 

@@ -35,7 +35,7 @@ var documentBase = path.join(__dirname, 'browser', 'documents');
 var relativeBase = typeof window === 'undefined' ? documentBase : 'base/documents';
 var personDocument = require('./browser/documents/{id}/person.json');
 
-describe('json-refs issues', function () {
+describe('json-refs Issues', function () {
   describe('Issue #65', function () {
     it('should handle remote references with fragments replacing the whole document', function (done) {
       var uri = 'https://cdn.rawgit.com/apigee-127/swagger-tools/master/test/browser/people.json';

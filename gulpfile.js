@@ -137,7 +137,9 @@ gulp.task('test-node', function (cb) {
             'test/**/test-*.js',
             '!test/browser/test-*.js'
           ])
-            .pipe($.mocha({reporter: 'spec'}))
+            .pipe($.mocha({
+              reporter: 'spec'
+            }))
             .on('error', function (err) {
               reject(err);
             })

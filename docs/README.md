@@ -60,6 +60,9 @@ npm install json-refs --save
 
 The json-refs project's API documentation can be found here: https://github.com/whitlockjc/json-refs/blob/master/docs/API.md
 
+## CLI Documentation
+The json-refs project's CLI documentation can be found here: https://github.com/whitlockjc/json-refs/blob/master/docs/CLI.md
+
 ## Dependencies
 
 Below is the list of projects being used by json-refs and the purpose(s) they are used for:

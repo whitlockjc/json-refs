@@ -1,5 +1,9 @@
 ## Release Notes
 
+### v2.1.0 (2016-01-23)
+
+* First pass at a `json-refs` CLI utility
+
 ### v2.0.8 (2016-01-23)
 
 * Fixed an issue with options that filter references *(`options.filter` and `options.subDocPath`)* and the internal
