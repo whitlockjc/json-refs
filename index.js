@@ -1142,6 +1142,7 @@ function resolveRefs (obj, options) {
 
       // Replace remote references first
       Object.keys(aRefs).forEach(function (refPtr) {
+        var ptrPath = pathFromPtr(refPtr);
         var refDetails = aRefs[refPtr];
         var value;
 
@@ -1151,8 +1152,13 @@ function resolveRefs (obj, options) {
               value = findValue(refDetails.value || {},
                                 refDetails.uriDetails.fragment ?
                                 pathFromPtr(refDetails.uriDetails.fragment) :
-                                  []);
-              setValue(cloned, pathFromPtr(refPtr), value);
+                                []);
+
+              if (ptrPath.length === 0) {
+                cloned = value;
+              } else {
+                setValue(cloned, pathFromPtr(refPtr), value);
+              }
 
               // The reference includes a fragment so update the reference details
               if (!isType(refDetails.value, 'Undefined')) {
@@ -1174,6 +1180,7 @@ function resolveRefs (obj, options) {
       // Replace local references
       Object.keys(aRefs).forEach(function (refPtr) {
         var refDetails = aRefs[refPtr];
+        var refPath = pathFromPtr(refPtr);
         var parentLocation = refDetails.parentLocation;
         var value;
 
@@ -1205,7 +1212,11 @@ function resolveRefs (obj, options) {
                                     []);
               }
 
-              setValue(cloned, pathFromPtr(refPtr), value);
+              if (refPath.length === 0) {
+                cloned = value;
+              } else {
+                setValue(cloned, pathFromPtr(refPtr), value);
+              }
 
               refDetails.value = value;
             } catch (err) {

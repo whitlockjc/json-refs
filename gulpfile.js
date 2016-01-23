@@ -183,7 +183,8 @@ gulp.task('test-browser', ['browserify'], function (cb) {
 
       return new Promise(function (resolve, reject) {
         var b = browserify([
-          './test/test-json-refs.js'
+          './test/test-json-refs.js',
+          './test/test-issues.js'
         ], {
           debug: true
         });

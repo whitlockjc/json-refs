@@ -31,6 +31,44 @@ var JsonRefs = typeof window === 'undefined' ? require('../') : window.JsonRefs;
 var URI = require('uri-js');
 
 describe('json-refs issues', function () {
+  describe('Issue #65', function () {
+    it('should handle remote references with fragments replacing the whole document', function (done) {
+      var uri = 'https://cdn.rawgit.com/apigee-127/swagger-tools/master/test/browser/people.json';
+      var doc = {
+        $ref: uri + '#/paths/~1people~1{id}'
+      };
+
+      JsonRefs.resolveRefsAt(uri)
+        .then(function (results) {
+          return JsonRefs.resolveRefs(doc)
+            .then(function (results2) {
+              assert.deepEqual(results2, {
+                refs: {
+                  '#': {
+                    def: doc,
+                    uri: doc.$ref,
+                    uriDetails: {
+                      fragment: '/paths/~1people~1%7Bid%7D',
+                      host: 'cdn.rawgit.com',
+                      path: '/apigee-127/swagger-tools/master/test/browser/people.json',
+                      port: undefined,
+                      query: undefined,
+                      reference: 'uri',
+                      scheme: 'https',
+                      userinfo: undefined
+                    },
+                    type: 'remote',
+                    value: results.value.paths['/people/{id}']
+                  }
+                },
+                resolved: results.resolved.paths['/people/{id}']
+              });
+            });
+        })
+        .then(done, done);
+    });
+  });
+
   describe('Issue #63', function () {
     it('should handle options.filter and options.includeInvalid combination', function () {
       var doc = {
