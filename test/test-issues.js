@@ -28,7 +28,12 @@
 
 var assert = require('assert');
 var JsonRefs = typeof window === 'undefined' ? require('../') : window.JsonRefs;
+var path = require('path');
 var URI = require('uri-js');
+
+var documentBase = path.join(__dirname, 'browser', 'documents');
+var relativeBase = typeof window === 'undefined' ? documentBase : 'base/documents';
+var personDocument = require('./browser/documents/{id}/person.json');
 
 describe('json-refs issues', function () {
   describe('Issue #65', function () {
@@ -88,74 +93,150 @@ describe('json-refs issues', function () {
   });
 
   describe('Issue #61', function () {
-    it('should handle references with unescaped URI characters', function (done) {
-      var refURI = '#/~1some~1{id}~1hello there';
-      var doc = {
-        '/some/{id}/hello there': 'hello',
-        'ref': {
-          $ref: refURI
-        }
-      };
+    describe('local references', function () {
+      it('should handle references with unescaped URI characters', function (done) {
+        var refURI = '#/~1some~1{id}~1hello there';
+        var doc = {
+          '/some/{id}/hello there': 'hello',
+          'ref': {
+            $ref: refURI
+          }
+        };
 
-      JsonRefs.resolveRefs(doc)
-        .then(function (results) {
-          var refDetails = results.refs['#/ref'];
+        JsonRefs.resolveRefs(doc)
+          .then(function (results) {
+            var refDetails = results.refs['#/ref'];
 
-          assert.equal(Object.keys(results.refs).length, 1);
-          assert.deepEqual(refDetails, {
-            def: doc.ref,
-            uri: refURI,
-            uriDetails: {
-              scheme: undefined,
-              userinfo: undefined,
-              host: undefined,
-              port: undefined,
-              path: '',
-              query: undefined,
-              fragment: '/~1some~1%7Bid%7D~1hello%20there',
-              reference: 'same-document'
-            },
-            type: 'local',
-            value: 'hello'
-          });
-        })
-        .then(done, done);
+            assert.equal(Object.keys(results.refs).length, 1);
+            assert.deepEqual(refDetails, {
+              def: doc.ref,
+              uri: refURI,
+              uriDetails: {
+                scheme: undefined,
+                userinfo: undefined,
+                host: undefined,
+                port: undefined,
+                path: '',
+                query: undefined,
+                fragment: '/~1some~1%7Bid%7D~1hello%20there',
+                reference: 'same-document'
+              },
+              type: 'local',
+              value: 'hello'
+            });
+          })
+          .then(done, done);
+      });
+
+      it('should handle references with escaped URI characters', function (done) {
+        var refURI = encodeURI('#/~1some~1{id}~1hello there/some nested path');
+        var doc = {
+          '/some/{id}/hello there': {
+            'some nested path': 'hello'
+          },
+          'ref': {
+            $ref: refURI
+          }
+        };
+
+        JsonRefs.resolveRefs(doc)
+          .then(function (results) {
+            var refDetails = results.refs['#/ref'];
+
+            assert.equal(Object.keys(results.refs).length, 1);
+            assert.deepEqual(refDetails, {
+              def: doc.ref,
+              uri: refURI,
+              uriDetails: {
+                scheme: undefined,
+                userinfo: undefined,
+                host: undefined,
+                port: undefined,
+                path: '',
+                query: undefined,
+                fragment: '/~1some~1%7Bid%7D~1hello%20there/some%20nested%20path',
+                reference: 'same-document'
+              },
+              type: 'local',
+              value: 'hello'
+            });
+          })
+          .then(done, done);
+      });
     });
 
-    it('should handle references with escaped URI characters', function (done) {
-      var refURI = encodeURI('#/~1some~1{id}~1hello there/some nested path');
-      var doc = {
-        '/some/{id}/hello there': {
-          'some nested path': 'hello'
-        },
-        'ref': {
-          $ref: refURI
-        }
-      };
+    describe('remote references', function () {
+      it('should handle references with unescaped URI characters', function (done) {
+        var doc = {
+          $ref: './{id}/person.json'
+        };
 
-      JsonRefs.resolveRefs(doc)
-        .then(function (results) {
-          var refDetails = results.refs['#/ref'];
-
-          assert.equal(Object.keys(results.refs).length, 1);
-          assert.deepEqual(refDetails, {
-            def: doc.ref,
-            uri: refURI,
-            uriDetails: {
-              scheme: undefined,
-              userinfo: undefined,
-              host: undefined,
-              port: undefined,
-              path: '',
-              query: undefined,
-              fragment: '/~1some~1%7Bid%7D~1hello%20there/some%20nested%20path',
-              reference: 'same-document'
-            },
-            type: 'local',
-            value: 'hello'
-          });
+        JsonRefs.resolveRefs(doc, {
+          relativeBase: relativeBase
         })
-        .then(done, done);
+          .then(function (results) {
+            assert.deepEqual(results, {
+              refs: {
+                '#': {
+                  def: doc,
+                  uri: doc.$ref,
+                  uriDetails: {
+                    scheme: undefined,
+                    userinfo: undefined,
+                    host: undefined,
+                    port: undefined,
+                    path: './%7Bid%7D/person.json',
+                    query: undefined,
+                    fragment: undefined,
+                    reference: 'relative'
+                  },
+                  type: 'relative',
+                  value: personDocument
+                }
+              },
+              resolved: personDocument
+            });
+          })
+          .then(done, done);
+      });
+
+      it('should handle references with escaped URI characters', function (done) {
+        var doc = {
+          ref: {
+            $ref: encodeURI('./{id}/person.json')
+          }
+        };
+
+        JsonRefs.resolveRefs(doc, {
+          relativeBase: relativeBase
+        })
+          .then(function (results) {
+            assert.deepEqual(results, {
+              refs: {
+                '#/ref': {
+                  def: doc.ref,
+                  uri: doc.ref.$ref,
+                  uriDetails: {
+                    scheme: undefined,
+                    userinfo: undefined,
+                    host: undefined,
+                    port: undefined,
+                    path: './%7Bid%7D/person.json',
+                    query: undefined,
+                    fragment: undefined,
+                    reference: 'relative'
+                  },
+                  type: 'relative',
+                  value: personDocument
+                }
+              },
+              resolved: {
+                ref: personDocument
+              }
+            });
+          })
+          .then(done, done);
+      });
     });
   });
 });

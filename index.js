@@ -32,7 +32,7 @@
  */
 
 var dirname = require('path').dirname;
-var pathLoader = require('path-loader');
+var PathLoader = require('path-loader');
 var qs = require('querystring');
 var slash = require('slash');
 var URI = require('uri-js');
@@ -268,22 +268,24 @@ function findAllRefs (obj, options, parents, parentPath, documents) {
         Object.keys(documents).forEach(function (refPtr) {
           var document = documents[refPtr];
 
-          // Merge each reference into the root document's references
-          Object.keys(document.refs).forEach(function (cRefPtr) {
-            var fPtr = pathToPtr(pathFromPtr(refPtr).concat(pathFromPtr(cRefPtr)));
-            var refDetails = refs[fPtr];
+          if (Object.keys(refs).length > 0) {
+            // Merge each reference into the root document's references
+            Object.keys(document.refs).forEach(function (cRefPtr) {
+              var fPtr = pathToPtr(pathFromPtr(refPtr).concat(pathFromPtr(cRefPtr)));
+              var refDetails = refs[fPtr];
 
-            if (isType(refDetails, 'Undefined')) {
-              refs[fPtr] = document.refs[cRefPtr];
+              if (isType(refDetails, 'Undefined')) {
+                refs[fPtr] = document.refs[cRefPtr];
+              }
+            });
+
+            // Record the value of the remote reference
+            refs[refPtr].value = document.value;
+
+            // Mark the remote reference itself as circular
+            if (document.circular) {
+              refs[refPtr].circular = true;
             }
-          });
-
-          // Record the value of the remote reference
-          refs[refPtr].value = document.value;
-
-          // Mark the remote reference itself as circular
-          if (document.circular) {
-            refs[refPtr].circular = true;
           }
         });
       }
@@ -356,8 +358,8 @@ function getRemoteDocument (url, options) {
       };
     }
 
-    // Attempt to load the resource using  path-loader
-    allTasks = pathLoader.load(url, loaderOptions);
+    // Attempt to load the resource using path-loader
+    allTasks = PathLoader.load(decodeURI(url), loaderOptions);
 
     // Update the cache
     allTasks = allTasks

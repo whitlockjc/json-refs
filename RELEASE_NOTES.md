@@ -1,5 +1,9 @@
 ## Release Notes
 
+### v2.0.7 (2016-01-23)
+
+* Further address issues with lack of encoding in JSON References *(path segments instead of fragments)* *(Issue #61)*
+
 ### v2.0.6 (2016-01-22)
 
 * Fix an issue where a JSON Reference at the root of the document was not resolved properly *(Issue #65)*
