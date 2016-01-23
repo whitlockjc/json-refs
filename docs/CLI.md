@@ -58,6 +58,9 @@ Below are a few things that are worth mentioning but cannot fit into the command
 * `json-refs` only works with JSON and YAML files at this time
 * The `-H|--header` option for `json-refs` requires a pattern like this: `<HEADER_NAME>: <HEADER_VALUE>` *(Notice the
 space after the colon, it is **required**)*
+* `json-refs`, like its API, does not error out in the event of invalid references.  In the event that your resolved
+document does not look as you would expect, that is likely because some references were unresolvable.  To identify if
+this is the case, or just to ensure your documents validate fully, use the `--validate` flag.
 
 ### Help
 
@@ -70,8 +73,9 @@ space after the colon, it is **required**)*
   Options:
 
     -h, --help             output usage information
-    -H, --header <header>  The header to use when retrieving an HTTP/HTTPS location
+    -H, --header <header>  The header to use when retrieving a remote document
     -I, --filter <type>    The type of JSON References to resolved
+    -S, --validate         Fail when the document has invalid JSON References
     -y, --yaml             Output as YAML
 
 
@@ -90,3 +94,7 @@ Here are a few examples:
 **Note:** There are two types of remote references, `relative` and `remote`.
 
 `json-refs resolve https://cdn.rawgit.com/whitlockjc/json-refs/master/test/browser/documents/test-document.yaml --filter relative --filter remote`
+
+#### Validate the Document
+
+`json-refs resolve https://cdn.rawgit.com/whitlockjc/json-refs/master/test/browser/documents/test-document.yaml --validate`

@@ -96,6 +96,7 @@ program
   .description('Prints document at location with its JSON References resolved')
   .option('-H, --header <header>', 'The header to use when retrieving a remote document', optionArrayAppender(), [])
   .option('-I, --filter <type>', 'The type of JSON References to resolved', optionArrayAppender(), [])
+  .option('-S, --validate', 'Fail when the document has invalid JSON References')
   .option('-y, --yaml', 'Output as YAML')
   .action(function (location) {
     var options = {
@@ -109,6 +110,10 @@ program
 
     if (this.filter.length > 0) {
       options.filter = this.filter;
+    }
+
+    if (this.validate) {
+      options.includeInvalid = true;
     }
 
     if (this.header.length > 0) {
@@ -125,9 +130,25 @@ program
 
     JsonRefs.resolveRefsAt(location, options)
       .then(function (results) {
-        console.log(that.yaml ?
-                      YAML.safeDump(results.resolved, {noRefs: true}) :
-                      JSON.stringify(results.resolved, null, 2));
+        var errors = [];
+
+        if (that.validate) {
+          Object.keys(results.refs).forEach(function (refPtr) {
+            var refDetails = results.refs[refPtr];
+
+            if (refDetails.type === 'invalid' || refDetails.error) {
+              errors.push('  ' + refPtr + ': ' + refDetails.error);
+            }
+          });
+        }
+
+        if (that.validate && errors.length > 0) {
+          throw new Error('Document has invalid references:\n\n' + errors.join('\n'));
+        } else {
+          console.log(that.yaml ?
+                        YAML.safeDump(results.resolved, {noRefs: true}) :
+                        JSON.stringify(results.resolved, null, 2));
+        }
       })
       .catch(exitWithError);
   });

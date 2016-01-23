@@ -85,6 +85,7 @@ var resolveHelp = [
   '    -h, --help             output usage information',
   '    -H, --header <header>  The header to use when retrieving a remote document',
   '    -I, --filter <type>    The type of JSON References to resolved',
+  '    -S, --validate         Fail when the document has invalid JSON References',
   '    -y, --yaml             Output as YAML',
   '',
   ''
@@ -316,6 +317,29 @@ describe('json-refs CLI', function () {
           assert.equal(stderr, '');
 
           assert.deepEqual(stdout, JSON.stringify(pkg, null, 2) + '\n');
+
+          done();
+        });
+      });
+
+      it('--validate option', function (done) {
+        this.timeout(10000);
+
+        executeJsonRefs(['resolve', '--validate', testDocumentLocation], function (stderr, stdout) {
+          assert.equal(stdout, '');
+
+          assert.equal(stderr, [
+            '',
+            '  error: Document has invalid references:',
+            '',
+            '  #/invalid: HTTP URIs must have a host.',
+            '  #/missing: JSON Pointer points to missing location: #/some/missing/path',
+            '  #/remote/relative/missing: JSON Pointer points to missing location: #/some/missing/path',
+            '  #/remote/relative/child/missing: JSON Pointer points to missing location: #/some/missing/path',
+            '  #/remote/relative/child/ancestor/missing: JSON Pointer points to missing location: #/some/missing/path',
+            '',
+            ''
+          ].join('\n'));
 
           done();
         });
