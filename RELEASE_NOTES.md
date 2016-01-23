@@ -1,11 +1,12 @@
 ## Release Notes
 
-### v2.0.5 (TBD)
+### v2.0.5 (2016-01-22)
 
 * Added support to work with URI encoded JSON References and to handle JSON References with unescaped special
 characters *(This means that if you have a reference like `#/paths/{petId}`, which is technically invalid, we will not
 mark it as invalid and will process it.  It also means if your reference is escaped, like `#/definitions/My%20Pet`, it
 will also work as expected.)* *(Issue #61)*
+* Fix an issue with combining `options.filter` and `options.includeInvalid` *(Issue #63)*
 * We now clone the JSON Reference definition and JSON Reference details respectively for `options.refPreProcessor' and
 `options.refPostProcessor` *(Issue #64)*
 
