@@ -116,6 +116,15 @@ function combineQueryParams (qs1, qs2) {
 }
 
 function combineURIs (u1, u2) {
+  // Empty out paths to the current location so we do not attempt to join them unnecessarily
+  if (u1 === '.') {
+    u1 = undefined;
+  }
+
+  if (u2 === '.') {
+    u2 = undefined;
+  }
+
   // Convert Windows paths
   if (isType(u1, 'String')) {
     u1 = slash(u1);
