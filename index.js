@@ -92,6 +92,11 @@ function combinePaths (p1, p2) {
 
   pathToSegments(p1).concat(pathToSegments(p2)).forEach(handleSegment);
 
+  // The '..' prefix is removed above so add it back if need be
+  if (p1.indexOf('..') === 0) {
+    combined.unshift('..');
+  }
+
   return combined.length === 0 ? '' : combined.join('/');
 }
 
@@ -133,7 +138,7 @@ function combineURIs (u1, u2) {
       combinedDetails = u1Details;
 
       // Join the paths
-      combinedDetails.path = URI.normalize(combinePaths(u1Details.path, u2Details.path));
+      combinedDetails.path = combinePaths(u1Details.path, u2Details.path);
 
       // Join query parameters
       combinedDetails.query = combineQueryParams(u1Details.query, u2Details.query);
@@ -145,7 +150,8 @@ function combineURIs (u1, u2) {
   // Remove the fragment
   combinedDetails.fragment = undefined;
 
-  return URI.serialize(combinedDetails);
+  // URI.serialize will remove the '../' prefix
+  return (combinedDetails.path.indexOf('../') === 0 ? '../' : '') + URI.serialize(combinedDetails);
 }
 
 function filterRefs (options, refs) {

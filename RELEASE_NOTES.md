@@ -1,5 +1,11 @@
 ## Release Notes
 
+### v2.1.1 (2016-01-23)
+
+* Fixed an issue with `#findRefsAt` and `#resolveRefsAt` and relative locations *(Issue #67)*
+* Updated `json-refs resolve` to validate by default to avoid confusion *(Removed the `--validate` flag and replaced
+it with the `--force` flag to disable validation)*
+
 ### v2.1.0 (2016-01-23)
 
 * First pass at a `json-refs` CLI utility

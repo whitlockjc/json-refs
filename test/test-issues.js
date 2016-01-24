@@ -26,16 +26,47 @@
 
 'use strict';
 
+var _ = require('lodash');
 var assert = require('assert');
 var JsonRefs = typeof window === 'undefined' ? require('../') : window.JsonRefs;
 var path = require('path');
 var URI = require('uri-js');
+var YAML = require('js-yaml');
 
 var documentBase = path.join(__dirname, 'browser', 'documents');
 var relativeBase = typeof window === 'undefined' ? documentBase : 'base/documents';
 var personDocument = require('./browser/documents/{id}/person.json');
 
 describe('json-refs Issues', function () {
+  describe('Issue #67', function () {
+    it('should handle relative locations for #findRefsAt and #resolveRefsAt', function (done) {
+      JsonRefs.resolveRefsAt('../documents/test-document.yaml', {
+        loaderOptions: {
+          processContent: function (res, callback) {
+            callback(undefined, YAML.safeLoad(res.text));
+          }
+        },
+        relativeBase: relativeBase
+      })
+        .then(function (results) {
+          // Make sure there are no unresolvable references except the expected ones
+          _.each(results, function (refDetails, refPtr) {
+            var expectedMissing = [
+              '#/missing',
+              '#/remote/relative/missing',
+              '#/remote/relative/child/missing',
+              '#/remote/relative/child/ancestor/missing'
+            ];
+
+            if (expectedMissing.indexOf(refPtr) === -1) {
+              assert.ok(!_.has(refDetails.missing));
+            }
+          });
+        })
+        .then(done, done);
+    });
+  });
+
   describe('Issue #65', function () {
     it('should handle remote references with fragments replacing the whole document', function (done) {
       var uri = 'https://rawgit.com/apigee-127/swagger-tools/master/test/browser/people.json';
