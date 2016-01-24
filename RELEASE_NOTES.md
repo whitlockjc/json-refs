@@ -1,9 +1,5 @@
 ## Release Notes
 
-### v2.1.2 (2016-01-23)
-
-* Fixed another issue related Issue #67
-
 ### v2.1.1 (2016-01-23)
 
 * Fixed an issue with `#findRefsAt` and `#resolveRefsAt` and relative locations *(Issue #67)*
