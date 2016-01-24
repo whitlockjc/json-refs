@@ -1,6 +1,6 @@
 ## Release Notes
 
-### TBD
+### v2.1.2 (2016-01-23)
 
 * Scoped fixed for issue #67 to relative references only
 * Use Node.js `path` APIs instead of reinventing them
