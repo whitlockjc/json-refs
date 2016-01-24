@@ -40,6 +40,7 @@ var URI = require('uri-js');
 var badPtrTokenRegex = /~(?:[^01]|$)/g;
 var remoteCache = {};
 var remoteTypes = ['relative', 'remote'];
+var remoteUriTypes = ['absolute', 'uri'];
 var uriDetailsCache = {};
 
 // Load promises polyfill if necessary
@@ -159,8 +160,9 @@ function combineURIs (u1, u2) {
   // Remove the fragment
   combinedDetails.fragment = undefined;
 
-  // URI.serialize will remove the '../' prefix
-  return (combinedDetails.path.indexOf('../') === 0 ? '../' : '') + URI.serialize(combinedDetails);
+  // For relative URIs, add back the '..' since it was removed above
+  return (remoteUriTypes.indexOf(combinedDetails.reference) === -1 &&
+          combinedDetails.path.indexOf('../') === 0 ? '../' : '') + URI.serialize(combinedDetails);
 }
 
 function filterRefs (options, refs) {

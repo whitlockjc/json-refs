@@ -1,5 +1,9 @@
 ## Release Notes
 
+### TBD
+
+* Scoped fixed for issue #67 to relative references only
+
 ### v2.1.1 (2016-01-23)
 
 * Fixed an issue with `#findRefsAt` and `#resolveRefsAt` and relative locations *(Issue #67)*

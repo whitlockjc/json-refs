@@ -91,11 +91,19 @@ var resolveHelp = [
   ''
 ].join('\n');
 
-function executeJsonRefs (args, done) {
+function executeJsonRefs (args, done, cwd) {
+  var options;
+
   // Add Node args
   args.unshift('node', path.resolve(path.join(__dirname, '..', 'bin', 'json-refs')));
 
-  cp.exec(args.join(' '), function (err, stdout, stderr) {
+  if (typeof cwd !== 'undefined') {
+    options = {
+      cwd: cwd
+    };
+  }
+
+  cp.exec(args.join(' '), options, function (err, stdout, stderr) {
     done(stderr, stdout);
   });
 };
@@ -358,6 +366,48 @@ describe('json-refs CLI', function () {
               assert.equal(stdout, YAML.safeDump(results.resolved, {noRefs: true}) + '\n');
             })
             .then(done, done);
+        });
+      });
+    });
+
+    describe('issues', function () {
+      describe('Issue #67', function () {
+        var expectedOutput = [
+          '',
+          '  error: Document has invalid references:',
+          '',
+          '  #/deferred: JSON Pointer points to missing location: #/project/name',
+          '  #/missing: JSON Pointer points to missing location: #/some/missing/path',
+          '  #/ancestor/deferred: JSON Pointer points to missing location: #/project/name',
+          '  #/ancestor/missing: JSON Pointer points to missing location: #/some/missing/path',
+          '  #/ancestor/nested/deferred: JSON Pointer points to missing location: #/project/name',
+          '  #/ancestor/nested/missing: JSON Pointer points to missing location: #/some/missing/path',
+          '  #/ancestor/nested/child/deferred: JSON Pointer points to missing location: #/project/name',
+          '  #/ancestor/nested/child/missing: JSON Pointer points to missing location: #/some/missing/path',
+          '',
+          '',
+        ].join('\n');
+
+        it('relative references to ancestor of process.cwd()', function (done) {
+          this.timeout(10000);
+
+          executeJsonRefs(['resolve', './test-nested-1.yaml'], function (stderr, stdout) {
+            assert.equal(stderr, expectedOutput);
+            assert.equal(stdout, '');
+
+            done();
+          }, path.join(__dirname, 'browser', 'documents', 'nested'));
+        });
+
+        it('relative references to child of process.cwd()', function (done) {
+          this.timeout(10000);
+
+          executeJsonRefs(['resolve', '../test/browser/documents/nested/test-nested-1.yaml'], function (stderr, stdout) {
+            assert.equal(stderr, expectedOutput);
+            assert.equal(stdout, '');
+
+            done();
+          }, __dirname);
         });
       });
     });
