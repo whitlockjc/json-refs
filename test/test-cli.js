@@ -83,9 +83,9 @@ var resolveHelp = [
   '  Options:',
   '',
   '    -h, --help             output usage information',
+  '    -f, --force            Do not fail when the document has invalid JSON References',
   '    -H, --header <header>  The header to use when retrieving a remote document',
   '    -I, --filter <type>    The type of JSON References to resolved',
-  '    -S, --validate         Fail when the document has invalid JSON References',
   '    -y, --yaml             Output as YAML',
   '',
   ''
@@ -258,13 +258,22 @@ describe('json-refs CLI', function () {
         this.timeout(10000);
 
         executeJsonRefs(['resolve', testDocumentLocation], function (stderr, stdout) {
-          assert.equal(stderr, '');
+          assert.equal(stdout, '');
 
-          JsonRefs.resolveRefsAt(testDocumentLocation, jsonRefsOptions)
-            .then(function (results) {
-              assert.equal(stdout, JSON.stringify(results.resolved, null, 2) + '\n');
-            })
-            .then(done, done);
+          assert.equal(stderr, [
+            '',
+            '  error: Document has invalid references:',
+            '',
+            '  #/invalid: HTTP URIs must have a host.',
+            '  #/missing: JSON Pointer points to missing location: #/some/missing/path',
+            '  #/remote/relative/missing: JSON Pointer points to missing location: #/some/missing/path',
+            '  #/remote/relative/child/missing: JSON Pointer points to missing location: #/some/missing/path',
+            '  #/remote/relative/child/ancestor/missing: JSON Pointer points to missing location: #/some/missing/path',
+            '',
+            ''
+          ].join('\n'));
+
+          done();
         });
       });
 
@@ -275,7 +284,9 @@ describe('json-refs CLI', function () {
           'resolve',
           testDocumentLocation,
           '--filter', 'relative',
-          '-I', 'remote'];
+          '-I', 'remote',
+          '--force'
+        ];
         var cOptions = _.cloneDeep(jsonRefsOptions);
 
         cOptions.filter = ['relative', 'remote'];
@@ -284,6 +295,20 @@ describe('json-refs CLI', function () {
           assert.equal(stderr, '');
 
           JsonRefs.resolveRefsAt(testDocumentLocation, cOptions)
+            .then(function (results) {
+              assert.equal(stdout, JSON.stringify(results.resolved, null, 2) + '\n');
+            })
+            .then(done, done);
+        });
+      });
+
+      it('--force option', function (done) {
+        this.timeout(10000);
+
+        executeJsonRefs(['resolve', testDocumentLocation, '--force'], function (stderr, stdout) {
+          assert.equal(stderr, '');
+
+          JsonRefs.resolveRefsAt(testDocumentLocation, jsonRefsOptions)
             .then(function (results) {
               assert.equal(stdout, JSON.stringify(results.resolved, null, 2) + '\n');
             })
@@ -322,33 +347,10 @@ describe('json-refs CLI', function () {
         });
       });
 
-      it('--validate option', function (done) {
-        this.timeout(10000);
-
-        executeJsonRefs(['resolve', '--validate', testDocumentLocation], function (stderr, stdout) {
-          assert.equal(stdout, '');
-
-          assert.equal(stderr, [
-            '',
-            '  error: Document has invalid references:',
-            '',
-            '  #/invalid: HTTP URIs must have a host.',
-            '  #/missing: JSON Pointer points to missing location: #/some/missing/path',
-            '  #/remote/relative/missing: JSON Pointer points to missing location: #/some/missing/path',
-            '  #/remote/relative/child/missing: JSON Pointer points to missing location: #/some/missing/path',
-            '  #/remote/relative/child/ancestor/missing: JSON Pointer points to missing location: #/some/missing/path',
-            '',
-            ''
-          ].join('\n'));
-
-          done();
-        });
-      });
-
       it('--yaml option', function (done) {
         this.timeout(10000);
 
-        executeJsonRefs(['resolve', testDocumentLocation, '--yaml'], function (stderr, stdout) {
+        executeJsonRefs(['resolve', testDocumentLocation, '-fy'], function (stderr, stdout) {
           assert.equal(stderr, '');
 
           JsonRefs.resolveRefsAt(testDocumentLocation, jsonRefsOptions)

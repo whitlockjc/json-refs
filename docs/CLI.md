@@ -58,9 +58,9 @@ Below are a few things that are worth mentioning but cannot fit into the command
 * `json-refs` only works with JSON and YAML files at this time
 * The `-H|--header` option for `json-refs` requires a pattern like this: `<HEADER_NAME>: <HEADER_VALUE>` *(Notice the
 space after the colon, it is **required**)*
-* `json-refs`, like its API, does not error out in the event of invalid references.  In the event that your resolved
-document does not look as you would expect, that is likely because some references were unresolvable.  To identify if
-this is the case, or just to ensure your documents validate fully, use the `--validate` flag.
+* To avoid confusion, `json-refs` will fail whenever there are invalid JSON References in the document(s) processed.
+But if you want to skip validation and generated the resolved document with the invalid JSON References unresolved,
+use the `--force` flag.
 
 ### Help
 
@@ -73,9 +73,9 @@ this is the case, or just to ensure your documents validate fully, use the `--va
   Options:
 
     -h, --help             output usage information
+    -f, --force            Do not fail when the document has invalid JSON References
     -H, --header <header>  The header to use when retrieving a remote document
     -I, --filter <type>    The type of JSON References to resolved
-    -S, --validate         Fail when the document has invalid JSON References
     -y, --yaml             Output as YAML
 
 
@@ -95,6 +95,6 @@ Here are a few examples:
 
 `json-refs resolve https://cdn.rawgit.com/whitlockjc/json-refs/master/test/browser/documents/test-document.yaml --filter relative --filter remote`
 
-#### Validate the Document
+#### Skip Validation
 
-`json-refs resolve https://cdn.rawgit.com/whitlockjc/json-refs/master/test/browser/documents/test-document.yaml --validate`
+`json-refs resolve https://cdn.rawgit.com/whitlockjc/json-refs/master/test/browser/documents/test-document.yaml --force`
