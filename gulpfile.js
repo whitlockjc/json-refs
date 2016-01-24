@@ -134,8 +134,9 @@ gulp.task('test-node', function (cb) {
         .pipe($.istanbul.hookRequire()) // Force `require` to return covered files
         .on('finish', function () {
           gulp.src([
-            'test/**/test-*.js',
-            '!test/browser/test-*.js'
+            './test/test-json-refs.js',
+            './test/test-issues.js',
+            './test/test-cli.js'
           ])
             .pipe($.mocha({
               reporter: 'spec'

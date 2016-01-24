@@ -3,6 +3,7 @@
 ### TBD
 
 * Scoped fixed for issue #67 to relative references only
+* Use Node.js `path` APIs instead of reinventing them
 
 ### v2.1.1 (2016-01-23)
 

@@ -31,7 +31,7 @@
  * @module JsonRefs
  */
 
-var dirname = require('path').dirname;
+var path = require('path');
 var PathLoader = require('path-loader');
 var qs = require('querystring');
 var slash = require('slash');
@@ -76,31 +76,6 @@ function clone (obj) {
   return cloned;
 }
 
-function combinePaths (p1, p2) {
-  var combined = [];
-
-  function pathToSegments (path) {
-    return isType(path, 'Undefined') || path === '' ? [] : path.split('/');
-  }
-
-  function handleSegment (seg) {
-    if (seg === '..') {
-      combined.pop();
-    } else {
-      combined.push(seg);
-    }
-  }
-
-  pathToSegments(p1).concat(pathToSegments(p2)).forEach(handleSegment);
-
-  // The '..' prefix is removed above so add it back if need be
-  if (p1.indexOf('..') === 0) {
-    combined.unshift('..');
-  }
-
-  return combined.length === 0 ? '' : combined.join('/');
-}
-
 function combineQueryParams (qs1, qs2) {
   var combined = {};
 
@@ -117,15 +92,6 @@ function combineQueryParams (qs1, qs2) {
 }
 
 function combineURIs (u1, u2) {
-  // Empty out paths to the current location so we do not attempt to join them unnecessarily
-  if (u1 === '.') {
-    u1 = undefined;
-  }
-
-  if (u2 === '.') {
-    u2 = undefined;
-  }
-
   // Convert Windows paths
   if (isType(u1, 'String')) {
     u1 = slash(u1);
@@ -139,7 +105,7 @@ function combineURIs (u1, u2) {
   var u1Details;
   var combinedDetails;
 
-  if (u2Details.reference === 'absolute' || u2Details.reference === 'uri') {
+  if (remoteUriTypes.indexOf(u2Details.reference) > -1) {
     combinedDetails = u2Details;
   } else {
     u1Details = isType(u1, 'Undefined') ? undefined : parseURI(u1);
@@ -148,7 +114,7 @@ function combineURIs (u1, u2) {
       combinedDetails = u1Details;
 
       // Join the paths
-      combinedDetails.path = combinePaths(u1Details.path, u2Details.path);
+      combinedDetails.path = path.join(u1Details.path, u2Details.path);
 
       // Join query parameters
       combinedDetails.query = combineQueryParams(u1Details.query, u2Details.query);
@@ -249,7 +215,7 @@ function findAllRefs (obj, options, parents, parentPath, documents) {
                   documents[pathToPtr(rParentPath)] = rRefs;
 
                   // Update the relative base based on the retrieved location
-                  rOptions.relativeBase = dirname(location);
+                  rOptions.relativeBase = path.dirname(location);
 
                   // Find all important references within the document
                   return findAllRefs(rRefs.value, rOptions, parents.concat(location), rParentPath, documents);
@@ -1318,7 +1284,7 @@ function resolveRefsAt (location, options) {
       var cOptions = clone(options);
 
       // Update the relative base based on the retrieved location
-      cOptions.relativeBase = dirname(location);
+      cOptions.relativeBase = path.dirname(location);
 
       return resolveRefs(res, cOptions)
         .then(function (res2) {
