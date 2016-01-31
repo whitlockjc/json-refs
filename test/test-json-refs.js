@@ -245,7 +245,9 @@ describe('json-refs API', function () {
       age: testTypesDocument.definitions.Integer,
       family: {
         type: 'array',
-        items: {}
+        items: {
+          $ref: '#/definitions/Person'
+        }
       },
       name: testTypesDocument.definitions.String 
     }
@@ -256,7 +258,7 @@ describe('json-refs API', function () {
       name: testNestedDocument1.name,
       ancestor: {
         name: testDocument1.name,
-        nested: {},
+        nested: testDocument1.nested,
         local: testDocument1.name,
         deferred: testDocument.project.name,
         missing: testDocument1.missing
@@ -321,7 +323,7 @@ describe('json-refs API', function () {
             uriDetails: URI.parse(testDocument.circular.ancestor.$ref),
             type: 'local',
             circular: true,
-            value: {}
+            value: testDocument.circular.ancestor
           },
           '#/circular/root': {
             def: testDocument.circular.root,
@@ -329,7 +331,7 @@ describe('json-refs API', function () {
             uriDetails: URI.parse(testDocument.circular.root.$ref),
             type: 'local',
             circular: true,
-            value: {}
+            value: testDocument.circular.root
           },
           '#/remote/absolute': {
             def: testDocument.remote.absolute,
@@ -461,7 +463,7 @@ describe('json-refs API', function () {
             uri: testDocument1.nested.$ref,
             uriDetails: URI.parse(testDocument1.nested.$ref),
             type: 'relative',
-            value: {},
+            value: testDocument1.nested,
             circular: true
           },
           '#/remote/relative-with-hash2/properties/age': {
@@ -501,8 +503,8 @@ describe('json-refs API', function () {
             testDocument.project.description
           ],
           circular: {
-            root: {},
-            ancestor: {}
+            root: testDocument.circular.root,
+            ancestor: testDocument.circular.ancestor
           },
           definitions: {
             HumanName: testDocument.definitions.HumanName,
@@ -544,7 +546,7 @@ describe('json-refs API', function () {
                 age: testTypesDocument.definitions.Integer,
                 family: {
                   type: 'array',
-                  items: {}
+                  items: testTypesDocument.definitions.Person.properties.family.items
                 }
               }
             }
@@ -1070,7 +1072,7 @@ describe('json-refs API', function () {
               uri: testDocument1.nested.$ref,
               uriDetails: URI.parse(testDocument1.nested.$ref),
               type: 'relative',
-              value: {},
+              value: testDocument1.nested,
               circular: true
             },
             '#/remote/relative/child/deferred': {

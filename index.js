@@ -1189,7 +1189,7 @@ function resolveRefs (obj, options) {
 
         if (isType(refDetails.error, 'Undefined') && refDetails.type !== 'invalid') {
           if (isType(refDetails.value, 'Undefined') && refDetails.circular) {
-            refDetails.value = {};
+            refDetails.value = refDetails.def;
           }
 
           // We defer processing all references without a value until later

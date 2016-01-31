@@ -3,6 +3,8 @@
 ### v2.1.3 TBD
 
 * Fixed a problem where references were not fully resolved for remote references with fragmenets *(Issue #70)*
+* Updated handling of resolving circular references to leave circular references as-is instead of resolving to an empty
+object *(Issue #69)*
 
 ### v2.1.2 (2016-01-23)
 
