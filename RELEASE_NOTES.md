@@ -1,6 +1,6 @@
 ## Release Notes
 
-### v2.1.3 TBD
+### v2.1.3 (2016-01-31)
 
 * Fixed a problem where references were not fully resolved for remote references with fragmenets *(Issue #70)*
 * Updated handling of resolving circular references to leave circular references as-is instead of resolving to an empty
