@@ -37,7 +37,7 @@ var YAML = require('js-yaml');
 var documentBase = path.join(__dirname, 'browser', 'documents');
 var ofTypeError = new TypeError('options.filter must be an Array, a Function of a String');
 var osdpTypeError = new TypeError('options.subDocPath must be an Array of path segments or a valid JSON Pointer');
-var osdpMissingError = new Error('JSON Pointer points to missing location: #/missing');
+var osdpMissingError = new Error('options.subDocPath points to missing location: #/missing');
 var objTypeError = new TypeError('obj must be an Array or an Object');
 var optionsTypeError = new TypeError('options must be an Object');
 var relativeBase = typeof window === 'undefined' ? documentBase : 'base/documents';
@@ -47,11 +47,13 @@ var testDocument = YAML.safeLoad(fs.readFileSync(path.join(__dirname, 'browser',
 var testDocument1 = YAML.safeLoad(fs.readFileSync(path.join(__dirname, 'browser', 'documents', 'test-document-1.yaml'),
                                                   'utf-8'));
 var testDocumentSame = YAML.safeLoad(fs.readFileSync(path.join(__dirname, 'browser', 'documents', 'test-document-same.yaml'),
-                                                  'utf-8'));
+                                                     'utf-8'));
 var testNestedDocument = YAML.safeLoad(fs.readFileSync(path.join(__dirname, 'browser', 'documents', 'nested',
                                                                  'test-nested.yaml'), 'utf-8'));
 var testNestedDocument1 = YAML.safeLoad(fs.readFileSync(path.join(__dirname, 'browser', 'documents', 'nested',
                                                                   'test-nested-1.yaml'), 'utf-8'));
+var testTypesDocument = YAML.safeLoad(fs.readFileSync(path.join(__dirname, 'browser', 'documents', 'test-types.yaml'),
+                                                      'utf-8'));
 
 function validateError (expected, actual, index) {
   try {
@@ -222,6 +224,32 @@ function yamlContentProcessor (res, callback) {
 }
 
 describe('json-refs API', function () {
+  var expectedPersonValue = {
+    type: 'object',
+    properties: {
+      addresses: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: {
+            city: testTypesDocument.definitions.String,
+            name: testTypesDocument.definitions.String,
+            state: testTypesDocument.definitions.String,
+            street: {
+              type: 'array',
+              items: testTypesDocument.definitions.String
+            }
+          }
+        }
+      },
+      age: testTypesDocument.definitions.Integer,
+      family: {
+        type: 'array',
+        items: {}
+      },
+      name: testTypesDocument.definitions.String 
+    }
+  };
   var expectedRelativeValue = {
     name: testNestedDocument.name,
     child: {
@@ -250,43 +278,6 @@ describe('json-refs API', function () {
       .then(function (refs) {
         remotePkgJson = refs.value;
         expectedValidResolveRefs = {
-          '#/array/0': {
-            def: testDocument.array[0],
-            uri: testDocument.array[0].$ref,
-            uriDetails: URI.parse(testDocument.array[0].$ref),
-            type: 'local',
-            value: testDocument.project.name
-          },
-          '#/array/1': {
-            def: testDocument.array[1],
-            uri: testDocument.array[1].$ref,
-            uriDetails: URI.parse(testDocument.array[1].$ref),
-            type: 'local',
-            value: testDocument.project.description
-          },
-          '#/circular/root': {
-            def: testDocument.circular.root,
-            uri: testDocument.circular.root.$ref,
-            uriDetails: URI.parse(testDocument.circular.root.$ref),
-            type: 'local',
-            circular: true,
-            value: {}
-          },
-          '#/circular/ancestor': {
-            def: testDocument.circular.ancestor,
-            uri: testDocument.circular.ancestor.$ref,
-            uriDetails: URI.parse(testDocument.circular.ancestor.$ref),
-            type: 'local',
-            circular: true,
-            value: {}
-          },
-          '#/definitions/Person/properties/name': {
-            def: testDocument.definitions.Person.properties.name,
-            uri: testDocument.definitions.Person.properties.name.$ref,
-            uriDetails: URI.parse(testDocument.definitions.Person.properties.name.$ref),
-            type: 'local',
-            value: testDocument.definitions.HumanName
-          },
           '#/local': {
             def: testDocument.local,
             uri: testDocument.local.$ref,
@@ -301,6 +292,44 @@ describe('json-refs API', function () {
             type: 'local',
             error: new Error('JSON Pointer points to missing location: #/some/missing/path'),
             missing: true
+          },
+          '#/warning': {
+            def: testDocument.warning,
+            uri: testDocument.warning.$ref,
+            uriDetails: URI.parse(testDocument.warning.$ref),
+            type: 'local',
+            value: testDocument.project.name,
+            warning: 'Extra JSON Reference properties will be ignored: ignored'
+          },
+          '#/array/0': {
+            def: testDocument.array[0],
+            uri: testDocument.array[0].$ref,
+            uriDetails: URI.parse(testDocument.array[0].$ref),
+            type: 'local',
+            value: testDocument.project.name
+          },
+          '#/array/1': {
+            def: testDocument.array[1],
+            uri: testDocument.array[1].$ref,
+            uriDetails: URI.parse(testDocument.array[1].$ref),
+            type: 'local',
+            value: testDocument.project.description
+          },
+          '#/circular/ancestor': {
+            def: testDocument.circular.ancestor,
+            uri: testDocument.circular.ancestor.$ref,
+            uriDetails: URI.parse(testDocument.circular.ancestor.$ref),
+            type: 'local',
+            circular: true,
+            value: {}
+          },
+          '#/circular/root': {
+            def: testDocument.circular.root,
+            uri: testDocument.circular.root.$ref,
+            uriDetails: URI.parse(testDocument.circular.root.$ref),
+            type: 'local',
+            circular: true,
+            value: {}
           },
           '#/remote/absolute': {
             def: testDocument.remote.absolute,
@@ -331,6 +360,13 @@ describe('json-refs API', function () {
             type: 'relative',
             value: testNestedDocument.name
           },
+          '#/remote/relative-with-hash2': {
+            def: testDocument.remote['relative-with-hash2'],
+            uri: testDocument.remote['relative-with-hash2'].$ref,
+            uriDetails: URI.parse(testDocument.remote['relative-with-hash2'].$ref),
+            type: 'relative',
+            value: expectedPersonValue
+          },
           '#/remote/relative/child': {
             def: testNestedDocument.child,
             uri: testNestedDocument.child.$ref,
@@ -339,6 +375,35 @@ describe('json-refs API', function () {
             value: expectedRelativeValue.child,
             circular: true
           },
+          '#/remote/relative/deferred': {
+            def: testNestedDocument.deferred,
+            uri: testNestedDocument.deferred.$ref,
+            uriDetails: URI.parse(testNestedDocument.deferred.$ref),
+            type: 'local',
+            value: expectedRelativeValue.child.deferred
+          },
+          '#/remote/relative/local': {
+            def: testNestedDocument.local,
+            uri: testNestedDocument.local.$ref,
+            uriDetails: URI.parse(testNestedDocument.local.$ref),
+            type: 'local',
+            value: testNestedDocument.name
+          },
+          '#/remote/relative/missing': {
+            def: testNestedDocument.missing,
+            uri: testNestedDocument.missing.$ref,
+            uriDetails: URI.parse(testNestedDocument.missing.$ref),
+            type: 'local',
+            error: new Error('JSON Pointer points to missing location: #/some/missing/path'),
+            missing: true
+          },
+          '#/definitions/Person/properties/name': {
+            def: testDocument.definitions.Person.properties.name,
+            uri: testDocument.definitions.Person.properties.name.$ref,
+            uriDetails: URI.parse(testDocument.definitions.Person.properties.name.$ref),
+            type: 'local',
+            value: testDocument.definitions.HumanName
+          },
           '#/remote/relative/child/ancestor': {
             def: testNestedDocument1.ancestor,
             uri: testNestedDocument1.ancestor.$ref,
@@ -346,6 +411,28 @@ describe('json-refs API', function () {
             type: 'relative',
             value: expectedRelativeValue.child.ancestor,
             circular: true
+          },
+          '#/remote/relative/child/deferred': {
+            def: testNestedDocument1.deferred,
+            uri: testNestedDocument1.deferred.$ref,
+            uriDetails: URI.parse(testNestedDocument1.deferred.$ref),
+            type: 'local',
+            value: expectedRelativeValue.child.deferred
+          },
+          '#/remote/relative/child/local': {
+            def: testNestedDocument1.local,
+            uri: testNestedDocument1.local.$ref,
+            uriDetails: URI.parse(testNestedDocument1.local.$ref),
+            type: 'local',
+            value: expectedRelativeValue.child.name
+          },
+          '#/remote/relative/child/missing': {
+            def: testNestedDocument1.missing,
+            uri: testNestedDocument1.missing.$ref,
+            uriDetails: URI.parse(testNestedDocument1.missing.$ref),
+            type: 'local',
+            error: new Error('JSON Pointer points to missing location: #/some/missing/path'),
+            missing: true
           },
           '#/remote/relative/child/ancestor/deferred': {
             def: testDocument1.deferred,
@@ -377,57 +464,34 @@ describe('json-refs API', function () {
             value: {},
             circular: true
           },
-          '#/remote/relative/child/deferred': {
-            def: testNestedDocument1.deferred,
-            uri: testNestedDocument1.deferred.$ref,
-            uriDetails: URI.parse(testNestedDocument1.deferred.$ref),
+          '#/remote/relative-with-hash2/properties/age': {
+            def: testTypesDocument.definitions.Person.properties.age,
+            uri: testTypesDocument.definitions.Person.properties.age.$ref,
+            uriDetails: URI.parse(testTypesDocument.definitions.Person.properties.age.$ref),
             type: 'local',
-            value: expectedRelativeValue.child.deferred
+            value: expectedPersonValue.properties.age
           },
-          '#/remote/relative/child/local': {
-            def: testNestedDocument1.local,
-            uri: testNestedDocument1.local.$ref,
-            uriDetails: URI.parse(testNestedDocument1.local.$ref),
+          '#/remote/relative-with-hash2/properties/name': {
+            def: testTypesDocument.definitions.Person.properties.name,
+            uri: testTypesDocument.definitions.Person.properties.name.$ref,
+            uriDetails: URI.parse(testTypesDocument.definitions.Person.properties.name.$ref),
             type: 'local',
-            value: expectedRelativeValue.child.name
+            value: expectedPersonValue.properties.name
           },
-          '#/remote/relative/child/missing': {
-            def: testNestedDocument1.missing,
-            uri: testNestedDocument1.missing.$ref,
-            uriDetails: URI.parse(testNestedDocument1.missing.$ref),
+          '#/remote/relative-with-hash2/properties/addresses/items': {
+            def: testTypesDocument.definitions.Person.properties.addresses.items,
+            uri: testTypesDocument.definitions.Person.properties.addresses.items.$ref,
+            uriDetails: URI.parse(testTypesDocument.definitions.Person.properties.addresses.items.$ref),
             type: 'local',
-            error: new Error('JSON Pointer points to missing location: #/some/missing/path'),
-            missing: true
+            value: expectedPersonValue.properties.addresses.items
           },
-          '#/remote/relative/deferred': {
-            def: testNestedDocument.deferred,
-            uri: testNestedDocument.deferred.$ref,
-            uriDetails: URI.parse(testNestedDocument.deferred.$ref),
+          '#/remote/relative-with-hash2/properties/family/items': {
+            def: testTypesDocument.definitions.Person.properties.family.items,
+            uri: testTypesDocument.definitions.Person.properties.family.items.$ref,
+            uriDetails: URI.parse(testTypesDocument.definitions.Person.properties.family.items.$ref),
             type: 'local',
-            value: expectedRelativeValue.child.deferred
-          },
-          '#/remote/relative/local': {
-            def: testNestedDocument.local,
-            uri: testNestedDocument.local.$ref,
-            uriDetails: URI.parse(testNestedDocument.local.$ref),
-            type: 'local',
-            value: testNestedDocument.name
-          },
-          '#/remote/relative/missing': {
-            def: testNestedDocument.missing,
-            uri: testNestedDocument.missing.$ref,
-            uriDetails: URI.parse(testNestedDocument.missing.$ref),
-            type: 'local',
-            error: new Error('JSON Pointer points to missing location: #/some/missing/path'),
-            missing: true
-          },
-          '#/warning': {
-            def: testDocument.warning,
-            uri: testDocument.warning.$ref,
-            uriDetails: URI.parse(testDocument.warning.$ref),
-            type: 'local',
-            value: testDocument.project.name,
-            warning: 'Extra JSON Reference properties will be ignored: ignored'
+            value: expectedPersonValue.properties.family.items,
+            circular: true
           }
         };
         expectedFullyResolved = {
@@ -443,7 +507,7 @@ describe('json-refs API', function () {
           definitions: {
             HumanName: testDocument.definitions.HumanName,
             Person: {
-              type: testDocument.definitions.Person.type,
+              type: 'object',
               properties: {
                 age: testDocument.definitions.Person.properties.age,
                 name: testDocument.definitions.HumanName
@@ -457,7 +521,33 @@ describe('json-refs API', function () {
             absolute: remotePkgJson,
             'absolute-with-hash': remotePkgJson.name,
             relative: expectedRelativeValue,
-            'relative-with-hash': testNestedDocument.name
+            'relative-with-hash': testNestedDocument.name,
+            'relative-with-hash2': {
+              type: 'object',
+              properties: {
+                addresses: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      name: testTypesDocument.definitions.String,
+                      street: {
+                        type: 'array',
+                        items: testTypesDocument.definitions.String
+                      },
+                      city: testTypesDocument.definitions.String,
+                      state: testTypesDocument.definitions.String
+                    }
+                  }
+                },
+                name: testTypesDocument.definitions.String,
+                age: testTypesDocument.definitions.Integer,
+                family: {
+                  type: 'array',
+                  items: {}
+                }
+              }
+            }
           },
           warning: testDocument.project.name
         };
@@ -519,6 +609,7 @@ describe('json-refs API', function () {
       '#/remote/absolute-with-hash': testDocument.remote['absolute-with-hash'],
       '#/remote/relative': testDocument.remote.relative,
       '#/remote/relative-with-hash': testDocument.remote['relative-with-hash'],
+      '#/remote/relative-with-hash2': testDocument.remote['relative-with-hash2'],
       '#/warning': testDocument.warning
     };
 
@@ -560,7 +651,8 @@ describe('json-refs API', function () {
             '#/remote/absolute',
             '#/remote/absolute-with-hash',
             '#/remote/relative',
-            '#/remote/relative-with-hash'
+            '#/remote/relative-with-hash',
+            '#/remote/relative-with-hash2'
           ]);
         });
 
@@ -573,7 +665,8 @@ describe('json-refs API', function () {
         it('option as string', function () {
           assert.deepEqual(Object.keys(JsonRefs.findRefs(testDocument, {filter: 'relative'})), [
             '#/remote/relative',
-            '#/remote/relative-with-hash'
+            '#/remote/relative-with-hash',
+            '#/remote/relative-with-hash2'
           ]);
         });
       });
@@ -604,7 +697,7 @@ describe('json-refs API', function () {
         assert.equal(Object.keys(refs).length, 1);
       });
 
-      it('options.refPreProcessor', function () {
+      it('options.refPostProcessor', function () {
         var doc = {
           project: testDocument.project,
           ref: {
@@ -869,14 +962,14 @@ describe('json-refs API', function () {
         },
         relativeBase: relativeBase
       })
-      .then(function (res) {
-        // Validate the resolved document
-        assert.deepEqual(res.resolved, expectedFullyResolved);
+        .then(function (res) {
+          // Validate the resolved document
+          assert.deepEqual(res.resolved, expectedFullyResolved);
 
-        // Validate the reference metadata
-        validateResolvedRefDetails(res.refs, expectedValidResolveRefs);
-      })
-      .then(done, done);
+          // Validate the reference metadata
+          validateResolvedRefDetails(res.refs, expectedValidResolveRefs);
+        })
+        .then(done, done);
     });
 
     it('should handle definition contains the same name as its own', function (done) {
@@ -898,134 +991,135 @@ describe('json-refs API', function () {
         relativeBase: relativeBase,
         subDocPath: '#/remote/relative'
       })
-      .then(function (res) {
-        // Validate the resolved document
-        assert.deepEqual(res.resolved, {
-          project: testDocument.project,
-          array: testDocument.array,
-          circular: testDocument.circular,
-          definitions: testDocument.definitions,
-          invalid: testDocument.invalid,
-          local: testDocument.local,
-          missing: testDocument.missing,
-          remote: {
-            absolute: testDocument.remote.absolute,
-            'absolute-with-hash': testDocument.remote['absolute-with-hash'],
-            relative: expectedRelativeValue,
-            'relative-with-hash': testDocument.remote['relative-with-hash']
-          },
-          warning: testDocument.warning
-        });
-
-        // Validate the reference metadata
-        validateResolvedRefDetails(res.refs, {
-          '#/remote/relative': {
-            def: testDocument.remote.relative,
-            uri: testDocument.remote.relative.$ref,
-            uriDetails: URI.parse(testDocument.remote.relative.$ref),
-            type: 'relative',
-            value: {
-              name: testNestedDocument.name,
-              child: expectedRelativeValue.child,
-              local: testNestedDocument.name,
-              deferred: testDocument.project.name,
-              missing: testNestedDocument.missing
+        .then(function (res) {
+          // Validate the resolved document
+          assert.deepEqual(res.resolved, {
+            project: testDocument.project,
+            array: testDocument.array,
+            circular: testDocument.circular,
+            definitions: testDocument.definitions,
+            invalid: testDocument.invalid,
+            local: testDocument.local,
+            missing: testDocument.missing,
+            remote: {
+              absolute: testDocument.remote.absolute,
+              'absolute-with-hash': testDocument.remote['absolute-with-hash'],
+              relative: expectedRelativeValue,
+              'relative-with-hash': testDocument.remote['relative-with-hash'],
+              'relative-with-hash2': testDocument.remote['relative-with-hash2']
             },
+            warning: testDocument.warning
+          });
+
+          // Validate the reference metadata
+          validateResolvedRefDetails(res.refs, {
+            '#/remote/relative': {
+              def: testDocument.remote.relative,
+              uri: testDocument.remote.relative.$ref,
+              uriDetails: URI.parse(testDocument.remote.relative.$ref),
+              type: 'relative',
+              value: {
+                name: testNestedDocument.name,
+                child: expectedRelativeValue.child,
+                local: testNestedDocument.name,
+                deferred: testDocument.project.name,
+                missing: testNestedDocument.missing
+              },
+              circular: true
+            },
+            '#/remote/relative/child': {
+              def: testNestedDocument.child,
+              uri: testNestedDocument.child.$ref,
+              uriDetails: URI.parse(testNestedDocument.child.$ref),
+              type: 'relative',
+              value: expectedRelativeValue.child,
             circular: true
-          },
-          '#/remote/relative/child': {
-            def: testNestedDocument.child,
-            uri: testNestedDocument.child.$ref,
-            uriDetails: URI.parse(testNestedDocument.child.$ref),
-            type: 'relative',
-            value: expectedRelativeValue.child,
-            circular: true
-          },
-          '#/remote/relative/child/ancestor': {
-            def: testNestedDocument1.ancestor,
-            uri: testNestedDocument1.ancestor.$ref,
-            uriDetails: URI.parse(testNestedDocument1.ancestor.$ref),
-            type: 'relative',
-            value: expectedRelativeValue.child.ancestor,
-            circular: true
-          },
-          '#/remote/relative/child/ancestor/deferred': {
-            def: testDocument1.deferred,
-            uri: testDocument1.deferred.$ref,
-            uriDetails: URI.parse(testDocument1.deferred.$ref),
-            type: 'local',
-            value: expectedRelativeValue.child.ancestor.deferred
-          },
-          '#/remote/relative/child/ancestor/local': {
-            def: testDocument1.local,
-            uri: testDocument1.local.$ref,
-            uriDetails: URI.parse(testDocument1.local.$ref),
-            type: 'local',
-            value: expectedRelativeValue.child.ancestor.name
-          },
-          '#/remote/relative/child/ancestor/missing': {
-            def: testDocument1.missing,
-            uri: testDocument1.missing.$ref,
-            uriDetails: URI.parse(testDocument1.missing.$ref),
-            type: 'local',
-            error: new Error('JSON Pointer points to missing location: #/some/missing/path'),
-            missing: true
-          },
-          '#/remote/relative/child/ancestor/nested': {
-            def: testDocument1.nested,
-            uri: testDocument1.nested.$ref,
-            uriDetails: URI.parse(testDocument1.nested.$ref),
-            type: 'relative',
-            value: {},
-            circular: true
-          },
-          '#/remote/relative/child/deferred': {
-            def: testNestedDocument1.deferred,
-            uri: testNestedDocument1.deferred.$ref,
-            uriDetails: URI.parse(testNestedDocument1.deferred.$ref),
-            type: 'local',
-            value: expectedRelativeValue.child.deferred
-          },
-          '#/remote/relative/child/local': {
-            def: testNestedDocument1.local,
-            uri: testNestedDocument1.local.$ref,
-            uriDetails: URI.parse(testNestedDocument1.local.$ref),
-            type: 'local',
-            value: expectedRelativeValue.child.name
-          },
-          '#/remote/relative/child/missing': {
-            def: testNestedDocument1.missing,
-            uri: testNestedDocument1.missing.$ref,
-            uriDetails: URI.parse(testNestedDocument1.missing.$ref),
-            type: 'local',
-            error: new Error('JSON Pointer points to missing location: #/some/missing/path'),
-            missing: true
-          },
-          '#/remote/relative/deferred': {
-            def: testNestedDocument.deferred,
-            uri: testNestedDocument.deferred.$ref,
-            uriDetails: URI.parse(testNestedDocument.deferred.$ref),
-            type: 'local',
-            value: expectedRelativeValue.child.deferred
-          },
-          '#/remote/relative/local': {
-            def: testNestedDocument.local,
-            uri: testNestedDocument.local.$ref,
-            uriDetails: URI.parse(testNestedDocument.local.$ref),
-            type: 'local',
-            value: testNestedDocument.name
-          },
-          '#/remote/relative/missing': {
-            def: testNestedDocument.missing,
-            uri: testNestedDocument.missing.$ref,
-            uriDetails: URI.parse(testNestedDocument.missing.$ref),
-            type: 'local',
-            error: new Error('JSON Pointer points to missing location: #/some/missing/path'),
-            missing: true
-          }
-        });
-      })
-      .then(done, done);
+            },
+            '#/remote/relative/child/ancestor': {
+              def: testNestedDocument1.ancestor,
+              uri: testNestedDocument1.ancestor.$ref,
+              uriDetails: URI.parse(testNestedDocument1.ancestor.$ref),
+              type: 'relative',
+              value: expectedRelativeValue.child.ancestor,
+              circular: true
+            },
+            '#/remote/relative/child/ancestor/deferred': {
+              def: testDocument1.deferred,
+              uri: testDocument1.deferred.$ref,
+              uriDetails: URI.parse(testDocument1.deferred.$ref),
+              type: 'local',
+              value: expectedRelativeValue.child.ancestor.deferred
+            },
+            '#/remote/relative/child/ancestor/local': {
+              def: testDocument1.local,
+              uri: testDocument1.local.$ref,
+              uriDetails: URI.parse(testDocument1.local.$ref),
+              type: 'local',
+              value: expectedRelativeValue.child.ancestor.name
+            },
+            '#/remote/relative/child/ancestor/missing': {
+              def: testDocument1.missing,
+              uri: testDocument1.missing.$ref,
+              uriDetails: URI.parse(testDocument1.missing.$ref),
+              type: 'local',
+              error: new Error('JSON Pointer points to missing location: #/some/missing/path'),
+              missing: true
+            },
+            '#/remote/relative/child/ancestor/nested': {
+              def: testDocument1.nested,
+              uri: testDocument1.nested.$ref,
+              uriDetails: URI.parse(testDocument1.nested.$ref),
+              type: 'relative',
+              value: {},
+              circular: true
+            },
+            '#/remote/relative/child/deferred': {
+              def: testNestedDocument1.deferred,
+              uri: testNestedDocument1.deferred.$ref,
+              uriDetails: URI.parse(testNestedDocument1.deferred.$ref),
+              type: 'local',
+              value: expectedRelativeValue.child.deferred
+            },
+            '#/remote/relative/child/local': {
+              def: testNestedDocument1.local,
+              uri: testNestedDocument1.local.$ref,
+              uriDetails: URI.parse(testNestedDocument1.local.$ref),
+              type: 'local',
+              value: expectedRelativeValue.child.name
+            },
+            '#/remote/relative/child/missing': {
+              def: testNestedDocument1.missing,
+              uri: testNestedDocument1.missing.$ref,
+              uriDetails: URI.parse(testNestedDocument1.missing.$ref),
+              type: 'local',
+              error: new Error('JSON Pointer points to missing location: #/some/missing/path'),
+              missing: true
+            },
+            '#/remote/relative/deferred': {
+              def: testNestedDocument.deferred,
+              uri: testNestedDocument.deferred.$ref,
+              uriDetails: URI.parse(testNestedDocument.deferred.$ref),
+              type: 'local',
+              value: expectedRelativeValue.child.deferred
+            },
+            '#/remote/relative/local': {
+              def: testNestedDocument.local,
+              uri: testNestedDocument.local.$ref,
+              uriDetails: URI.parse(testNestedDocument.local.$ref),
+              type: 'local',
+              value: testNestedDocument.name
+            },
+            '#/remote/relative/missing': {
+              def: testNestedDocument.missing,
+              uri: testNestedDocument.missing.$ref,
+              uriDetails: URI.parse(testNestedDocument.missing.$ref),
+              type: 'local',
+              error: new Error('JSON Pointer points to missing location: #/some/missing/path'),
+              missing: true
+            }
+          });
+        })
+        .then(done, done);
     });
 
     it('should support options.includeInvalid', function (done) {

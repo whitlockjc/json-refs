@@ -54,6 +54,8 @@ remote:
     $ref: './nested/test-nested.yaml'
   relative-with-hash:
     $ref: './nested/test-nested.yaml#/name'
+  relative-with-hash2:
+    $ref: './test-types.yaml#/definitions/Person'
 
 # A reference with extra properties that should produce a warning
 warning:

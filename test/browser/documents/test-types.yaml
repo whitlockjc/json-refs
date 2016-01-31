@@ -1,0 +1,34 @@
+definitions:
+  Integer:
+    type: integer
+  String:
+    type: string
+  Address:
+    type: object
+    properties:
+      name:
+        $ref: '#/definitions/String'
+      street:
+        type: array
+        items:
+          $ref: '#/definitions/String'
+      city:
+        $ref: '#/definitions/String'
+      state:
+        $ref: '#/definitions/String'
+  Person:
+    type: object
+    properties:
+      addresses:
+        type: array
+        items:
+          $ref: '#/definitions/Address'
+      name:
+        $ref: '#/definitions/String'
+      age:
+        $ref: '#/definitions/Integer'
+      family:
+        type: array
+        items:
+          $ref: '#/definitions/Person'
+      

@@ -95,6 +95,57 @@ describe('json-refs Issues', function () {
                     },
                     type: 'remote',
                     value: results.value.paths['/people/{id}']
+                  },
+                  '#/delete/responses/default/schema': {
+                    def: results.value.paths['/people/{id}'].delete.responses.default.schema,
+                    uri: results.value.paths['/people/{id}'].delete.responses.default.schema.$ref,
+                    uriDetails: {
+                      fragment: '/definitions/Error',
+                      host: undefined,
+                      path: '',
+                      port: undefined,
+                      query: undefined,
+                      reference: 'same-document',
+                      scheme: undefined,
+                      userinfo: undefined
+                    },
+                    type: 'local',
+                    error: 'JSON Pointer points to missing location: #/definitions/Error',
+                    missing: true
+                  },
+                  '#/get/responses/200/schema': {
+                    def: results.value.paths['/people/{id}'].get.responses['200'].schema,
+                    uri: results.value.paths['/people/{id}'].get.responses['200'].schema.$ref,
+                    uriDetails: {
+                      fragment: '/definitions/Pet',
+                      host: undefined,
+                      path: '',
+                      port: undefined,
+                      query: undefined,
+                      reference: 'same-document',
+                      scheme: undefined,
+                      userinfo: undefined
+                    },
+                    type: 'local',
+                    error: 'JSON Pointer points to missing location: #/definitions/Pet',
+                    missing: true
+                  },
+                  '#/get/responses/default/schema': {
+                    def: results.value.paths['/people/{id}'].get.responses.default.schema,
+                    uri: results.value.paths['/people/{id}'].get.responses.default.schema.$ref,
+                    uriDetails: {
+                      fragment: '/definitions/Error',
+                      host: undefined,
+                      path: '',
+                      port: undefined,
+                      query: undefined,
+                      reference: 'same-document',
+                      scheme: undefined,
+                      userinfo: undefined
+                    },
+                    type: 'local',
+                    error: 'JSON Pointer points to missing location: #/definitions/Error',
+                    missing: true
                   }
                 },
                 resolved: results.resolved.paths['/people/{id}']

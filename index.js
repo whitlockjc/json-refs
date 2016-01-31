@@ -131,174 +131,208 @@ function combineURIs (u1, u2) {
           combinedDetails.path.indexOf('../') === 0 ? '../' : '') + URI.serialize(combinedDetails);
 }
 
-function filterRefs (options, refs) {
-  var refFilter = makeRefFilter(options);
-  var filtered = {};
-  var subDocPrefix = pathToPtr(makeSubDocPath(options));
-
-  Object.keys(refs).forEach(function (refPtr) {
-    var refDetails = refs[refPtr];
-
-    if (refFilter(refDetails, pathFromPtr(refPtr)) === true &&
-        refPtr.indexOf(subDocPrefix) > -1 &&
-        (refDetails.type !== 'invalid' || options.includeInvalid === true)) {
-      filtered[refPtr] = refDetails;
-    }
-  });
-
-  return filtered;
-}
-
 function findAncestors (obj, path) {
   var ancestors = [];
-  var node = obj;
+  var node;
 
-  path.slice(0, path.length - 1).forEach(function (seg) {
-    if (seg in node) {
-      node = node[seg];
+  if (path.length > 0) {
+    node = obj;
 
-      ancestors.push(node);
-    }
-  });
+    path.slice(0, path.length - 1).forEach(function (seg) {
+      if (seg in node) {
+        node = node[seg];
+
+        ancestors.push(node);
+      }
+    });
+  }
 
   return ancestors;
 }
 
+function processSubDocument (mode, doc, subDocPath, refDetails, options, parents, parentPtrs, allRefs, indirect) {
+  var refValue;
+  var rOptions;
+
+  if (subDocPath.length > 0) {
+    try {
+      refValue = findValue(doc, subDocPath);
+    } catch (err) {
+      // We only mark missing remote references as missing because local references can have deferred values
+      if (mode === 'remote') {
+        refDetails.error = err.message;
+        refDetails.missing = true;
+      }
+    }
+  } else {
+    refValue = doc;
+  }
+
+  if (!isType(refValue, 'Undefined')) {
+    refDetails.value = clone(refValue);
+  }
+
+  if (isType(refValue, 'Array') || isType(refValue, 'Object')) {
+    rOptions = clone(options);
+
+    if (mode === 'local') {
+      delete rOptions.subDocPath;
+
+      // Traverse the dereferenced value
+      doc = refValue;
+    } else {
+      rOptions.relativeBase = path.dirname(parents[parents.length - 1]);
+
+      if (subDocPath.length === 0) {
+        delete rOptions.subDocPath;
+      } else {
+        rOptions.subDocPath = subDocPath;
+      }
+    }
+
+    return findRefsRecursive(doc, rOptions, parents, parentPtrs, allRefs, indirect);
+  }
+}
+
 // Should this be its own exported API?
-function findAllRefs (obj, options, parents, parentPath, documents) {
+function findRefsRecursive (obj, options, parents, parentPtrs, allRefs, indirect) {
   var allTasks = Promise.resolve();
+  var parentPath = parentPtrs.length ? pathFromPtr(parentPtrs[parentPtrs.length - 1]) : [];
   var refs = findRefs(obj, options);
+  var subDocPath = options.subDocPath || [];
+  var subDocPtr = pathToPtr(subDocPath);
+  var ancestorPtrs = ['#'];
+
+  parents.forEach(function (parent, index) {
+    if (parent.charAt(0) !== '#') {
+      ancestorPtrs.push(parentPtrs[index]);
+    }
+  });
+
+  // Reverse the order so we search them in the proper order
+  ancestorPtrs.reverse();
+
+  if ((parents[parents.length - 1] || '').charAt(0) !== '#') {
+    allRefs.documents[pathToPtr(parentPath)] = obj;
+  }
 
   Object.keys(refs).forEach(function (refPtr) {
     var refDetails = refs[refPtr];
-    var refPath = pathFromPtr(refPtr);
     var location;
     var parentIndex;
+    var refFullPath;
+    var refFullPtr;
 
-    // Only process remote references
-    if (remoteTypes.indexOf(refDetails.type) > -1) {
-      location = combineURIs(options.relativeBase, refDetails.uri);
-      parentIndex = parents.indexOf(location);
+    // If there are no parents, treat the reference pointer as-is.  Otherwise, the reference is a reference within a
+    // remote document and its sub document path prefix must be removed.
+    if (parents.length === 0) {
+      refFullPath = parentPath.concat(pathFromPtr(refPtr));
+    } else {
+      refFullPath = parentPath.concat(pathFromPtr(refPtr).slice(parents.length === 0 ? 0 : subDocPath.length));
+    }
 
+    refFullPtr = pathToPtr(refFullPath);
+
+    // It is possible to process the same reference more than once in the event of hierarchical references so we avoid
+    // processing a reference if we've already done so.
+    if (!isType(allRefs[refFullPtr], 'Undefined')) {
+      return;
+    }
+
+    // Record the reference metadata
+    allRefs.refs[refFullPtr] = refs[refPtr];
+
+    // Do not process invalid references
+    if (isType(refDetails.error, 'Undefined') && refDetails.type !== 'invalid') {
+      if (remoteTypes.indexOf(refDetails.type) > -1) {
+        location = combineURIs(options.relativeBase, refDetails.uri);
+        parentIndex = parents.indexOf(location);
+      } else {
+        location = refDetails.uri;
+        parentIndex = parentPtrs.indexOf(location);
+      }
+
+      // Record ancestor paths
+      refDetails.ancestorPtrs = ancestorPtrs;
+
+      // Record if the reference is indirect based on its parent
+      refDetails.indirect = indirect;
+
+      // Only process non-circular references further
       if (parentIndex === -1) {
-        allTasks = allTasks
-          .then(function () {
-            var rParentPath = parentPath.concat(refPath);
-            var rOptions = clone(options);
-
-            // Remove the sub document path
-            delete rOptions.subDocPath;
-
-            // Remove the relative base
-            delete rOptions.relativeBase;
-
-            return findRefsAt(location, rOptions)
-              .then(function (rRefs) {
-                // Record the location for circular reference identification
-                rRefs.location = location;
-
-                if (refDetails.uriDetails.fragment) {
-                  // If the remote reference was for a fragment, do not include the reference details
-                  rRefs.refs = {};
-
-                  // Record the remote document
-                  documents[pathToPtr(rParentPath)] = rRefs;
-
-                  return rRefs;
-                } else {
-                  // Record the location in the document where the parent document was resolved
-                  Object.keys(rRefs.refs).forEach(function (refPtr) {
-                    rRefs.refs[refPtr].parentLocation = pathToPtr(rParentPath);
-                  });
-
-                  // Record the remote document
-                  documents[pathToPtr(rParentPath)] = rRefs;
-
-                  // Update the relative base based on the retrieved location
-                  rOptions.relativeBase = path.dirname(location);
-
-                  // Find all important references within the document
-                  return findAllRefs(rRefs.value, rOptions, parents.concat(location), rParentPath, documents);
-                }
-              }, function (err) {
-                refDetails.error = err.message;
-                refDetails.missing = true;
+        if (remoteTypes.indexOf(refDetails.type) > -1) {
+          allTasks = allTasks
+            .then(function () {
+              return getRemoteDocument(location, options)
+                .then(function (doc) {
+                  return processSubDocument('remote',
+                                            doc,
+                                            isType(refDetails.uriDetails.fragment, 'Undefined') ?
+                                              [] :
+                                              pathFromPtr(decodeURI(refDetails.uriDetails.fragment)),
+                                            refDetails,
+                                            options,
+                                            parents.concat(location),
+                                            parentPtrs.concat(refFullPtr),
+                                            allRefs,
+                                            indirect);
+                })
+                .catch(function (err) {
+                  refDetails.error = err.message;
+                  refDetails.missing = true;
+                });
+            });
+        } else {
+          if (refFullPtr.indexOf(location + '/') !== 0 && refFullPtr !== location &&
+              subDocPtr.indexOf(location + '/') !== 0 && subDocPtr !== location) {
+            allTasks = allTasks
+              .then(function () {
+                return processSubDocument('local',
+                                          obj,
+                                          pathFromPtr(location),
+                                          refDetails,
+                                          options,
+                                          parents.concat(location),
+                                          parentPtrs.concat(refFullPtr),
+                                          allRefs,
+                                          indirect || (location.indexOf(subDocPtr + '/') === -1 && location !== subDocPtr));
+                
               });
-          });
+          } else {
+            refDetails.circular = true;
+          }
+        }
       } else {
         // Mark seen ancestors as circular
-        parents.slice(parentIndex).forEach(function (parent) {
-          Object.keys(documents).forEach(function (cRefPtr) {
-            var document = documents[cRefPtr];
-
-            if (document.location === parent) {
-              document.circular = true;
-            }
-          });
+        parentPtrs.slice(parentIndex).forEach(function (parentPtr) {
+          allRefs.refs[parentPtr].circular = true;
         });
 
-        // Mark self as circular
-        documents[pathToPtr(parentPath)].refs[refPtr].circular = true;
+        refDetails.circular = true;
       }
     }
   });
 
   allTasks = allTasks
     .then(function () {
-      // Only collapse the documents when we're back at the top of the promise stack
-      if (parentPath.length === 0) {
-        // Collapse all references together into one list
-        Object.keys(documents).forEach(function (refPtr) {
-          var document = documents[refPtr];
-
-          if (Object.keys(refs).length > 0) {
-            // Merge each reference into the root document's references
-            Object.keys(document.refs).forEach(function (cRefPtr) {
-              var fPtr = pathToPtr(pathFromPtr(refPtr).concat(pathFromPtr(cRefPtr)));
-              var refDetails = refs[fPtr];
-
-              if (isType(refDetails, 'Undefined')) {
-                refs[fPtr] = document.refs[cRefPtr];
-              }
-            });
-
-            // Record the value of the remote reference
-            refs[refPtr].value = document.value;
-
-            // Mark the remote reference itself as circular
-            if (document.circular) {
-              refs[refPtr].circular = true;
-            }
-          }
-        });
-      }
-
-      return refs;
+      return allRefs;
     });
 
   return allTasks;
 }
 
-function findValue (obj, path, ignore) {
+function findValue (obj, path) {
   var value = obj;
 
-  try {
-    path.forEach(function (seg) {
-      seg = decodeURI(seg);
+  path.forEach(function (seg) {
+    seg = decodeURI(seg);
 
-      if (seg in value) {
-        value = value[seg];
-      } else {
-        throw Error('JSON Pointer points to missing location: ' + pathToPtr(path));
-      }
-    });
-  } catch (err) {
-    if (ignore === true) {
-      value = undefined;
+    if (seg in value) {
+      value = value[seg];
     } else {
-      throw err;
+      throw Error('JSON Pointer points to missing location: ' + pathToPtr(path));
     }
-  }
+  });
 
   return value;
 }
@@ -407,35 +441,39 @@ function isType (obj, type) {
 
 function makeRefFilter (options) {
   var refFilter;
+  var validTypes;
 
   if (isType(options.filter, 'Array') || isType(options.filter, 'String')) {
+    validTypes = isType(options.filter, 'String') ? [options.filter] : options.filter;
     refFilter = function (refDetails) {
-      var validTypes = isType(options.filter, 'String') ? [options.filter] : options.filter;
-
       // Check the exact type or for invalid URIs, check its original type
       return validTypes.indexOf(refDetails.type) > -1 || validTypes.indexOf(getRefType(refDetails)) > -1;
     };
   } else if (isType(options.filter, 'Function')) {
     refFilter = options.filter;
-  } else {
+  } else if (isType(options.filter, 'Undefined')) {
     refFilter = function () {
       return true;
     };
   }
 
-  return refFilter;
+  return function (refDetails, path) {
+    return (refDetails.type !== 'invalid' || options.includeInvalid === true) && refFilter(refDetails, path);
+  };
 }
 
 function makeSubDocPath (options) {
-  var fromPath = [];
+  var subDocPath;
 
   if (isType(options.subDocPath, 'Array')) {
-    fromPath = options.subDocPath;
+    subDocPath = options.subDocPath;
   } else if (isType(options.subDocPath, 'String')) {
-    fromPath = pathFromPtr(options.subDocPath);
+    subDocPath = pathFromPtr(options.subDocPath);
+  } else if (isType(options.subDocPath, 'Undefined')) {
+    subDocPath = [];
   }
 
-  return fromPath;
+  return subDocPath;
 }
 
 function parseURI (uri) {
@@ -481,31 +519,54 @@ function walk (ancestors, node, path, fn) {
   ancestors.pop();
 }
 
-function validateOptions (options) {
-  if (!isType(options, 'Undefined')) {
-    if (!isType(options, 'Object')) {
-      throw new TypeError('options must be an Object');
-    } else if (!isType(options.filter, 'Undefined') &&
-               !isType(options.filter, 'Array') &&
-               !isType(options.filter, 'Function') &&
-               !isType(options.filter, 'String')) {
-      throw new TypeError('options.filter must be an Array, a Function of a String');
-    } else if (!isType(options.includeInvalid, 'Undefined') &&
-               !isType(options.includeInvalid, 'Boolean')) {
-      throw new TypeError('options.includeInvalid must be a Boolean');
-    } else if (!isType(options.refPreProcessor, 'Undefined') &&
-               !isType(options.refPreProcessor, 'Function')) {
-      throw new TypeError('options.refPreProcessor must be a Function');
-    } else if (!isType(options.refPostProcessor, 'Undefined') &&
-               !isType(options.refPostProcessor, 'Function')) {
-      throw new TypeError('options.refPostProcessor must be a Function');
-    } else if (!isType(options.subDocPath, 'Undefined') &&
-               !isType(options.subDocPath, 'Array') &&
-               !isPtr(options.subDocPath)) {
-      // If a pointer is provided, throw an error if it's not the proper type
-      throw new TypeError('options.subDocPath must be an Array of path segments or a valid JSON Pointer');
+function validateOptions (options, obj) {
+  if (isType(options, 'Undefined')) {
+    // Default to an empty options object
+    options = {};
+  } else {
+    // Clone the options so we do not alter the ones passed in
+    options = clone(options);
+  }
+
+  if (!isType(options, 'Object')) {
+    throw new TypeError('options must be an Object');
+  } else if (!isType(options.filter, 'Undefined') &&
+             !isType(options.filter, 'Array') &&
+             !isType(options.filter, 'Function') &&
+             !isType(options.filter, 'String')) {
+    throw new TypeError('options.filter must be an Array, a Function of a String');
+  } else if (!isType(options.includeInvalid, 'Undefined') &&
+             !isType(options.includeInvalid, 'Boolean')) {
+    throw new TypeError('options.includeInvalid must be a Boolean');
+  } else if (!isType(options.refPreProcessor, 'Undefined') &&
+             !isType(options.refPreProcessor, 'Function')) {
+    throw new TypeError('options.refPreProcessor must be a Function');
+  } else if (!isType(options.refPostProcessor, 'Undefined') &&
+             !isType(options.refPostProcessor, 'Function')) {
+    throw new TypeError('options.refPostProcessor must be a Function');
+  } else if (!isType(options.subDocPath, 'Undefined') &&
+             !isType(options.subDocPath, 'Array') &&
+             !isPtr(options.subDocPath)) {
+    // If a pointer is provided, throw an error if it's not the proper type
+    throw new TypeError('options.subDocPath must be an Array of path segments or a valid JSON Pointer');
+  }
+
+  options.filter = makeRefFilter(options);
+
+  // Set the subDocPath to avoid everyone else having to compute it
+  options.subDocPath = makeSubDocPath(options);
+
+  if (!isType(obj, 'Undefined')) {
+    try {
+      findValue(obj, options.subDocPath);
+    } catch (err) {
+      err.message = err.message.replace('JSON Pointer', 'options.subDocPath');
+
+      throw err;
     }
   }
+
+  return options;
 }
 
 /* Module Members */
@@ -725,69 +786,50 @@ function encodePath (path) {
  * var invalidRefs = JsonRefs.findRefs(obj, {filter: 'invalid', includeInvalid: true});
  */
 function findRefs (obj, options) {
-  var ancestors = [];
-  var fromObj = obj;
-  var fromPath;
   var refs = {};
-  var refFilter;
 
   // Validate the provided document
   if (!isType(obj, 'Array') && !isType(obj, 'Object')) {
     throw new TypeError('obj must be an Array or an Object');
   }
 
-  // Set default for options
-  if (isType(options, 'Undefined')) {
-    options = {};
-  }
-
   // Validate options
-  validateOptions(options);
-
-  // Convert from to a pointer
-  fromPath = makeSubDocPath(options);
-
-  // Convert options.filter from an Array/String to a Function
-  refFilter = makeRefFilter(options);
-
-  if (fromPath.length > 0) {
-    ancestors = findAncestors(obj, fromPath);
-    fromObj = findValue(obj, fromPath);
-  }
+  options = validateOptions(options, obj);
 
   // Walk the document (or sub document) and find all JSON References
-  walk(ancestors, fromObj, fromPath, function (ancestors, node, path) {
-    var processChildren = true;
-    var refDetails;
+  walk(findAncestors(obj, options.subDocPath),
+       findValue(obj, options.subDocPath),
+       clone(options.subDocPath),
+       function (ancestors, node, path) {
+         var processChildren = true;
+         var refDetails;
 
-    if (isRefLike(node)) {
-      // Pre-process the node when necessary
-      if (!isType(options.refPreProcessor, 'Undefined')) {
-        node = options.refPreProcessor(clone(node), path);
-      }
+         if (isRefLike(node)) {
+           // Pre-process the node when necessary
+           if (!isType(options.refPreProcessor, 'Undefined')) {
+             node = options.refPreProcessor(clone(node), path);
+           }
 
-      refDetails = getRefDetails(node);
+           refDetails = getRefDetails(node);
 
-      if (refDetails.type !== 'invalid' || options.includeInvalid === true) {
-        if (refFilter(refDetails, path) === true) {
-          // Post-process the reference details when necessary
-          if (!isType(options.refPostProcessor, 'Undefined')) {
-            refDetails = options.refPostProcessor(clone(refDetails), path);
-          }
+           // Post-process the reference details
+           if (!isType(options.refPostProcessor, 'Undefined')) {
+             refDetails = options.refPostProcessor(refDetails, path);
+           }
 
-          refs[pathToPtr(path)] = refDetails;
-        }
+           if (options.filter(refDetails, path)) {
+             refs[pathToPtr(path)] = refDetails;
+           }
 
-        // Whenever a JSON Reference has extra children, its children should be ignored so we want to stop processing.
-        //   See: http://tools.ietf.org/html/draft-pbryan-zyp-json-ref-03#section-3
-        if (getExtraRefKeys(node).length > 0) {
-          processChildren = false;
-        }
-      }
-    }
+           // Whenever a JSON Reference has extra children, its children should not be processed.
+           //   See: http://tools.ietf.org/html/draft-pbryan-zyp-json-ref-03#section-3
+           if (getExtraRefKeys(node).length > 0) {
+             processChildren = false;
+           }
+         }
 
-    return processChildren;
-  });
+         return processChildren;
+       });
 
   return refs;
 }
@@ -832,13 +874,8 @@ function findRefsAt (location, options) {
         throw new TypeError('location must be a string');
       }
 
-      // Set default for options
-      if (isType(options, 'Undefined')) {
-        options = {};
-      }
-
-      // Validate options (Doing this here for a quick)
-      validateOptions(options);
+      // Validate options
+      options = validateOptions(options);
 
       // Combine the location and the optional relative base
       location = combineURIs(options.relativeBase, location);
@@ -847,11 +884,10 @@ function findRefsAt (location, options) {
     })
     .then(function (res) {
       var cacheEntry = clone(remoteCache[location]);
-      var cOptions;
+      var cOptions = clone(options);
+      var uriDetails = parseURI(location);
 
       if (isType(cacheEntry.refs, 'Undefined')) {
-        cOptions = clone(options);
-
         // Do not filter any references so the cache is complete
         delete cOptions.filter;
         delete cOptions.subDocPath;
@@ -861,10 +897,22 @@ function findRefsAt (location, options) {
         remoteCache[location].refs = findRefs(res, cOptions);
       }
 
-      // Filter out the references based on options.filter and options.subDocPath
-      cacheEntry.refs = filterRefs(options, remoteCache[location].refs);
+      // Add the filter options back
+      if (!isType(options.filter, 'Undefined')) {
+        cOptions.filter = options.filter;
+      }
 
-      return cacheEntry;
+      if (!isType(uriDetails.fragment, 'Undefined')) {
+        cOptions.subDocPath = pathFromPtr(decodeURI(uriDetails.fragment));
+      } else if (!isType(uriDetails.subDocPath, 'Undefined')) {
+        cOptions.subDocPath = options.subDocPath;
+      }
+
+      // This will use the cache so don't worry about calling it twice
+      return {
+        refs: findRefs(res, cOptions),
+        value: res
+      };
     });
 
   return allTasks;
@@ -1109,119 +1157,87 @@ function resolveRefs (obj, options) {
         throw new TypeError('obj must be an Array or an Object');
       }
 
-      // Set default for options
-      if (isType(options, 'Undefined')) {
-        options = {};
-      }
-
       // Validate options
-      validateOptions(options);
+      options = validateOptions(options, obj);
     })
     .then(function () {
-      // Find all references recursively
-      return findAllRefs(obj, options, [], [], {});
+      return findRefsRecursive(obj, options, [], [], {
+        documents: {},
+        refs: {}
+      });
     })
-    .then(function (aRefs) {
-      var cloned = clone(obj);
-      var parentLocations = [];
+    .then(function (allRefs) {
+      var resolved = clone(obj);
+      var deferredRefs = {};
+      var refs = {};
 
-      // Replace remote references first
-      Object.keys(aRefs).forEach(function (refPtr) {
-        var ptrPath = pathFromPtr(refPtr);
-        var refDetails = aRefs[refPtr];
-        var value;
+      function pathSorter (p1, p2) {
+        return pathFromPtr(p1).length - pathFromPtr(p2).length;
+      }
 
-        if (remoteTypes.indexOf(refDetails.type) > -1) {
-          if (isType(refDetails.error, 'Undefined') && refDetails.type !== 'invalid') {
-            try {
-              value = findValue(refDetails.value || {},
-                                refDetails.uriDetails.fragment ?
-                                pathFromPtr(refDetails.uriDetails.fragment) :
-                                []);
+      // Resolve all references with a known value
+      Object.keys(allRefs.refs).sort(pathSorter).forEach(function (refPtr) {
+        var refDetails = allRefs.refs[refPtr];
 
-              if (ptrPath.length === 0) {
-                cloned = value;
-              } else {
-                setValue(cloned, pathFromPtr(refPtr), value);
-              }
+        // Record all direct references
+        if (!refDetails.indirect) {
+          refs[refPtr] = refDetails;
+        }
 
-              // The reference includes a fragment so update the reference details
-              if (!isType(refDetails.value, 'Undefined')) {
-                refDetails.value = value;
-              } else if (refDetails.circular) {
-                // If there is no value and it's circular, set its value to an empty value
-                refDetails.value = {};
-              }
-            } catch (err) {
-              refDetails.error = err.message;
-              refDetails.missing = true;
-            }
-          } else {
-            refDetails.missing = true;
+        // Delete helper property
+        delete refDetails.indirect;
+
+        if (isType(refDetails.error, 'Undefined') && refDetails.type !== 'invalid') {
+          if (isType(refDetails.value, 'Undefined') && refDetails.circular) {
+            refDetails.value = {};
           }
-        }
-      });
 
-      // Replace local references
-      Object.keys(aRefs).forEach(function (refPtr) {
-        var refDetails = aRefs[refPtr];
-        var refPath = pathFromPtr(refPtr);
-        var parentLocation = refDetails.parentLocation;
-        var value;
-
-        // Record that this reference has parent location details so we can clean it up later
-        if (!isType(parentLocation, 'Undefined') && parentLocations.indexOf(refPtr) === -1) {
-          parentLocations.push(refPtr);
-        }
-
-        if (remoteTypes.indexOf(refDetails.type) === -1 && refDetails.type !== 'invalid') {
-          if (isType(refDetails.error, 'Undefined')) {
-            if (refPtr.indexOf(refDetails.uri + '/') > -1 || refPtr === refDetails.uri) {
-              refDetails.circular = true;
-              value = {};
+          // We defer processing all references without a value until later
+          if (isType(refDetails.value, 'Undefined')) {
+            deferredRefs[refPtr] = refDetails;
+          } else {
+            if (refPtr === '#') {
+              resolved = refDetails.value;
             } else {
-              if (!isType(parentLocation, 'Undefined')) {
-                // Attempt to get the referenced value from the remote document first
-                value = findValue(findValue(cloned, pathFromPtr(parentLocation)),
-                                  refDetails.uriDetails.fragment ?
-                                    pathFromPtr(refDetails.uriDetails.fragment) :
-                                    [], true);
-              }
+              setValue(resolved, pathFromPtr(refPtr), refDetails.value);
             }
 
-            try {
-              if (isType(value, 'Undefined')) {
-                value = findValue(cloned,
-                                  refDetails.uriDetails.fragment ?
-                                  pathFromPtr(refDetails.uriDetails.fragment) :
-                                    []);
-              }
-
-              if (refPath.length === 0) {
-                cloned = value;
-              } else {
-                setValue(cloned, pathFromPtr(refPtr), value);
-              }
-
-              refDetails.value = value;
-            } catch (err) {
-              refDetails.error = err.message;
-              refDetails.missing = true;
-            }
-          } else {
-            refDetails.missing = true;
+            // Delete helper property
+            delete refDetails.ancestorPtrs;
           }
         }
       });
 
-      // Remove all parentLocation values
-      parentLocations.forEach(function (refPtr) {
-        delete aRefs[refPtr].parentLocation;
+      // Resolve all deferred references
+      Object.keys(deferredRefs).forEach(function (refPtr) {
+        var refDetails = deferredRefs[refPtr];
+
+        // Attempt to resolve the value against all if its ancestors in order
+        refDetails.ancestorPtrs.forEach(function (ancestorPtr, index) {
+          if (isType(refDetails.value, 'Undefined')) {
+            try {
+              refDetails.value = clone(findValue(allRefs.documents[ancestorPtr], pathFromPtr(refDetails.uri)));
+
+              // Delete helper property
+              delete refDetails.ancestorPtrs;
+
+              setValue(resolved, pathFromPtr(refPtr), refDetails.value);
+            } catch (err) {
+              if (index === refDetails.ancestorPtrs.length - 1) {
+                refDetails.error = err.message;
+                refDetails.missing = true;
+
+                // Delete helper property
+                delete refDetails.ancestorPtrs;
+              }
+            }
+          }
+        });
       });
 
       return {
-        refs: aRefs,
-        resolved: cloned
+        refs: refs,
+        resolved: resolved
       };
     });
 
@@ -1267,13 +1283,8 @@ function resolveRefsAt (location, options) {
         throw new TypeError('location must be a string');
       }
 
-      // Set default for options
-      if (isType(options, 'Undefined')) {
-        options = {};
-      }
-
-      // Validate options (Doing this here for a quick)
-      validateOptions(options);
+      // Validate options
+      options = validateOptions(options);
 
       // Combine the location and the optional relative base
       location = combineURIs(options.relativeBase, location);
@@ -1282,6 +1293,12 @@ function resolveRefsAt (location, options) {
     })
     .then(function (res) {
       var cOptions = clone(options);
+      var uriDetails = parseURI(location);
+
+      // Set the sub document path if necessary
+      if (!isType(uriDetails.fragment, 'Undefined')) {
+        cOptions.subDocPath = pathFromPtr(decodeURI(uriDetails.fragment));
+      }
 
       // Update the relative base based on the retrieved location
       cOptions.relativeBase = path.dirname(location);
