@@ -1,8 +1,14 @@
 ## Release Notes
 
+### v2.1.5 (2016-02-02)
+
+* Fixed an issue with altering the original input
+* Fixed an issue with recursively processing references already planned to be processed created extra reference
+metadata which caused issues with resolution *(Issue #73)*
+
 ### v2.1.4 (2016-02-02)
 
-* Fixed a problem where multiple references to the same object were not all fully resolved *(Issue 72)*
+* Fixed a problem where multiple references to the same object were not all fully resolved *(Issue #72)*
 
 ### v2.1.3 (2016-01-31)
 
