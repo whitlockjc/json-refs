@@ -923,6 +923,7 @@ describe('json-refs API', function () {
       var doc = {
         $ref: 'fake.json'
       };
+      var cDoc = _.cloneDeep(doc);
 
       JsonRefs.resolveRefs(doc, {
         loaderOptions: {
@@ -933,8 +934,8 @@ describe('json-refs API', function () {
         .then(function (res) {
           var refDetails;
 
-          // Make sure the document is unchanged
-          assert.deepEqual(res.resolved, doc);
+          // Make sure the original document is unchanged
+          assert.deepEqual(cDoc, doc);
 
           // Make sure there is no error thrown and that the reference details are accurate
           assert.equal(Object.keys(res.refs).length, 1);
@@ -958,6 +959,8 @@ describe('json-refs API', function () {
     });
 
     it('should return the expected value', function (done) {
+      var cDoc = _.cloneDeep(testDocument);
+
       JsonRefs.resolveRefs(testDocument, {
         loaderOptions: {
           processContent: yamlContentProcessor
@@ -965,6 +968,9 @@ describe('json-refs API', function () {
         relativeBase: relativeBase
       })
         .then(function (res) {
+          // Make sure the original document is unchanged
+          assert.deepEqual(cDoc, testDocument);
+
           // Validate the resolved document
           assert.deepEqual(res.resolved, expectedFullyResolved);
 
