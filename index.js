@@ -285,19 +285,20 @@ function findRefsRecursive (obj, options, parents, parentPtrs, allRefs, indirect
         } else {
           if (refFullPtr.indexOf(location + '/') !== 0 && refFullPtr !== location &&
               subDocPtr.indexOf(location + '/') !== 0 && subDocPtr !== location) {
-            allTasks = allTasks
-              .then(function () {
-                return processSubDocument('local',
-                                          obj,
-                                          pathFromPtr(location),
-                                          refDetails,
-                                          options,
-                                          parents.concat(location),
-                                          parentPtrs.concat(refFullPtr),
-                                          allRefs,
-                                          indirect || (location.indexOf(subDocPtr + '/') === -1 && location !== subDocPtr));
-                
-              });
+            if (location.indexOf(subDocPtr + '/') !== 0) {
+              allTasks = allTasks
+                .then(function () {
+                  return processSubDocument('local',
+                                            obj,
+                                            pathFromPtr(location),
+                                            refDetails,
+                                            options,
+                                            parents.concat(location),
+                                            parentPtrs.concat(refFullPtr),
+                                            allRefs,
+                                            indirect || (location.indexOf(subDocPtr + '/') === -1 && location !== subDocPtr));
+                });
+            }
           } else {
             refDetails.circular = true;
           }
@@ -1159,6 +1160,9 @@ function resolveRefs (obj, options) {
 
       // Validate options
       options = validateOptions(options, obj);
+
+      // Clone the input so we do not alter it
+      obj = clone(obj);
     })
     .then(function () {
       return findRefsRecursive(obj, options, [], [], {
@@ -1167,7 +1171,6 @@ function resolveRefs (obj, options) {
       });
     })
     .then(function (allRefs) {
-      var resolved = clone(obj);
       var deferredRefs = {};
       var refs = {};
 
@@ -1197,9 +1200,9 @@ function resolveRefs (obj, options) {
             deferredRefs[refPtr] = refDetails;
           } else {
             if (refPtr === '#') {
-              resolved = refDetails.value;
+              obj = refDetails.value;
             } else {
-              setValue(resolved, pathFromPtr(refPtr), refDetails.value);
+              setValue(obj, pathFromPtr(refPtr), refDetails.value);
             }
 
             // Delete helper property
@@ -1221,7 +1224,7 @@ function resolveRefs (obj, options) {
               // Delete helper property
               delete refDetails.ancestorPtrs;
 
-              setValue(resolved, pathFromPtr(refPtr), refDetails.value);
+              setValue(obj, pathFromPtr(refPtr), refDetails.value);
             } catch (err) {
               if (index === refDetails.ancestorPtrs.length - 1) {
                 refDetails.error = err.message;
@@ -1237,7 +1240,7 @@ function resolveRefs (obj, options) {
 
       return {
         refs: refs,
-        resolved: resolved
+        resolved: obj
       };
     });
 
