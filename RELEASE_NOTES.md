@@ -1,8 +1,12 @@
 ## Release Notes
 
+### v2.1.4 (2016-02-02)
+
+* Fixed a problem where multiple references to the same object were not all fully resolved *(Issue 72)*
+
 ### v2.1.3 (2016-01-31)
 
-* Fixed a problem where references were not fully resolved for remote references with fragmenets *(Issue #70)*
+* Fixed a problem where references were not fully resolved for remote references with fragments *(Issue #70)*
 * Updated handling of resolving circular references to leave circular references as-is instead of resolving to an empty
 object *(Issue #69)*
 

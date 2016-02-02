@@ -169,7 +169,7 @@ function processSubDocument (mode, doc, subDocPath, refDetails, options, parents
   }
 
   if (!isType(refValue, 'Undefined')) {
-    refDetails.value = clone(refValue);
+    refDetails.value = refValue;
   }
 
   if (isType(refValue, 'Array') || isType(refValue, 'Object')) {
@@ -1216,7 +1216,7 @@ function resolveRefs (obj, options) {
         refDetails.ancestorPtrs.forEach(function (ancestorPtr, index) {
           if (isType(refDetails.value, 'Undefined')) {
             try {
-              refDetails.value = clone(findValue(allRefs.documents[ancestorPtr], pathFromPtr(refDetails.uri)));
+              refDetails.value = findValue(allRefs.documents[ancestorPtr], pathFromPtr(refDetails.uri));
 
               // Delete helper property
               delete refDetails.ancestorPtrs;

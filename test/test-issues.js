@@ -38,6 +38,16 @@ var relativeBase = typeof window === 'undefined' ? documentBase : 'base/document
 var personDocument = require('./browser/documents/{id}/person.json');
 
 describe('json-refs Issues', function () {
+  describe('Issue #72', function () {
+    it('should fully resolve swagger-tools/samples/2.0/petstore.json', function (done) {
+      JsonRefs.resolveRefsAt('https://rawgit.com/apigee-127/swagger-tools/master/samples/2.0/petstore.json')
+        .then(function (results) {
+          assert.equal(Object.keys(JsonRefs.findRefs(results.resolved)).length, 0);
+        })
+        .then(done, done);
+    });
+  });
+
   describe('Issue #67', function () {
     it('should handle relative locations for #findRefsAt and #resolveRefsAt', function (done) {
       JsonRefs.resolveRefsAt('../documents/test-document.yaml', {
