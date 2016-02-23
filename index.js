@@ -643,7 +643,7 @@ function validateOptions (options, obj) {
 /**
  * Detailed information about resolved JSON References.
  *
- * @typedef {UnresolvedRefDetails} ResolvedRefDetails
+ * @typedef {module:JsonRefs~UnresolvedRefDetails} ResolvedRefDetails
  *
  * @property {boolean} [circular] - Whether or not the JSON Reference is circular *(Will not be set if the JSON
  * Reference is not circular)*
@@ -659,16 +659,14 @@ function validateOptions (options, obj) {
  *
  * @property {module:JsonRefs~ResolvedRefDetails} refs - An object whose keys are JSON Pointers *(fragment version)*
  * to where the JSON Reference is defined and whose values are {@link module:JsonRefs~ResolvedRefDetails}
- * @property {object} value - The array/object with its JSON References fully resolved
+ * @property {object} resolved - The array/object with its JSON References fully resolved
  */
 
 /**
  * An object containing the retrieved document and detailed information about its JSON References.
  *
- * @typedef {object} RetrievedRefsResults
+ * @typedef {module:JsonRefs~ResolvedRefsResults} RetrievedRefsResults
  *
- * @property {module:JsonRefs~UnresolvedRefDetails} refs - An object whose keys are JSON Pointers *(fragment version)*
- * to where the JSON Reference is defined and whose values are {@link module:JsonRefs~UnresolvedRefDetails}
  * @property {object} value - The retrieved document
  */
 

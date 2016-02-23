@@ -10,9 +10,9 @@ JSON Pointers *(https://tools.ietf.org/html/rfc6901)*.
         * [~RefDetailsFilter](#module_JsonRefs..RefDetailsFilter) ⇒ <code>boolean</code>
         * [~RefPostProcessor](#module_JsonRefs..RefPostProcessor) ⇒ <code>object</code>
         * [~RefPreProcessor](#module_JsonRefs..RefPreProcessor) ⇒ <code>object</code>
-        * [~ResolvedRefDetails](#module_JsonRefs..ResolvedRefDetails) : <code>UnresolvedRefDetails</code>
+        * [~ResolvedRefDetails](#module_JsonRefs..ResolvedRefDetails) : <code>[UnresolvedRefDetails](#module_JsonRefs..UnresolvedRefDetails)</code>
         * [~ResolvedRefsResults](#module_JsonRefs..ResolvedRefsResults) : <code>object</code>
-        * [~RetrievedRefsResults](#module_JsonRefs..RetrievedRefsResults) : <code>object</code>
+        * [~RetrievedRefsResults](#module_JsonRefs..RetrievedRefsResults) : <code>[ResolvedRefsResults](#module_JsonRefs..ResolvedRefsResults)</code>
         * [~RetrievedResolvedRefsResults](#module_JsonRefs..RetrievedResolvedRefsResults) : <code>object</code>
         * [~UnresolvedRefDetails](#module_JsonRefs..UnresolvedRefDetails) : <code>object</code>
     * _static_
@@ -82,7 +82,7 @@ Simple function used to pre-process a JSON Reference like object.
 | path | <code>Array.&lt;string&gt;</code> | The path to the JSON Reference like object |
 
 <a name="module_JsonRefs..ResolvedRefDetails"></a>
-### JsonRefs~ResolvedRefDetails : <code>UnresolvedRefDetails</code>
+### JsonRefs~ResolvedRefDetails : <code>[UnresolvedRefDetails](#module_JsonRefs..UnresolvedRefDetails)</code>
 Detailed information about resolved JSON References.
 
 **Kind**: inner typedef of <code>[JsonRefs](#module_JsonRefs)</code>  
@@ -104,10 +104,10 @@ The results of resolving the JSON References of an array/object.
 | Name | Type | Description |
 | --- | --- | --- |
 | refs | <code>[ResolvedRefDetails](#module_JsonRefs..ResolvedRefDetails)</code> | An object whose keys are JSON Pointers *(fragment version)* to where the JSON Reference is defined and whose values are [ResolvedRefDetails](#module_JsonRefs..ResolvedRefDetails) |
-| value | <code>object</code> | The array/object with its JSON References fully resolved |
+| resolved | <code>object</code> | The array/object with its JSON References fully resolved |
 
 <a name="module_JsonRefs..RetrievedRefsResults"></a>
-### JsonRefs~RetrievedRefsResults : <code>object</code>
+### JsonRefs~RetrievedRefsResults : <code>[ResolvedRefsResults](#module_JsonRefs..ResolvedRefsResults)</code>
 An object containing the retrieved document and detailed information about its JSON References.
 
 **Kind**: inner typedef of <code>[JsonRefs](#module_JsonRefs)</code>  
@@ -115,7 +115,6 @@ An object containing the retrieved document and detailed information about its J
 
 | Name | Type | Description |
 | --- | --- | --- |
-| refs | <code>[UnresolvedRefDetails](#module_JsonRefs..UnresolvedRefDetails)</code> | An object whose keys are JSON Pointers *(fragment version)* to where the JSON Reference is defined and whose values are [UnresolvedRefDetails](#module_JsonRefs..UnresolvedRefDetails) |
 | value | <code>object</code> | The retrieved document |
 
 <a name="module_JsonRefs..RetrievedResolvedRefsResults"></a>
