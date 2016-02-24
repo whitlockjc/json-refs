@@ -1206,6 +1206,9 @@ function resolveRefs (obj, options) {
             // Delete helper property
             delete refDetails.ancestorPtrs;
           }
+        } else {
+          // Delete helper property
+          delete refDetails.ancestorPtrs;
         }
       });
 
