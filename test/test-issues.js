@@ -359,4 +359,21 @@ describe('json-refs Issues', function () {
       });
     });
   });
+
+  describe('Issue #77', function () {
+    it('combined URI\'s should handle windows pathing correctly', function (done) {
+      JsonRefs.resolveRefsAt('../documents/test-document.yaml', {
+        loaderOptions: {
+          processContent: function (res, callback) {
+            callback(undefined, YAML.safeLoad(res.text));
+          }
+        },
+        relativeBase: relativeBase
+      })
+        .then(function (results) {
+          assert.notEqual(results.refs['#/remote/relative'].missing, true);
+        })
+        .then(done, done);
+    });
+  });
 });
