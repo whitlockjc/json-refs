@@ -114,7 +114,7 @@ function combineURIs (u1, u2) {
       combinedDetails = u1Details;
 
       // Join the paths
-      combinedDetails.path = path.join(u1Details.path, u2Details.path);
+      combinedDetails.path = slash(path.join(u1Details.path, u2Details.path));
 
       // Join query parameters
       combinedDetails.query = combineQueryParams(u1Details.query, u2Details.query);
