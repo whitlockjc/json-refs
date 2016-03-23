@@ -1,4 +1,5 @@
 <a name="module_JsonRefs"></a>
+
 ## JsonRefs
 Various utilities for JSON References *(http://tools.ietf.org/html/draft-pbryan-zyp-json-ref-03)* and
 JSON Pointers *(https://tools.ietf.org/html/rfc6901)*.
@@ -30,6 +31,7 @@ JSON Pointers *(https://tools.ietf.org/html/rfc6901)*.
         * [.resolveRefsAt(location, [options])](#module_JsonRefs.resolveRefsAt) ⇒ <code>Promise</code>
 
 <a name="module_JsonRefs..JsonRefsOptions"></a>
+
 ### JsonRefs~JsonRefsOptions : <code>object</code>
 The options used for various JsonRefs APIs.
 
@@ -46,6 +48,7 @@ The options used for various JsonRefs APIs.
 | [options.subDocPath] | <code>string</code> &#124; <code>Array.&lt;string&gt;</code> | <code>&quot;[]&quot;</code> | The JSON Pointer or array of path segments to the sub document location to search from |
 
 <a name="module_JsonRefs..RefDetailsFilter"></a>
+
 ### JsonRefs~RefDetailsFilter ⇒ <code>boolean</code>
 Simple function used to filter out JSON References.
 
@@ -58,6 +61,7 @@ Simple function used to filter out JSON References.
 | path | <code>Array.&lt;string&gt;</code> | The path to the JSON Reference |
 
 <a name="module_JsonRefs..RefPostProcessor"></a>
+
 ### JsonRefs~RefPostProcessor ⇒ <code>object</code>
 Simple function used to post-process a JSON Reference details.
 
@@ -70,6 +74,7 @@ Simple function used to post-process a JSON Reference details.
 | path | <code>Array.&lt;string&gt;</code> | The path to the JSON Reference |
 
 <a name="module_JsonRefs..RefPreProcessor"></a>
+
 ### JsonRefs~RefPreProcessor ⇒ <code>object</code>
 Simple function used to pre-process a JSON Reference like object.
 
@@ -82,6 +87,7 @@ Simple function used to pre-process a JSON Reference like object.
 | path | <code>Array.&lt;string&gt;</code> | The path to the JSON Reference like object |
 
 <a name="module_JsonRefs..ResolvedRefDetails"></a>
+
 ### JsonRefs~ResolvedRefDetails : <code>[UnresolvedRefDetails](#module_JsonRefs..UnresolvedRefDetails)</code>
 Detailed information about resolved JSON References.
 
@@ -95,6 +101,7 @@ Detailed information about resolved JSON References.
 | value | <code>\*</code> | The referenced value *(Will not be set if the referenced value is missing)* |
 
 <a name="module_JsonRefs..ResolvedRefsResults"></a>
+
 ### JsonRefs~ResolvedRefsResults : <code>object</code>
 The results of resolving the JSON References of an array/object.
 
@@ -107,6 +114,7 @@ The results of resolving the JSON References of an array/object.
 | resolved | <code>object</code> | The array/object with its JSON References fully resolved |
 
 <a name="module_JsonRefs..RetrievedRefsResults"></a>
+
 ### JsonRefs~RetrievedRefsResults : <code>[ResolvedRefsResults](#module_JsonRefs..ResolvedRefsResults)</code>
 An object containing the retrieved document and detailed information about its JSON References.
 
@@ -118,6 +126,7 @@ An object containing the retrieved document and detailed information about its J
 | value | <code>object</code> | The retrieved document |
 
 <a name="module_JsonRefs..RetrievedResolvedRefsResults"></a>
+
 ### JsonRefs~RetrievedResolvedRefsResults : <code>object</code>
 An object containing the retrieved document, the document with its references resolved and  detailed information
 about its JSON References.
@@ -132,6 +141,7 @@ about its JSON References.
 | value | <code>object</code> | The retrieved document |
 
 <a name="module_JsonRefs..UnresolvedRefDetails"></a>
+
 ### JsonRefs~UnresolvedRefDetails : <code>object</code>
 Detailed information about unresolved JSON References.
 
@@ -148,11 +158,13 @@ Detailed information about unresolved JSON References.
 | warning | <code>string</code> | The warning information *(Only present when the JSON Reference definition produces a warning)* |
 
 <a name="module_JsonRefs.clearCache"></a>
+
 ### JsonRefs.clearCache()
 Clears the internal cache of remote documents, reference details, etc.
 
 **Kind**: static method of <code>[JsonRefs](#module_JsonRefs)</code>  
 <a name="module_JsonRefs.decodePath"></a>
+
 ### JsonRefs.decodePath(path) ⇒ <code>string</code>
 Takes an array of path segments and decodes the JSON Pointer tokens in them.
 
@@ -169,6 +181,7 @@ Takes an array of path segments and decodes the JSON Pointer tokens in them.
 | path | <code>Array.&lt;string&gt;</code> | The array of path segments |
 
 <a name="module_JsonRefs.encodePath"></a>
+
 ### JsonRefs.encodePath(path) ⇒ <code>string</code>
 Takes an array of path segments and encodes the special JSON Pointer characters in them.
 
@@ -185,6 +198,7 @@ Takes an array of path segments and encodes the special JSON Pointer characters 
 | path | <code>Array.&lt;string&gt;</code> | The array of path segments |
 
 <a name="module_JsonRefs.findRefs"></a>
+
 ### JsonRefs.findRefs(obj, [options]) ⇒ <code>object</code>
 Finds JSON References defined within the provided array/object.
 
@@ -211,6 +225,7 @@ var remoteRefs = JsonRefs.findRefs(obj, {filter: ['relative', 'remote']});
 var invalidRefs = JsonRefs.findRefs(obj, {filter: 'invalid', includeInvalid: true});
 ```
 <a name="module_JsonRefs.findRefsAt"></a>
+
 ### JsonRefs.findRefsAt(location, [options]) ⇒ <code>Promise</code>
 Finds JSON References defined within the document at the provided location.
 
@@ -243,6 +258,7 @@ JsonRefs.findRefsAt('http://petstore.swagger.io/v2/swagger.json', {
   });
 ```
 <a name="module_JsonRefs.getRefDetails"></a>
+
 ### JsonRefs.getRefDetails(obj) ⇒ <code>[UnresolvedRefDetails](#module_JsonRefs..UnresolvedRefDetails)</code>
 Returns detailed information about the JSON Reference.
 
@@ -254,6 +270,7 @@ Returns detailed information about the JSON Reference.
 | obj | <code>object</code> | The JSON Reference definition |
 
 <a name="module_JsonRefs.isPtr"></a>
+
 ### JsonRefs.isPtr(ptr, [throwWithDetails]) ⇒ <code>boolean</code>
 Returns whether the argument represents a JSON Pointer.
 
@@ -290,6 +307,7 @@ if (isPtr(str)) {
 }
 ```
 <a name="module_JsonRefs.isRef"></a>
+
 ### JsonRefs.isRef(obj, [throwWithDetails]) ⇒ <code>boolean</code>
 Returns whether the argument represents a JSON Reference.
 
@@ -328,6 +346,7 @@ if (isRef(obj)) {
 }
 ```
 <a name="module_JsonRefs.pathFromPtr"></a>
+
 ### JsonRefs.pathFromPtr(ptr) ⇒ <code>Array.&lt;string&gt;</code>
 Returns an array of path segments for the provided JSON Pointer.
 
@@ -343,6 +362,7 @@ Returns an array of path segments for the provided JSON Pointer.
 | ptr | <code>string</code> | The JSON Pointer |
 
 <a name="module_JsonRefs.pathToPtr"></a>
+
 ### JsonRefs.pathToPtr(path, [hashPrefix]) ⇒ <code>string</code>
 Returns a JSON Pointer for the provided array of path segments.
 
@@ -361,6 +381,7 @@ Returns a JSON Pointer for the provided array of path segments.
 | [hashPrefix] | <code>boolean</code> | <code>true</code> | Whether or not create a hash-prefixed JSON Pointer |
 
 <a name="module_JsonRefs.resolveRefs"></a>
+
 ### JsonRefs.resolveRefs(obj, [options]) ⇒ <code>Promise</code>
 Finds JSON References defined within the provided array/object and resolves them.
 
@@ -390,6 +411,7 @@ JsonRefs.resolveRefs(swaggerObj, {
   });
 ```
 <a name="module_JsonRefs.resolveRefsAt"></a>
+
 ### JsonRefs.resolveRefsAt(location, [options]) ⇒ <code>Promise</code>
 Resolves JSON References defined within the document at the provided location.
 
