@@ -82,11 +82,12 @@ var resolveHelp = [
   '',
   '  Options:',
   '',
-  '    -h, --help             output usage information',
-  '    -f, --force            Do not fail when the document has invalid JSON References',
-  '    -H, --header <header>  The header to use when retrieving a remote document',
-  '    -I, --filter <type>    The type of JSON References to resolved',
-  '    -y, --yaml             Output as YAML',
+  '    -h, --help                output usage information',
+  '    -f, --force               Do not fail when the document has invalid JSON References',
+  '    -H, --header <header>     The header to use when retrieving a remote document',
+  '    -I, --filter <type>       The type of JSON References to resolved',
+  '    -w, --warnings-as-errors  Treat warnings as errors',
+  '    -y, --yaml                Output as YAML',
   '',
   ''
 ].join('\n');
@@ -350,6 +351,30 @@ describe('json-refs CLI', function () {
           assert.equal(stderr, '');
 
           assert.deepEqual(stdout, JSON.stringify(pkg, null, 2) + '\n');
+
+          done();
+        });
+      });
+
+      it('--warnings-as-errors option', function (done) {
+        this.timeout(10000);
+
+        executeJsonRefs(['resolve', testDocumentLocation, '--warnings-as-errors'], function (stderr, stdout) {
+          assert.equal(stdout, '');
+
+          assert.equal(stderr, [
+            '',
+            '  error: Document has invalid references:',
+            '',
+            '  #/missing: JSON Pointer points to missing location: #/some/missing/path',
+            '  #/warning: Extra JSON Reference properties will be ignored: ignored',
+            '  #/invalid: HTTP URIs must have a host.',
+            '  #/remote/relative/missing: JSON Pointer points to missing location: #/some/missing/path',
+            '  #/remote/relative/child/missing: JSON Pointer points to missing location: #/some/missing/path',
+            '  #/remote/relative/child/ancestor/missing: JSON Pointer points to missing location: #/some/missing/path',
+            '',
+            ''
+          ].join('\n'));
 
           done();
         });
