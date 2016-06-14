@@ -316,6 +316,45 @@ function findRefsRecursive (obj, options, parents, parentPtrs, allRefs, indirect
 
   allTasks = allTasks
     .then(function () {
+      // Identify indirect, local circular references (Issue 82)
+      var circulars = [];
+
+      function walkRefs (parentPtrs, parentRefs, refPtr, ref) {
+        Object.keys(allRefs.refs).forEach(function (dRefPtr) {
+          var dRefDetails = allRefs.refs[dRefPtr];
+
+          // Do not process already processed references or references that are not a nested references
+          if (dRefPtr !== refPtr && dRefPtr.indexOf(ref + '/') === 0) {
+            if (parentRefs.indexOf(ref) > -1) {
+              if (circulars.indexOf(ref) === -1) {
+                circulars.push(ref);
+              }
+            } else {
+              walkRefs(parentPtrs.concat(refPtr), parentRefs.concat(ref), dRefPtr, dRefDetails.uri);
+            }
+          }
+        });
+      }
+
+      Object.keys(allRefs.refs).forEach(function (refPtr) {
+        var refDetails = allRefs.refs[refPtr];
+
+        // Only process local, non-circular references
+        if (refDetails.type === 'local' && !refDetails.circular && circulars.indexOf(refDetails.uri) === -1) {
+          walkRefs([], [], refPtr, refDetails.uri);
+        }
+      });
+
+      Object.keys(allRefs.refs).forEach(function (refPtr) {
+        var refDetails = allRefs.refs[refPtr];
+
+        if (circulars.indexOf(refDetails.uri) > -1) {
+          refDetails.circular = true;
+          refDetails.value = refDetails.def;
+        }
+      });
+    })
+    .then(function () {
       return allRefs;
     });
 

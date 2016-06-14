@@ -16,6 +16,32 @@ circular:
   # Reference to an ancestor
   ancestor:
     $ref: '#/circular'
+  # Reference to another object that references this one
+  User:
+    type: object
+    properties:
+      status:
+        $ref: '#/circular/Status'
+  # Reference to another object that references this one
+  Status:
+    type: object
+    properties:
+      user:
+        $ref: '#/circular/User'
+      message:
+        $ref: '#/circular/Message'
+  # Reference to another object that itself has an indirect reference to this one
+  Message:
+    type: object
+    properties:
+      author:
+        $ref: '#/circular/User'
+  # Reference to another object that itself has an indirect reference to itself
+  StatusWrapper:
+    type: object
+    properties:
+      status:
+        $ref: '#/circular/Status'
 
 definitions:
   HumanName:

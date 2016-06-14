@@ -333,6 +333,46 @@ describe('json-refs API', function () {
             circular: true,
             value: testDocument.circular.root
           },
+          '#/circular/User/properties/status': {
+            def: testDocument.circular.User.properties.status,
+            uri: testDocument.circular.User.properties.status.$ref,
+            uriDetails: URI.parse(testDocument.circular.User.properties.status.$ref),
+            type: 'local',
+            circular: true,
+            value: testDocument.circular.User.properties.status
+          },
+          '#/circular/Status/properties/user': {
+            def: testDocument.circular.Status.properties.user,
+            uri: testDocument.circular.Status.properties.user.$ref,
+            uriDetails: URI.parse(testDocument.circular.Status.properties.user.$ref),
+            type: 'local',
+            circular: true,
+            value: testDocument.circular.Status.properties.user
+          },
+          '#/circular/Status/properties/message': {
+            def: testDocument.circular.Status.properties.message,
+            uri: testDocument.circular.Status.properties.message.$ref,
+            uriDetails: URI.parse(testDocument.circular.Status.properties.message.$ref),
+            type: 'local',
+            circular: true,
+            value: testDocument.circular.Status.properties.message
+          },
+          '#/circular/Message/properties/author': {
+            def: testDocument.circular.Message.properties.author,
+            uri: testDocument.circular.Message.properties.author.$ref,
+            uriDetails: URI.parse(testDocument.circular.Message.properties.author.$ref),
+            type: 'local',
+            circular: true,
+            value: testDocument.circular.Message.properties.author
+          },
+          '#/circular/StatusWrapper/properties/status': {
+            def: testDocument.circular.StatusWrapper.properties.status,
+            uri: testDocument.circular.StatusWrapper.properties.status.$ref,
+            uriDetails: URI.parse(testDocument.circular.StatusWrapper.properties.status.$ref),
+            type: 'local',
+            circular: true,
+            value: testDocument.circular.StatusWrapper.properties.status
+          },
           '#/remote/absolute': {
             def: testDocument.remote.absolute,
             uri: testDocument.remote.absolute.$ref,
@@ -504,7 +544,11 @@ describe('json-refs API', function () {
           ],
           circular: {
             root: testDocument.circular.root,
-            ancestor: testDocument.circular.ancestor
+            ancestor: testDocument.circular.ancestor,
+            User: testDocument.circular.User,
+            Status: testDocument.circular.Status,
+            Message: testDocument.circular.Message,
+            StatusWrapper: testDocument.circular.StatusWrapper
           },
           definitions: {
             HumanName: testDocument.definitions.HumanName,
@@ -603,6 +647,11 @@ describe('json-refs API', function () {
       '#/array/1': testDocument.array[1],
       '#/circular/root': testDocument.circular.root,
       '#/circular/ancestor': testDocument.circular.ancestor,
+      '#/circular/User/properties/status': testDocument.circular.User.properties.status,
+      '#/circular/Status/properties/user': testDocument.circular.Status.properties.user,
+      '#/circular/Status/properties/message': testDocument.circular.Status.properties.message,
+      '#/circular/Message/properties/author': testDocument.circular.Message.properties.author,
+      '#/circular/StatusWrapper/properties/status': testDocument.circular.StatusWrapper.properties.status,
       '#/definitions/Person/properties/name': testDocument.definitions.Person.properties.name,
       '#/invalid': testDocument.invalid,
       '#/local': testDocument.local,

@@ -1,5 +1,9 @@
 ## Release Notes
 
+### v2.1.6 (2016-06-14)
+
+* Fixed a bug where identifying circular references failed for local, indirect references *(Issue #82)_
+
 ### v2.1.5 (2016-02-02)
 
 * Fixed an issue with altering the original input

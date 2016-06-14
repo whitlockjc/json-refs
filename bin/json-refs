@@ -134,7 +134,7 @@ program
         var errors = [];
 
         if (!that.force) {
-          Object.keys(results.refs).forEach(function (refPtr) {
+          Object.keys(results.refs).sort().forEach(function (refPtr) {
             var refDetails = results.refs[refPtr];
 
             if (refDetails.type === 'invalid' || refDetails.error || (that.warningsAsErrors && refDetails.warning)) {
