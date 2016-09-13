@@ -1,0 +1,43 @@
+---
+swagger: "2.0"
+info:
+  title: test
+  version: '0.0.0'
+responses:
+  500:
+    description: "error"
+    schema:
+      $ref: "#/definitions/e"
+paths: {}
+definitions:
+  y:
+    type: object
+    properties:
+      children:
+        type: array
+        items:
+          $ref: "#/definitions/z"
+  z:
+    type: object
+    properties:
+      name:
+        type: string
+  t:
+    type: string
+    enum:
+    - unauthorized
+    - forbidden
+  f:
+    type: object
+    properties:
+      error_type:
+        $ref: '#/definitions/t'
+  e:
+    type: object
+    properties:
+      error_type:
+        $ref: "#/definitions/t"
+      per_property_error_messages:
+        type: array
+        items:
+          $ref: '#/definitions/f'
