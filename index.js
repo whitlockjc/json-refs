@@ -150,7 +150,7 @@ function findAncestors (obj, path) {
   return ancestors;
 }
 
-function processSubDocument (mode, doc, subDocPath, refDetails, options, parents, parentPtrs, allRefs, indirect) {
+function processSubDocument (mode, doc, subDocPath, refDetails, options, parents, parentPtrs, allRefs, indirect, isRootFile) {
   var refValue;
   var rOptions;
 
@@ -190,18 +190,20 @@ function processSubDocument (mode, doc, subDocPath, refDetails, options, parents
       }
     }
 
-    return findRefsRecursive(doc, rOptions, parents, parentPtrs, allRefs, indirect);
+    return findRefsRecursive(doc, rOptions, parents, parentPtrs, allRefs, indirect, isRootFile);
   }
 }
 
 // Should this be its own exported API?
-function findRefsRecursive (obj, options, parents, parentPtrs, allRefs, indirect) {
+function findRefsRecursive (obj, options, parents, parentPtrs, allRefs, indirect, isRootFile) {
   var allTasks = Promise.resolve();
   var parentPath = parentPtrs.length ? pathFromPtr(parentPtrs[parentPtrs.length - 1]) : [];
-  var refs = findRefs(obj, options);
+  var refs = findRefs(obj, options, isRootFile);
   var subDocPath = options.subDocPath || [];
   var subDocPtr = pathToPtr(subDocPath);
   var ancestorPtrs = ['#'];
+
+  isRootFile = typeof isRootFile !== 'undefined' ? isRootFile : true;
 
   parents.forEach(function (parent, index) {
     if (parent.charAt(0) !== '#') {
@@ -275,7 +277,8 @@ function findRefsRecursive (obj, options, parents, parentPtrs, allRefs, indirect
                                             parents.concat(location),
                                             parentPtrs.concat(refFullPtr),
                                             allRefs,
-                                            indirect);
+                                            indirect,
+                                            false);
                 })
                 .catch(function (err) {
                   refDetails.error = err.message;
@@ -296,7 +299,8 @@ function findRefsRecursive (obj, options, parents, parentPtrs, allRefs, indirect
                                             parents.concat(location),
                                             parentPtrs.concat(refFullPtr),
                                             allRefs,
-                                            indirect || (location.indexOf(subDocPtr + '/') === -1 && location !== subDocPtr));
+                                            indirect || (location.indexOf(subDocPtr + '/') === -1 && location !== subDocPtr),
+                                            isRootFile);
                 });
             }
           } else {
@@ -492,7 +496,7 @@ function makeRefFilter (options) {
 
   if (isType(options.filter, 'Array') || isType(options.filter, 'String')) {
     validTypes = isType(options.filter, 'String') ? [options.filter] : options.filter;
-    refFilter = function (refDetails) {
+    refFilter = function (refDetails, path) {
       // Check the exact type or for invalid URIs, check its original type
       return validTypes.indexOf(refDetails.type) > -1 || validTypes.indexOf(getRefType(refDetails)) > -1;
     };
@@ -830,8 +834,10 @@ function encodePath (path) {
  * // Finding all invalid references
  * var invalidRefs = JsonRefs.findRefs(obj, {filter: 'invalid', includeInvalid: true});
  */
-function findRefs (obj, options) {
+function findRefs (obj, options, isRootFile) {
   var refs = {};
+
+  isRootFile = typeof isRootFile !== 'undefined' ? isRootFile : true;
 
   // Validate the provided document
   if (!isType(obj, 'Array') && !isType(obj, 'Object')) {
@@ -862,7 +868,7 @@ function findRefs (obj, options) {
              refDetails = options.refPostProcessor(refDetails, path);
            }
 
-           if (options.filter(refDetails, path)) {
+           if (!isRootFile || options.filter(refDetails, path)) {
              refs[pathToPtr(path)] = refDetails;
            }
 
