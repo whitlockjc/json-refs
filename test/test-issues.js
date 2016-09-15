@@ -376,4 +376,22 @@ describe('json-refs Issues', function () {
         .then(done, done);
     });
   });
+
+  describe('Issue #97', function () {
+    it('external circular refs should be handled correctly', function (done) {
+      JsonRefs.resolveRefsAt('external-circular-refs/b.yaml', {
+        filter: ['relative', 'local'],
+        loaderOptions: {
+          processContent: function (res, callback) {
+            callback(undefined, YAML.safeLoad(res.text));
+          }
+        },
+        relativeBase: relativeBase
+      })
+        .then(function (results) {
+          assert.ok(!_.has(results, 'resolved.definitions.x.properties.children.items.properties.parents.items.properties.children.items.properties.parents'));
+        })
+        .then(done, done);
+    });
+  });
 });

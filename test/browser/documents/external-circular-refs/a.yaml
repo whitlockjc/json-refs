@@ -1,0 +1,15 @@
+definitions:
+  y:
+    type: object
+    properties:
+      children:
+        type: array
+        items:
+          $ref: "#/definitions/z"
+  z:
+    type: object
+    properties:
+      parents:
+        type: array
+        items:
+          $ref: "#/definitions/y"
