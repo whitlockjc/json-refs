@@ -287,12 +287,13 @@ describe('json-refs Issues', function () {
 
     describe('remote references', function () {
       it('should handle references with unescaped URI characters', function (done) {
+        var relativePath = './{id}/person.json';
         var doc = {
-          $ref: './{id}/person.json'
+          $ref: relativePath
         };
 
         JsonRefs.resolveRefs(doc, {
-          relativeBase: relativeBase
+          location: relativeBase + '/root.json'
         })
           .then(function (results) {
             assert.deepEqual(results, {
@@ -305,7 +306,7 @@ describe('json-refs Issues', function () {
                     userinfo: undefined,
                     host: undefined,
                     port: undefined,
-                    path: './%7Bid%7D/person.json',
+                    path: encodeURI(relativePath),
                     query: undefined,
                     fragment: undefined,
                     reference: 'relative'
@@ -328,7 +329,7 @@ describe('json-refs Issues', function () {
         };
 
         JsonRefs.resolveRefs(doc, {
-          relativeBase: relativeBase
+          location: relativeBase + '/root.json'
         })
           .then(function (results) {
             assert.deepEqual(results, {
@@ -341,7 +342,7 @@ describe('json-refs Issues', function () {
                     userinfo: undefined,
                     host: undefined,
                     port: undefined,
-                    path: './%7Bid%7D/person.json',
+                    path: doc.ref.$ref,
                     query: undefined,
                     fragment: undefined,
                     reference: 'relative'
@@ -357,23 +358,6 @@ describe('json-refs Issues', function () {
           })
           .then(done, done);
       });
-    });
-  });
-
-  describe('Issue #77', function () {
-    it('combined URI\'s should handle windows pathing correctly', function (done) {
-      JsonRefs.resolveRefsAt('../documents/test-document.yaml', {
-        loaderOptions: {
-          processContent: function (res, callback) {
-            callback(undefined, YAML.safeLoad(res.text));
-          }
-        },
-        relativeBase: relativeBase
-      })
-        .then(function (results) {
-          assert.notEqual(results.refs['#/remote/relative'].missing, true);
-        })
-        .then(done, done);
     });
   });
 });

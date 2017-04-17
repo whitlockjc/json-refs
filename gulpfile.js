@@ -66,6 +66,8 @@ gulp.task('browserify', function (cb) {
         if (!isStandalone) {
           // Expose Bower modules so they can be required
           exposify.config = {
+            'graphlib': 'graphlib',
+            'lodash': '_',
             'path-loader': 'PathLoader'
           };
 
@@ -139,7 +141,8 @@ gulp.task('test-node', function (cb) {
             './test/test-cli.js'
           ])
             .pipe($.mocha({
-              reporter: 'spec'
+              reporter: 'spec',
+              timeout: 5000
             }))
             .on('error', function (err) {
               reject(err);

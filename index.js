@@ -31,6 +31,8 @@
  * @module JsonRefs
  */
 
+var clone = require('clone');
+var gl = require('graphlib');
 var path = require('path');
 var PathLoader = require('path-loader');
 var qs = require('querystring');
@@ -51,29 +53,10 @@ if (typeof Promise === 'undefined') {
 
 /* Internal Functions */
 
-// This is a very simplistic clone function that does not take into account non-JSON types.  For these types the
-// original value is used as the clone.  So while it's not a complete deep clone, for the needs of this project
-// this should be sufficient.
-function clone (obj) {
-  var cloned;
-
-  if (isType(obj, 'Array')) {
-    cloned = [];
-
-    obj.forEach(function (value, index) {
-      cloned[index] = clone(value);
-    });
-  } else if (isType(obj, 'Object')) {
-    cloned = {};
-
-    Object.keys(obj).forEach(function (key) {
-      cloned[key] = clone(obj[key]);
-    });
-  } else {
-    cloned = obj;
+function addIfNotPresent (arr, val) {
+  if (arr.indexOf(val) === -1) {
+    arr.push(val);
   }
-
-  return cloned;
 }
 
 function combineQueryParams (qs1, qs2) {
@@ -150,222 +133,12 @@ function findAncestors (obj, path) {
   return ancestors;
 }
 
-function processSubDocument (mode, doc, subDocPath, refDetails, options, parents, parentPtrs, allRefs, indirect) {
-  var refValue;
-  var rOptions;
-
-  if (subDocPath.length > 0) {
-    try {
-      refValue = findValue(doc, subDocPath);
-    } catch (err) {
-      // We only mark missing remote references as missing because local references can have deferred values
-      if (mode === 'remote') {
-        refDetails.error = err.message;
-        refDetails.missing = true;
-      }
-    }
-  } else {
-    refValue = doc;
-  }
-
-  if (!isType(refValue, 'Undefined')) {
-    refDetails.value = refValue;
-  }
-
-  if (isType(refValue, 'Array') || isType(refValue, 'Object')) {
-    rOptions = clone(options);
-
-    if (mode === 'local') {
-      delete rOptions.subDocPath;
-
-      // Traverse the dereferenced value
-      doc = refValue;
-    } else {
-      rOptions.relativeBase = path.dirname(parents[parents.length - 1]);
-
-      if (subDocPath.length === 0) {
-        delete rOptions.subDocPath;
-      } else {
-        rOptions.subDocPath = subDocPath;
-      }
-    }
-
-    return findRefsRecursive(doc, rOptions, parents, parentPtrs, allRefs, indirect);
-  }
+function isRemote (refDetails) {
+  return remoteTypes.indexOf(getRefType(refDetails)) > -1;
 }
 
-// Should this be its own exported API?
-function findRefsRecursive (obj, options, parents, parentPtrs, allRefs, indirect) {
-  var allTasks = Promise.resolve();
-  var parentPath = parentPtrs.length ? pathFromPtr(parentPtrs[parentPtrs.length - 1]) : [];
-  var refs = findRefs(obj, options);
-  var subDocPath = options.subDocPath || [];
-  var subDocPtr = pathToPtr(subDocPath);
-  var ancestorPtrs = ['#'];
-
-  parents.forEach(function (parent, index) {
-    if (parent.charAt(0) !== '#') {
-      ancestorPtrs.push(parentPtrs[index]);
-    }
-  });
-
-  // Reverse the order so we search them in the proper order
-  ancestorPtrs.reverse();
-
-  if ((parents[parents.length - 1] || '').charAt(0) !== '#') {
-    allRefs.documents[pathToPtr(parentPath)] = obj;
-  }
-
-  Object.keys(refs).forEach(function (refPtr) {
-    var refDetails = refs[refPtr];
-    var location;
-    var parentIndex;
-    var refFullPath;
-    var refFullPtr;
-
-    // If there are no parents, treat the reference pointer as-is.  Otherwise, the reference is a reference within a
-    // remote document and its sub document path prefix must be removed.
-    if (parents.length === 0) {
-      refFullPath = parentPath.concat(pathFromPtr(refPtr));
-    } else {
-      refFullPath = parentPath.concat(pathFromPtr(refPtr).slice(parents.length === 0 ? 0 : subDocPath.length));
-    }
-
-    refFullPtr = pathToPtr(refFullPath);
-
-    // It is possible to process the same reference more than once in the event of hierarchical references so we avoid
-    // processing a reference if we've already done so.
-    if (!isType(allRefs[refFullPtr], 'Undefined')) {
-      return;
-    }
-
-    // Record the reference metadata
-    allRefs.refs[refFullPtr] = refs[refPtr];
-
-    // Do not process invalid references
-    if (isType(refDetails.error, 'Undefined') && refDetails.type !== 'invalid') {
-      if (remoteTypes.indexOf(refDetails.type) > -1) {
-        location = combineURIs(options.relativeBase, refDetails.uri);
-        parentIndex = parents.indexOf(location);
-      } else {
-        location = refDetails.uri;
-        parentIndex = parentPtrs.indexOf(location);
-      }
-
-      // Record ancestor paths
-      refDetails.ancestorPtrs = ancestorPtrs;
-
-      // Record if the reference is indirect based on its parent
-      refDetails.indirect = indirect;
-
-      // Only process non-circular references further
-      if (parentIndex === -1) {
-        if (remoteTypes.indexOf(refDetails.type) > -1) {
-          allTasks = allTasks
-            .then(function () {
-              return getRemoteDocument(location, options)
-                .then(function (doc) {
-                  return processSubDocument('remote',
-                                            doc,
-                                            isType(refDetails.uriDetails.fragment, 'Undefined') ?
-                                              [] :
-                                              pathFromPtr(decodeURI(refDetails.uriDetails.fragment)),
-                                            refDetails,
-                                            options,
-                                            parents.concat(location),
-                                            parentPtrs.concat(refFullPtr),
-                                            allRefs,
-                                            indirect);
-                })
-                .catch(function (err) {
-                  refDetails.error = err.message;
-                  refDetails.missing = true;
-                });
-            });
-        } else {
-          if (refFullPtr.indexOf(location + '/') !== 0 && refFullPtr !== location &&
-              subDocPtr.indexOf(location + '/') !== 0 && subDocPtr !== location) {
-            if (location.indexOf(subDocPtr + '/') !== 0) {
-              allTasks = allTasks
-                .then(function () {
-                  return processSubDocument('local',
-                                            obj,
-                                            pathFromPtr(location),
-                                            refDetails,
-                                            options,
-                                            parents.concat(location),
-                                            parentPtrs.concat(refFullPtr),
-                                            allRefs,
-                                            indirect || (location.indexOf(subDocPtr + '/') === -1 && location !== subDocPtr));
-                });
-            }
-          } else {
-            refDetails.circular = true;
-          }
-        }
-      } else {
-        // Mark seen ancestors as circular
-        parentPtrs.slice(parentIndex).forEach(function (parentPtr) {
-          allRefs.refs[parentPtr].circular = true;
-        });
-
-        refDetails.circular = true;
-      }
-    }
-  });
-
-  allTasks = allTasks
-    .then(function () {
-      // Identify indirect, local circular references (Issue 82)
-      var circulars = [];
-      var processedRefPtrs = [];
-      var processedRefs = [];
-
-      function walkRefs (parentPtrs, parentRefs, refPtr, ref) {
-        Object.keys(allRefs.refs).forEach(function (dRefPtr) {
-          var dRefDetails = allRefs.refs[dRefPtr];
-
-          // Do not process already processed references or references that are not a nested references
-          if (processedRefs.indexOf(ref) === -1 && processedRefPtrs.indexOf(refPtr) === -1 &&
-              circulars.indexOf(ref) === -1 && dRefPtr !== refPtr && dRefPtr.indexOf(ref + '/') === 0) {
-            if (parentRefs.indexOf(ref) > -1) {
-              parentRefs.forEach(function (parentRef) {
-                if (circulars.indexOf(ref) === -1) {
-                  circulars.push(parentRef);
-                }
-              });
-            } else {
-              walkRefs(parentPtrs.concat(refPtr), parentRefs.concat(ref), dRefPtr, dRefDetails.uri);
-            }
-
-            processedRefPtrs.push(refPtr);
-            processedRefs.push(ref);
-          }
-        });
-      }
-
-      Object.keys(allRefs.refs).forEach(function (refPtr) {
-        var refDetails = allRefs.refs[refPtr];
-
-        // Only process local, non-circular references
-        if (refDetails.type === 'local' && !refDetails.circular && circulars.indexOf(refDetails.uri) === -1) {
-          walkRefs([], [], refPtr, refDetails.uri);
-        }
-      });
-
-      Object.keys(allRefs.refs).forEach(function (refPtr) {
-        var refDetails = allRefs.refs[refPtr];
-
-        if (circulars.indexOf(refDetails.uri) > -1) {
-          refDetails.circular = true;
-        }
-      });
-    })
-    .then(function () {
-      return allRefs;
-    });
-
-  return allTasks;
+function isValid (refDetails) {
+  return isType(refDetails.error, 'Undefined') && refDetails.type !== 'invalid';
 }
 
 function findValue (obj, path) {
@@ -444,7 +217,11 @@ function getRemoteDocument (url, options) {
   } else {
     // Return the cached version
     allTasks = allTasks.then(function () {
-      return cacheEntry.value;
+      if (isType(cacheEntry.error, 'Error')) {
+        throw cacheEntry.error;
+      } else {
+        return cacheEntry.value;
+      }
     });
   }
 
@@ -486,6 +263,14 @@ function isType (obj, type) {
   }
 }
 
+function makeAbsolute (location) {
+  if (location.indexOf('://') === -1 && !path.isAbsolute(location)) {
+    return path.resolve(process.cwd(), location);
+  } else {
+    return location;
+  }
+}
+
 function makeRefFilter (options) {
   var refFilter;
   var validTypes;
@@ -523,9 +308,136 @@ function makeSubDocPath (options) {
   return subDocPath;
 }
 
+function markMissing (refDetails, err) {
+  // TODO: Store the full error
+  refDetails.error = err.message;
+  refDetails.missing = true;
+}
+
 function parseURI (uri) {
   // We decode first to avoid doubly encoding
   return URI.parse(encodeURI(decodeURI(uri)));
+}
+
+function buildRefModel (document, options, metadata) {
+  var allTasks = Promise.resolve();
+  var subDocPtr = pathToPtr(options.subDocPath);
+  var absLocation = makeAbsolute(options.location);
+  var docDepKey = absLocation + subDocPtr;
+  var refs;
+  var rOptions;
+
+  // Store the document in the metadata if necessary
+  if (isType(metadata.docs[absLocation], 'Undefined')) {
+    metadata.docs[absLocation] = document;
+  }
+
+  // If there are no dependencies stored for the location+subDocPath, we've never seen it before and will process it
+  if (isType(metadata.deps[docDepKey], 'Undefined')) {
+    metadata.deps[docDepKey] = {};
+
+    // Find the references based on the options
+    refs = findRefs(document, options);
+
+    // Iterate over the references and process
+    Object.keys(refs).forEach(function (refPtr) {
+      var refDetails = refs[refPtr];
+      var refKey = makeAbsolute(options.location) + refPtr;
+      var refdKey = refDetails.refdId = makeAbsolute(isRemote(refDetails) ?
+                                                       combineURIs(options.relativeBase, refDetails.uri) :
+                                                       options.location) + '#' +
+                                          (refDetails.uri.indexOf('#') > -1 ?
+                                             refDetails.uri.split('#')[1] :
+                                             '');
+
+      // Record reference metadata
+      metadata.refs[refKey] = refDetails;
+
+      // Do not process invalid references
+      if (!isValid(refDetails)) {
+        return;
+      }
+
+      // Record dependency (relative to the document's sub-document path)
+      metadata.deps[docDepKey][refPtr === subDocPtr ? '#' : refPtr.replace(subDocPtr + '/', '#/')] = refdKey;
+
+      // Do not process directly-circular references (to an ancestor or self)
+      if (refKey.indexOf(refdKey + '/') === 0) {
+        refDetails.circular = true;
+
+        return;
+      }
+
+      // Prepare the options for subsequent processDocument calls
+      rOptions = clone(options);
+
+      rOptions.subDocPath = isType(refDetails.uriDetails.fragment, 'Undefined') ?
+                                     [] :
+                                     pathFromPtr(decodeURI(refDetails.uriDetails.fragment));
+
+      // Resolve the reference
+      if (isRemote(refDetails)) {
+        // The new location being referenced
+        rOptions.location = refdKey.split('#')[0];
+        // When processing relative references in the referenced document, use its base as the relative base
+        rOptions.relativeBase = path.dirname(rOptions.location);
+
+        allTasks = allTasks
+          .then(function (nMetadata, nOptions) {
+            return function () {
+              var rAbsLocation = makeAbsolute(nOptions.location);
+              var rDoc = nMetadata.docs[rAbsLocation];
+
+              if (isType(rDoc, 'Undefined')) {
+                // We have no cache so we must retrieve the document
+                return getRemoteDocument(rAbsLocation, nOptions)
+                        .catch(function (err) {
+                          // Store the response in the document cache
+                          nMetadata.docs[rAbsLocation] = err;
+
+                          // Return the error to allow the subsequent `then` to handle both errors and successes
+                          return err;
+                        });
+              } else {
+                // We have already retrieved (or attempted to) the document and should use the cached version in the
+                // metadata since it could already be processed some.
+                return Promise.resolve()
+                  .then(function () {
+                    return rDoc;
+                  });
+              }
+            };
+          }(metadata, rOptions));
+      } else {
+        allTasks = allTasks
+          .then(function () {
+            return document;
+          });
+      }
+
+      // Process the remote document or the referenced portion of the local document
+      allTasks = allTasks
+        .then(function (nMetadata, nOptions, nRefDetails) {
+          return function (doc) {
+            if (isType(doc, 'Error')) {
+              markMissing(nRefDetails, doc);
+            } else {
+              // Wrapped in a try/catch since findRefs throws
+              try {
+                return buildRefModel(doc, nOptions, nMetadata)
+                  .catch(function (err) {
+                    markMissing(nRefDetails, err);
+                  });
+              } catch (err) {
+                markMissing(nRefDetails, err);
+              }
+            }
+          };
+        }(metadata, rOptions, refDetails));
+    });
+  }
+
+  return allTasks;
 }
 
 function setValue (obj, refPath, value) {
@@ -561,9 +473,9 @@ function walk (ancestors, node, path, fn) {
         });
       }
     }
-  }
 
-  ancestors.pop();
+    ancestors.pop();
+  }
 }
 
 function validateOptions (options, obj) {
@@ -613,6 +525,19 @@ function validateOptions (options, obj) {
     }
   }
 
+  // options.location is not officially supported yet but will be when Issue 88 is complete
+  if (isType(options.location, 'Undefined')) {
+    options.location = combineURIs(options.relativeBase, './root.json');
+  }
+
+  // Just to be safe, remove any accidental fragment as it would break things
+  options.location = combineURIs(options.location, undefined);
+
+  // TODO: Add warning for options.relativeBase usage
+
+  // Update the relative base based on the retrieved location
+  options.relativeBase = path.dirname(options.location);
+
   return options;
 }
 
@@ -641,14 +566,15 @@ function validateOptions (options, obj) {
  * the JSON References are invalid will be included in the returned metadata.)*
  * @param {object} [loaderOptions] - The options to pass to
  * {@link https://github.com/whitlockjc/path-loader/blob/master/docs/API.md#module_PathLoader.load|PathLoader~load}
+ * @param {string} [location=root.json] - The location of the document being processed
  * @param {module:JsonRefs~RefPreProcessor} [refPreProcessor] - The callback used to pre-process a JSON Reference like
  * object *(This is called prior to validating the JSON Reference like object and getting its details)*
  * @param {module:JsonRefs~RefPostProcessor} [refPostProcessor] - The callback used to post-process the JSON Reference
  * metadata *(This is called prior filtering the references)*
- * @param {string} [options.relativeBase] - The base location to use when resolving relative references *(Only useful
- * for APIs that do remote reference resolution.  If this value is not defined,
- * {@link https://github.com/whitlockjc/path-loader|path-loader} will use `window.location.href` for the browser and
- * `process.cwd()` for Node.js.)*
+ * @param {string} [options.relativeBase] - The base location to use when resolving relative references *(Deprecated,
+ * use `options.location` instead.  Only useful for APIs that do remote reference resolution.  If this value is not
+ * defined, {@link https://github.com/whitlockjc/path-loader|path-loader} will use `window.location.href` for the
+ * browser and `process.cwd()` for Node.js.)*
  * @param {string|string[]} [options.subDocPath=[]] - The JSON Pointer or array of path segments to the sub document
  * location to search from
  */
@@ -848,6 +774,7 @@ function findRefs (obj, options) {
        function (ancestors, node, path) {
          var processChildren = true;
          var refDetails;
+         var refPtr;
 
          if (isRefLike(node)) {
            // Pre-process the node when necessary
@@ -863,7 +790,9 @@ function findRefs (obj, options) {
            }
 
            if (options.filter(refDetails, path)) {
-             refs[pathToPtr(path)] = refDetails;
+             refPtr = pathToPtr(path);
+
+             refs[refPtr] = refDetails;
            }
 
            // Whenever a JSON Reference has extra children, its children should not be processed.
@@ -919,18 +848,24 @@ function findRefsAt (location, options) {
         throw new TypeError('location must be a string');
       }
 
+      if (isType(options, 'Undefined')) {
+        options = {};
+      }
+
+      if (isType(options, 'Object')) {
+        // Combine the location and the optional relative base
+        options.location = combineURIs(options.relativeBase, location);
+      }
+
       // Validate options
       options = validateOptions(options);
 
-      // Combine the location and the optional relative base
-      location = combineURIs(options.relativeBase, location);
-
-      return getRemoteDocument(location, options);
+      return getRemoteDocument(options.location, options);
     })
     .then(function (res) {
-      var cacheEntry = clone(remoteCache[location]);
+      var cacheEntry = clone(remoteCache[options.location]);
       var cOptions = clone(options);
-      var uriDetails = parseURI(location);
+      var uriDetails = parseURI(options.location);
 
       if (isType(cacheEntry.refs, 'Undefined')) {
         // Do not filter any references so the cache is complete
@@ -939,7 +874,7 @@ function findRefsAt (location, options) {
 
         cOptions.includeInvalid = true;
 
-        remoteCache[location].refs = findRefs(res, cOptions);
+        remoteCache[options.location].refs = findRefs(res, cOptions);
       }
 
       // Add the filter options back
@@ -1209,85 +1144,228 @@ function resolveRefs (obj, options) {
       obj = clone(obj);
     })
     .then(function () {
-      return findRefsRecursive(obj, options, [], [], {
-        documents: {},
-        refs: {}
-      });
+      var metadata = {
+        deps: {}, // To avoid processing the same refernece twice, and for circular reference identification
+        docs: {}, // Cache to avoid processing the same document more than once
+        refs: {} // Reference locations and their metadata
+      };
+
+      return buildRefModel(obj, options, metadata)
+        .then(function () {
+          return metadata;
+        });
     })
-    .then(function (allRefs) {
-      var deferredRefs = {};
-      var refs = {};
+    .then(function (results) {
+      var allRefs = {};
+      var circularPaths = [];
+      var circulars = [];
+      var depGraph = new gl.Graph();
+      var fullLocation = makeAbsolute(options.location);
+      var refsRoot = fullLocation + pathToPtr(options.subDocPath);
 
-      function pathSorter (p1, p2) {
-        return pathFromPtr(p1).length - pathFromPtr(p2).length;
-      }
+      // Identify circulars
 
-      // Resolve all references with a known value
-      Object.keys(allRefs.refs).sort(pathSorter).forEach(function (refPtr) {
-        var refDetails = allRefs.refs[refPtr];
-
-        // Record all direct references
-        if (!refDetails.indirect) {
-          refs[refPtr] = refDetails;
-        }
-
-        // Delete helper property
-        delete refDetails.indirect;
-
-        if (isType(refDetails.error, 'Undefined') && refDetails.type !== 'invalid') {
-          if (isType(refDetails.value, 'Undefined') && refDetails.circular) {
-            refDetails.value = refDetails.def;
-          }
-
-          // We defer processing all references without a value until later
-          if (isType(refDetails.value, 'Undefined')) {
-            deferredRefs[refPtr] = refDetails;
-          } else {
-            if (refPtr === '#') {
-              obj = refDetails.value;
-            } else {
-              setValue(obj, pathFromPtr(refPtr), refDetails.value);
-            }
-
-            // Delete helper property
-            delete refDetails.ancestorPtrs;
-          }
-        } else {
-          // Delete helper property
-          delete refDetails.ancestorPtrs;
-        }
+      // Add nodes first
+      Object.keys(results.deps).forEach(function (node) {
+        depGraph.setNode(node);
       });
 
-      // Resolve all deferred references
-      Object.keys(deferredRefs).forEach(function (refPtr) {
-        var refDetails = deferredRefs[refPtr];
+      // Add edges
+      Object.keys(results.deps).forEach(function (node) {
+        Object.keys(results.deps[node]).forEach(function (prop) {
+          depGraph.setEdge(node, results.deps[node][prop]);
+        });
+      });
 
-        // Attempt to resolve the value against all if its ancestors in order
-        refDetails.ancestorPtrs.forEach(function (ancestorPtr, index) {
-          if (isType(refDetails.value, 'Undefined')) {
-            try {
-              refDetails.value = findValue(allRefs.documents[ancestorPtr], pathFromPtr(refDetails.uri));
+      circularPaths = gl.alg.findCycles(depGraph);
 
-              // Delete helper property
-              delete refDetails.ancestorPtrs;
+      // Create a unique list of circulars
+      circularPaths.forEach(function (path) {
+        path.forEach(function (seg) {
+          addIfNotPresent(circulars, seg);
+        });
+      });
 
-              setValue(obj, pathFromPtr(refPtr), refDetails.value);
-            } catch (err) {
-              if (index === refDetails.ancestorPtrs.length - 1) {
-                refDetails.error = err.message;
-                refDetails.missing = true;
+      // Process circulars
+      Object.keys(results.deps).forEach(function (node) {
+        Object.keys(results.deps[node]).forEach(function (prop) {
+          var isCircular = false;
+          var refPtr = node + prop.slice(1);
+          var refd = results.deps[node][prop];
+          var refDetails = results.refs[node + prop.slice(1)];
+          var remote = isRemote(refDetails);
+          var pathIndex;
 
-                // Delete helper property
-                delete refDetails.ancestorPtrs;
+          if (circulars.indexOf(refd) > -1) {
+            // Figure out if the circular is part of a circular chain or just a reference to a circular
+            circularPaths.forEach(function (path) {
+              // Short circuit
+              if (isCircular) {
+                return;
+              }
+
+              pathIndex = path.indexOf(refd);
+
+              if (pathIndex > -1) {
+                // Check each path segment to see if the reference location is beneath one of its segments
+                path.forEach(function (seg) {
+                  // Short circuit
+                  if (isCircular) {
+                    return;
+                  }
+
+                  if (refPtr.indexOf(seg + '/') === 0) {
+                    // If the reference is local, mark it as circular but if it's a remote reference, only mark it
+                    // circular if the matching path is the last path segment.
+                    if ((remote && pathIndex === path.length - 1) || !remote) {
+                      isCircular = true;
+                    }
+                  }
+                });
+              }
+            });
+          }
+
+          if (isCircular) {
+            // Update all references and reference details
+            refDetails.circular = true;
+          }
+        });
+      });
+
+      // Resolve the references
+      Object.keys(results.deps).forEach(function (parentPtr) {
+        var pPtrParts = parentPtr.split('#');
+        var pDocument = results.docs[pPtrParts[0]];
+        var pPtrPath = pathFromPtr(pPtrParts[1]);
+
+        Object.keys(results.deps[parentPtr]).forEach(function (prop) {
+          var childPtr = results.deps[parentPtr][prop];
+          var cPtrParts = childPtr.split('#');
+          var cDocument = results.docs[cPtrParts[0]];
+          var cPtrPath = pPtrPath.concat(pathFromPtr(prop));
+          var refDetails = results.refs[pPtrParts[0] + pathToPtr(cPtrPath)];
+
+          // Resolve reference if valid
+          if (isType(refDetails.error, 'Undefined')
+              && isType(refDetails.missing, 'Undefined')) {
+            if (refDetails.circular) {
+              refDetails.value = refDetails.def;
+            } else {
+              try {
+                refDetails.value = findValue(cDocument, pathFromPtr(cPtrParts[1]));
+              } catch (err) {
+                markMissing(refDetails, err);
+
+                return;
+              }
+
+              // If the reference is at the root of the document, replace the document in the cache.  Otherwise, replace
+              // the value in the appropriate location in the document cache.
+              if (pPtrParts[1] === '' && prop === '#') {
+                results.docs[pPtrParts[0]] = refDetails.value;
+              } else {
+                setValue(pDocument, cPtrPath, refDetails.value);
               }
             }
           }
         });
       });
 
+      function walkRefs (root, refPtr, refPath) {
+        var refDetails = results.refs[refPtr];
+        var refDeps;
+
+        // Record the reference (relative to the root document)
+        allRefs[pathToPtr(options.subDocPath.concat(refPath))] = refDetails;
+
+        // Do not walk invalid references
+        if (refDetails.circular || !isValid(refDetails)) {
+          // Sanitize errors
+          if (!refDetails.circular && refDetails.error) {
+            // The way we use findRefs now results in an error that doesn't match the expectation
+            refDetails.error = refDetails.error.replace('options.subDocPath', 'JSON Pointer');
+
+            // Update the error to use the appropriate JSON Pointer
+            if (refDetails.error.indexOf('#') > -1) {
+              refDetails.error = refDetails.error.replace(refDetails.uri.substr(refDetails.uri.indexOf('#')),
+                                                          refDetails.uri);
+            }
+
+            // Report errors opening files as JSON Pointer errors
+            if (refDetails.error.indexOf('ENOENT:') === 0 || refDetails.error.indexOf('Not Found') === 0) {
+              refDetails.error = 'JSON Pointer points to missing location: ' + refDetails.uri;
+            }
+          }
+
+          return;
+        }
+
+        refDeps = results.deps[refDetails.refdId];
+
+        if (refDetails.refdId.indexOf(root) !== 0) {
+          Object.keys(refDeps).forEach(function (prop) {
+            walkRefs(refDetails.refdId, refDetails.refdId + prop.substr(1), refPath.concat(pathFromPtr(prop)));
+          });
+        }
+      }
+
+      // For performance reasons, we only process a document (or sub document) and each reference once ever.  This means
+      // that if we want to provide the full picture as to what paths in the resolved document were created as a result
+      // of a reference, we have to take our fully-qualified reference locations and expand them to be all local based
+      // on the original document.
+      Object.keys(results.refs).forEach(function (refPtr) {
+        // We only want to process references found at or beneath the provided document and sub-document path
+        if (refPtr.indexOf(refsRoot) !== 0) {
+          return;
+        }
+
+        walkRefs(refsRoot, refPtr, pathFromPtr(refPtr.substr(refsRoot.length)));
+      });
+
+      // Sanitize the reference details
+      Object.keys(results.refs).forEach(function (refPtr) {
+        var refDetails = results.refs[refPtr];
+
+        // Delete the reference id used for dependency tracking and circular identification
+        delete refDetails.refdId;
+      });
+
+      // circularPaths.forEach(function (path) {
+      //   console.log(path.join(' -> '));
+      // });
+
+      // Object.keys(allRefs).forEach(function (refPtr) {
+      //   var refDetails = allRefs[refPtr];
+
+      //   console.log('%s (c: %s, m: %s, v: %s)-> %s',
+      //               refPtr,
+      //               refDetails.circular ? 'yes': 'no',
+      //               refDetails.missing ? 'yes' : 'no',
+      //               refDetails.error ? 'yes' : 'no',
+      //               refDetails.refdId);
+      // });
+
+      // console.log('Dependencies');
+      // console.log('------------');
+      // Object.keys(results.deps).forEach(function (dep) {
+      //   console.log(dep);
+      //   Object.keys(results.deps[dep]).forEach(function (prop) {
+      //     console.log('  %s -> %s', prop, results.deps[dep][prop]);
+      //   });
+      // });
+      // console.log();
+
+      // console.log('References');
+      // console.log('----------');
+      // Object.keys(results.refs).forEach(function (refPtr) {
+      //   console.log('  %s -> %s', refPtr, results.refs[refPtr].uri);
+      // });
+      // console.log();
+
       return {
-        refs: refs,
-        resolved: obj
+        refs: allRefs,
+        resolved: results.docs[fullLocation]
       };
     });
 
@@ -1333,25 +1411,28 @@ function resolveRefsAt (location, options) {
         throw new TypeError('location must be a string');
       }
 
+      if (isType(options, 'Undefined')) {
+        options = {};
+      }
+
+      if (isType(options, 'Object')) {
+        // Combine the location and the optional relative base
+        options.location = combineURIs(options.relativeBase, location);
+      }
+
       // Validate options
       options = validateOptions(options);
 
-      // Combine the location and the optional relative base
-      location = combineURIs(options.relativeBase, location);
-
-      return getRemoteDocument(location, options);
+      return getRemoteDocument(options.location, options);
     })
     .then(function (res) {
       var cOptions = clone(options);
-      var uriDetails = parseURI(location);
+      var uriDetails = parseURI(options.location);
 
       // Set the sub document path if necessary
       if (!isType(uriDetails.fragment, 'Undefined')) {
         cOptions.subDocPath = pathFromPtr(decodeURI(uriDetails.fragment));
       }
-
-      // Update the relative base based on the retrieved location
-      cOptions.relativeBase = path.dirname(location);
 
       return resolveRefs(res, cOptions)
         .then(function (res2) {

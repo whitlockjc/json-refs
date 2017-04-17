@@ -78,10 +78,14 @@ remote:
     $ref: 'https://rawgit.com/whitlockjc/json-refs/master/package.json#/name'
   relative:
     $ref: './nested/test-nested.yaml'
+  relative-missing:
+    $ref: './missing.yaml'
   relative-with-hash:
     $ref: './nested/test-nested.yaml#/name'
   relative-with-hash2:
     $ref: './test-types.yaml#/definitions/Person'
+  relative-with-hash3:
+    $ref: './test-types.yaml#/missing'
 
 # A reference with extra properties that should produce a warning
 warning:

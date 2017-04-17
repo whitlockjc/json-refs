@@ -1,8 +1,12 @@
 ## Release Notes
 
+### v2.2.0 TBD
+
+* Resolver rewrite *(Issues #80, #87, #88, #89, #97, #100, #101 and #103)*
+
 ### v2.1.6 (2016-06-14)
 
-* Fixed a bug where identifying circular references failed for local, indirect references *(Issue #82)_
+* Fixed a bug where identifying circular references failed for local, indirect references *(Issue #82)*
 
 ### v2.1.5 (2016-02-02)
 

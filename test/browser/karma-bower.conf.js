@@ -11,6 +11,7 @@ module.exports = function (config) {
     basePath: '.',
     frameworks: ['mocha'],
     files: [
+      {pattern: 'vendor/lodash.min.js', watch: false}, // Manually loaded first to avoid graphlib load issue
       {pattern: 'vendor/**/*', watch: false, included: true},
       {pattern: 'json-refs.js', watch: false, included: true},
       {pattern: 'test-browser.js', watch: false, included: true},

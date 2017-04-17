@@ -275,6 +275,8 @@ describe('json-refs CLI', function () {
             '',
             '  #/invalid: HTTP URIs must have a host.',
             '  #/missing: JSON Pointer points to missing location: #/some/missing/path',
+            '  #/remote/relative-missing: JSON Pointer points to missing location: ./missing.yaml',
+            '  #/remote/relative-with-hash3: JSON Pointer points to missing location: ./test-types.yaml#/missing',
             '  #/remote/relative/child/ancestor/missing: JSON Pointer points to missing location: #/some/missing/path',
             '  #/remote/relative/child/missing: JSON Pointer points to missing location: #/some/missing/path',
             '  #/remote/relative/missing: JSON Pointer points to missing location: #/some/missing/path',
@@ -368,6 +370,8 @@ describe('json-refs CLI', function () {
             '',
             '  #/invalid: HTTP URIs must have a host.',
             '  #/missing: JSON Pointer points to missing location: #/some/missing/path',
+            '  #/remote/relative-missing: JSON Pointer points to missing location: ./missing.yaml',
+            '  #/remote/relative-with-hash3: JSON Pointer points to missing location: ./test-types.yaml#/missing',
             '  #/remote/relative/child/ancestor/missing: JSON Pointer points to missing location: #/some/missing/path',
             '  #/remote/relative/child/missing: JSON Pointer points to missing location: #/some/missing/path',
             '  #/remote/relative/missing: JSON Pointer points to missing location: #/some/missing/path',
@@ -397,17 +401,13 @@ describe('json-refs CLI', function () {
 
     describe('issues', function () {
       describe('Issue #67', function () {
+        // Since the ancestor is a circular, the fact it is marked as such and not marked as missing is enough of a test
         var expectedOutput = [
           '',
           '  error: Document has invalid references:',
           '',
-          '  #/ancestor/deferred: JSON Pointer points to missing location: #/project/name',
           '  #/ancestor/missing: JSON Pointer points to missing location: #/some/missing/path',
-          '  #/ancestor/nested/child/deferred: JSON Pointer points to missing location: #/project/name',
-          '  #/ancestor/nested/child/missing: JSON Pointer points to missing location: #/some/missing/path',
-          '  #/ancestor/nested/deferred: JSON Pointer points to missing location: #/project/name',
           '  #/ancestor/nested/missing: JSON Pointer points to missing location: #/some/missing/path',
-          '  #/deferred: JSON Pointer points to missing location: #/project/name',
           '  #/missing: JSON Pointer points to missing location: #/some/missing/path',
           '',
           '',

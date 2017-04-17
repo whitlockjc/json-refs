@@ -3,7 +3,5 @@ ancestor:
   $ref: ../test-document-1.yaml
 local:
   $ref: '#/name'
-deferred:
-  $ref: '#/project/name'
 missing:
   $ref: '#/some/missing/path'
