@@ -22,10 +22,10 @@
     "test"
   ],
   "dependencies": {
-    "path-loader": "~1.0.1",
+    "path-loader": "~1.0.2",
     "graphlib": "^2.1.1"
   },
   "devDependencies": {
-    "mocha": "~2.3.4"
+    "mocha": "~3.2.0"
   }
 }

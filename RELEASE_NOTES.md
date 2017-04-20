@@ -3,6 +3,7 @@
 ### v2.2.0 TBD
 
 * Resolver rewrite *(Issues #80, #87, #88, #89, #97, #100, #101 and #103)*
+* Updated dependencies for security *(Issues #108, #109)*
 
 ### v2.1.6 (2016-06-14)
 
