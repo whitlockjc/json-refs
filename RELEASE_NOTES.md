@@ -1,5 +1,9 @@
 ## Release Notes
 
+### v2.1.7 (2017-04-22)
+
+* Updated dependencies for security *(Issues #108, #109)*
+
 ### v2.1.6 (2016-06-14)
 
 * Fixed a bug where identifying circular references failed for local, indirect references *(Issue #82)_
