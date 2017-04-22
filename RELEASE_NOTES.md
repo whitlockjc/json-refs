@@ -1,8 +1,18 @@
 ## Release Notes
 
-### v2.2.0 TBD
+### TBD
 
-* Resolver rewrite *(Issues #80, #87, #88, #89, #97, #100, #101 and #103)*
+* Added `options.location` to allow for better relative reference resolution
+* Removed `options.relativeBase` as it's too confusing and easier to get right using `options.location`
+* Fixed accidental feature of resolver that would that resolved remote references against parent documents *(Issue #100)*
+* Fixed issue where circular reference in remote documents were not handled properly *(Issue #97)*
+* Fixed issue where references to the root document were not marked as circular at proper depth *(Issue #88)*
+* Fixed issue where documents could be resolved more than once *(Issues #87, #89 and #103)*
+* Fixed issue with remote references not being fully resolved *(Issue #80)*
+* Rewrote resolver for accuracy and efficiency *(Issues #80, #87, #88, #89, #97, #100 and #103)*
+
+### v2.1.7 (2017-04-22)
+
 * Updated dependencies for security *(Issues #108, #109)*
 
 ### v2.1.6 (2016-06-14)
