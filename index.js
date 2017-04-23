@@ -474,6 +474,9 @@ function validateOptions (options, obj) {
 
   if (!_.isObject(options)) {
     throw new TypeError('options must be an Object');
+  } else if (!_.isUndefined(options.resolveCirculars) &&
+             !_.isBoolean(options.resolveCirculars)) {
+    throw new TypeError('options.resolveCirculars must be a Boolean');
   } else if (!_.isUndefined(options.filter) &&
              !_.isArray(options.filter) &&
              !_.isFunction(options.filter) &&
@@ -496,6 +499,11 @@ function validateOptions (options, obj) {
              !isPtr(options.subDocPath)) {
     // If a pointer is provided, throw an error if it's not the proper type
     throw new TypeError('options.subDocPath must be an Array of path segments or a valid JSON Pointer');
+  }
+
+  // Default to false for allowing circulars
+  if (_.isUndefined(options.resolveCirculars)) {
+    options.resolveCirculars = false;
   }
 
   options.filter = makeRefFilter(options);
@@ -564,6 +572,7 @@ function validateOptions (options, obj) {
  * object *(This is called prior to validating the JSON Reference like object and getting its details)*
  * @param {module:JsonRefs~RefPostProcessor} [refPostProcessor] - The callback used to post-process the JSON Reference
  * metadata *(This is called prior filtering the references)*
+ * @param {boolean} [resolveCirculars=false] - Whether to resolve circular references
  * @param {string|string[]} [options.subDocPath=[]] - The JSON Pointer or array of path segments to the sub document
  * location to search from
  */
@@ -1239,7 +1248,7 @@ function resolveRefs (obj, options) {
 
           // Resolve reference if valid
           if (_.isUndefined(refDetails.error) && _.isUndefined(refDetails.missing)) {
-            if (refDetails.circular) {
+            if (!options.resolveCirculars && refDetails.circular) {
               refDetails.value = refDetails.def;
             } else {
               try {

@@ -39,6 +39,7 @@ The options used for various JsonRefs APIs.
 
 | Param | Type | Default | Description |
 | --- | --- | --- | --- |
+| [allowCircular] | <code>boolean</code> | <code>false</code> | Whether or not to allow resolution to create circular documents |
 | [filter] | <code>string</code> &#124; <code>Array.&lt;string&gt;</code> &#124; <code>function</code> | <code>&quot;function () {return true;}&quot;</code> | The filter to use when gathering JSON References *(If this value is a single string or an array of strings, the value(s) are expected to be the `type(s)` you are interested in collecting as described in [getRefDetails](#module_JsonRefs.getRefDetails).  If it is a function, it is expected that the function behaves like [RefDetailsFilter](#module_JsonRefs..RefDetailsFilter).)* |
 | [includeInvalid] | <code>boolean</code> | <code>false</code> | Whether or not to include invalid JSON Reference details *(This will make it so that objects that are like JSON Reference objects, as in they are an `Object` and the have a `$ref` property, but fail validation will be included.  This is very useful for when you want to know if you have invalid JSON Reference definitions.  This will not mean that APIs will process invalid JSON References but the reasons as to why the JSON References are invalid will be included in the returned metadata.)* |
 | [loaderOptions] | <code>object</code> |  | The options to pass to [PathLoader~load](https://github.com/whitlockjc/path-loader/blob/master/docs/API.md#module_PathLoader.load) |

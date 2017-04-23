@@ -1081,6 +1081,50 @@ describe('json-refs API', function () {
       .then(done, done);
     });
 
+    describe('should support options.resolveCirculars', function () {
+      it('invalid type', function (done) {
+        JsonRefs.resolveRefs({}, {resolveCirculars: 'nope'})
+          .then(function () {
+            throw new Error('Should had failed');
+          })
+          .catch(function (err) {
+            assert.equal(err.message, 'options.resolveCirculars must be a Boolean');
+          })
+          .then(done, done);
+      });
+
+      it('valid value', function (done) {
+        JsonRefs.resolveRefs(testDocument, {
+          resolveCirculars: true,
+          loaderOptions: {
+            processContent: yamlContentProcessor
+          },
+          location: testDocumentLocation
+        })
+          .then(function (res) {
+            var circularPtrs = {
+              '#/circular/ancestor': res.resolved.circular,
+              '#/circular/root': res.resolved,
+              '#/circular/User/properties/status': res.resolved.circular.Status,
+              '#/circular/Status/properties/user': res.resolved.circular.User,
+              '#/circular/Status/properties/message': res.resolved.circular.Message,
+              '#/circular/Message/properties/author': res.resolved.circular.User,
+              '#/circular/StatusWrapper/properties/status': res.resolved.circular.Status,
+              '#/remote/relative/child/ancestor/nested': res.resolved.remote.relative,
+              '#/remote/relative-with-hash2/properties/family/items': res.resolved.remote['relative-with-hash2']
+            };
+
+            _.each(circularPtrs, function (circularValue, circularPtr) {
+              // Validate resolved value
+              assert.deepEqual(_.get(res.resolved, JsonRefs.pathFromPtr(circularPtr)), circularValue);
+              // validate the reference metadata value
+              assert.deepEqual(res.refs[circularPtr].value, circularValue);
+            });
+          })
+          .then(done, done);
+      });
+    });
+
     it('should support options.subDocPath', function (done) {
       JsonRefs.resolveRefs(testDocument, {
         loaderOptions: {
