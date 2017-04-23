@@ -35,9 +35,8 @@ To use the Bower install, your HTML includes might look like this:
 
 The standalone binaries come in two flavors:
 
-* [json-refs-standalone.js](https://raw.github.com/whitlockjc/json-refs/master/browser/json-refs-standalone.js): _420kb_, full source source maps
-* [json-refs-standalone-min.js](https://raw.github.com/whitlockjc/json-refs/master/browser/json-refs-standalone-min.js): _48kb_, minified, compressed
-and no sourcemap
+* [json-refs-standalone.js](https://raw.github.com/whitlockjc/json-refs/master/browser/json-refs-standalone.js): _1,904kb_, full source source maps
+* [json-refs-standalone-min.js](https://raw.github.com/whitlockjc/json-refs/master/browser/json-refs-standalone-min.js): _140kb_, minified, compressed and no sourcemap
 
 Of course, these links are for the master builds so feel free to download from the release of your choice.  Once you've
 gotten them downloaded, to use the standalone binaries, your HTML include might look like this:

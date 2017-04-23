@@ -557,9 +557,10 @@ function validateOptions (options, obj) {
  * the JSON References are invalid will be included in the returned metadata.)*
  * @param {object} [loaderOptions] - The options to pass to
  * {@link https://github.com/whitlockjc/path-loader/blob/master/docs/API.md#module_PathLoader.load|PathLoader~load}
- * @param {string} [location=root.json] - The location of the document being processed *(If this value is relative,
- * {@link https://github.com/whitlockjc/path-loader|path-loader} will use `window.location.href` for the browser and
- * `process.cwd()` for Node.js.)*
+ * @param {string} [location=root.json] - The location of the document being processed  *(This property is only useful
+ * when resolving references as it will be used to locate relative references found within the document being resolved.
+ * If this value is relative, {@link https://github.com/whitlockjc/path-loader|path-loader} will use
+ * `window.location.href` for the browser and `process.cwd()` for Node.js.)*
  * @param {module:JsonRefs~RefPreProcessor} [refPreProcessor] - The callback used to pre-process a JSON Reference like
  * object *(This is called prior to validating the JSON Reference like object and getting its details)*
  * @param {module:JsonRefs~RefPostProcessor} [refPostProcessor] - The callback used to post-process the JSON Reference
