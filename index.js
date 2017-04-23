@@ -31,7 +31,8 @@
  * @module JsonRefs
  */
 
-var clone = require('clone');
+// Cherry-pick lodash components to help with size
+var _ = require('lodash');
 var gl = require('graphlib');
 var path = require('path');
 var PathLoader = require('path-loader');
@@ -53,18 +54,12 @@ if (typeof Promise === 'undefined') {
 
 /* Internal Functions */
 
-function addIfNotPresent (arr, val) {
-  if (arr.indexOf(val) === -1) {
-    arr.push(val);
-  }
-}
-
 function combineQueryParams (qs1, qs2) {
   var combined = {};
 
   function mergeQueryParams (obj) {
-    Object.keys(obj).forEach(function (key) {
-      combined[key] = obj[key];
+    _.each(obj, function (val, key) {
+      combined[key] = val;
     });
   }
 
@@ -76,24 +71,24 @@ function combineQueryParams (qs1, qs2) {
 
 function combineURIs (u1, u2) {
   // Convert Windows paths
-  if (isType(u1, 'String')) {
+  if (_.isString(u1)) {
     u1 = slash(u1);
   }
 
-  if (isType(u2, 'String')) {
+  if (_.isString(u2)) {
     u2 = slash(u2);
   }
 
-  var u2Details = parseURI(isType(u2, 'Undefined') ? '' : u2);
+  var u2Details = parseURI(_.isUndefined(u2) ? '' : u2);
   var u1Details;
   var combinedDetails;
 
   if (remoteUriTypes.indexOf(u2Details.reference) > -1) {
     combinedDetails = u2Details;
   } else {
-    u1Details = isType(u1, 'Undefined') ? undefined : parseURI(u1);
+    u1Details = _.isUndefined(u1) ? undefined : parseURI(u1);
 
-    if (!isType(u1Details, 'Undefined')) {
+    if (!_.isUndefined(u1Details)) {
       combinedDetails = u1Details;
 
       // Join the paths
@@ -138,12 +133,13 @@ function isRemote (refDetails) {
 }
 
 function isValid (refDetails) {
-  return isType(refDetails.error, 'Undefined') && refDetails.type !== 'invalid';
+  return _.isUndefined(refDetails.error) && refDetails.type !== 'invalid';
 }
 
 function findValue (obj, path) {
   var value = obj;
 
+  // Using this manual approach instead of _.get since we have to decodeURI the segments
   path.forEach(function (seg) {
     seg = decodeURI(seg);
 
@@ -185,11 +181,11 @@ function getRefType (refDetails) {
 function getRemoteDocument (url, options) {
   var cacheEntry = remoteCache[url];
   var allTasks = Promise.resolve();
-  var loaderOptions = clone(options.loaderOptions || {});
+  var loaderOptions = _.cloneDeep(options.loaderOptions || {});
 
-  if (isType(cacheEntry, 'Undefined')) {
+  if (_.isUndefined(cacheEntry)) {
     // If there is no content processor, default to processing the raw response as JSON
-    if (isType(loaderOptions.processContent, 'Undefined')) {
+    if (_.isUndefined(loaderOptions.processContent)) {
       loaderOptions.processContent = function (res, callback) {
         callback(undefined, JSON.parse(res.text));
       };
@@ -217,7 +213,7 @@ function getRemoteDocument (url, options) {
   } else {
     // Return the cached version
     allTasks = allTasks.then(function () {
-      if (isType(cacheEntry.error, 'Error')) {
+      if (_.isError(cacheEntry.error)) {
         throw cacheEntry.error;
       } else {
         return cacheEntry.value;
@@ -227,7 +223,7 @@ function getRemoteDocument (url, options) {
 
   // Return a cloned version to avoid updating the cache
   allTasks = allTasks.then(function (res) {
-    return clone(res);
+    return _.cloneDeep(res);
   });
 
   return allTasks;
@@ -237,9 +233,9 @@ function isRefLike (obj, throwWithDetails) {
   var refLike = true;
 
   try {
-    if (!isType(obj, 'Object')) {
+    if (!_.isPlainObject(obj)) {
       throw new Error('obj is not an Object');
-    } else if (!isType(obj.$ref, 'String')) {
+    } else if (!_.isString(obj.$ref)) {
       throw new Error('obj.$ref is not a String');
     }
   } catch (err) {
@@ -251,16 +247,6 @@ function isRefLike (obj, throwWithDetails) {
   }
 
   return refLike;
-}
-
-function isType (obj, type) {
-  // A PhantomJS bug (https://github.com/ariya/phantomjs/issues/11722) prohibits us from using the same approach for
-  // undefined checking that we use for other types.
-  if (type === 'Undefined') {
-    return typeof obj === 'undefined';
-  } else {
-    return Object.prototype.toString.call(obj) === '[object ' + type + ']';
-  }
 }
 
 function makeAbsolute (location) {
@@ -275,15 +261,15 @@ function makeRefFilter (options) {
   var refFilter;
   var validTypes;
 
-  if (isType(options.filter, 'Array') || isType(options.filter, 'String')) {
-    validTypes = isType(options.filter, 'String') ? [options.filter] : options.filter;
+  if (_.isArray(options.filter) || _.isString(options.filter)) {
+    validTypes = _.isString(options.filter) ? [options.filter] : options.filter;
     refFilter = function (refDetails) {
       // Check the exact type or for invalid URIs, check its original type
       return validTypes.indexOf(refDetails.type) > -1 || validTypes.indexOf(getRefType(refDetails)) > -1;
     };
-  } else if (isType(options.filter, 'Function')) {
+  } else if (_.isFunction(options.filter)) {
     refFilter = options.filter;
-  } else if (isType(options.filter, 'Undefined')) {
+  } else if (_.isUndefined(options.filter)) {
     refFilter = function () {
       return true;
     };
@@ -297,11 +283,11 @@ function makeRefFilter (options) {
 function makeSubDocPath (options) {
   var subDocPath;
 
-  if (isType(options.subDocPath, 'Array')) {
+  if (_.isArray(options.subDocPath)) {
     subDocPath = options.subDocPath;
-  } else if (isType(options.subDocPath, 'String')) {
+  } else if (_.isString(options.subDocPath)) {
     subDocPath = pathFromPtr(options.subDocPath);
-  } else if (isType(options.subDocPath, 'Undefined')) {
+  } else if (_.isUndefined(options.subDocPath)) {
     subDocPath = [];
   }
 
@@ -329,20 +315,19 @@ function buildRefModel (document, options, metadata) {
   var rOptions;
 
   // Store the document in the metadata if necessary
-  if (isType(metadata.docs[absLocation], 'Undefined')) {
+  if (_.isUndefined(metadata.docs[absLocation])) {
     metadata.docs[absLocation] = document;
   }
 
   // If there are no dependencies stored for the location+subDocPath, we've never seen it before and will process it
-  if (isType(metadata.deps[docDepKey], 'Undefined')) {
+  if (_.isUndefined(metadata.deps[docDepKey])) {
     metadata.deps[docDepKey] = {};
 
     // Find the references based on the options
     refs = findRefs(document, options);
 
     // Iterate over the references and process
-    Object.keys(refs).forEach(function (refPtr) {
-      var refDetails = refs[refPtr];
+    _.each(refs, function (refDetails, refPtr) {
       var refKey = makeAbsolute(options.location) + refPtr;
       var refdKey = refDetails.refdId = makeAbsolute(isRemote(refDetails) ?
                                                        combineURIs(relativeBase, refDetails.uri) :
@@ -370,9 +355,9 @@ function buildRefModel (document, options, metadata) {
       }
 
       // Prepare the options for subsequent processDocument calls
-      rOptions = clone(options);
+      rOptions = _.cloneDeep(options);
 
-      rOptions.subDocPath = isType(refDetails.uriDetails.fragment, 'Undefined') ?
+      rOptions.subDocPath = _.isUndefined(refDetails.uriDetails.fragment) ?
                                      [] :
                                      pathFromPtr(decodeURI(refDetails.uriDetails.fragment));
 
@@ -387,7 +372,7 @@ function buildRefModel (document, options, metadata) {
               var rAbsLocation = makeAbsolute(nOptions.location);
               var rDoc = nMetadata.docs[rAbsLocation];
 
-              if (isType(rDoc, 'Undefined')) {
+              if (_.isUndefined(rDoc)) {
                 // We have no cache so we must retrieve the document
                 return getRemoteDocument(rAbsLocation, nOptions)
                         .catch(function (err) {
@@ -418,7 +403,7 @@ function buildRefModel (document, options, metadata) {
       allTasks = allTasks
         .then(function (nMetadata, nOptions, nRefDetails) {
           return function (doc) {
-            if (isType(doc, 'Error')) {
+            if (_.isError(doc)) {
               markMissing(nRefDetails, doc);
             } else {
               // Wrapped in a try/catch since findRefs throws
@@ -453,7 +438,7 @@ function walk (ancestors, node, path, fn) {
   }
 
   // Call the iteratee
-  if (isType(fn, 'Function')) {
+  if (_.isFunction(fn)) {
     processChildren = fn(ancestors, node, path);
   }
 
@@ -462,13 +447,13 @@ function walk (ancestors, node, path, fn) {
     ancestors.push(node);
 
     if (processChildren !== false) {
-      if (isType(node, 'Array')) {
+      if (_.isArray(node)) {
         node.forEach(function (member, index) {
           walkItem(member, index.toString());
         });
-      } else if (isType(node, 'Object')) {
-        Object.keys(node).forEach(function (key) {
-          walkItem(node[key], key);
+      } else if (_.isObject(node)) {
+        _.each(node, function (cNode, key) {
+          walkItem(cNode, key);
         });
       }
     }
@@ -480,34 +465,35 @@ function walk (ancestors, node, path, fn) {
 function validateOptions (options, obj) {
   var locationParts;
 
-  if (isType(options, 'Undefined')) {
+  if (_.isUndefined(options)) {
     // Default to an empty options object
     options = {};
   } else {
     // Clone the options so we do not alter the ones passed in
-    options = clone(options);
+    options = _.cloneDeep(options);
   }
 
-  if (!isType(options, 'Object')) {
+  if (!_.isObject(options)) {
     throw new TypeError('options must be an Object');
-  } else if (!isType(options.filter, 'Undefined') &&
-             !isType(options.filter, 'Array') &&
-             !isType(options.filter, 'Function') &&
-             !isType(options.filter, 'String')) {
+  } else if (!_.isUndefined(options.filter) &&
+             !_.isArray(options.filter) &&
+             !_.isFunction(options.filter) &&
+             !_.isString(options.filter)) {
     throw new TypeError('options.filter must be an Array, a Function of a String');
-  } else if (!isType(options.includeInvalid, 'Undefined') &&
-             !isType(options.includeInvalid, 'Boolean')) {
+  } else if (!_.isUndefined(options.includeInvalid) &&
+             !_.isBoolean(options.includeInvalid)) {
     throw new TypeError('options.includeInvalid must be a Boolean');
-  } else if (!isType(options.location, 'Undefined') && !isType(options.location, 'String')) {
+  } else if (!_.isUndefined(options.location) &&
+             !_.isString(options.location)) {
     throw new TypeError('options.location must be a String');
-  } else if (!isType(options.refPreProcessor, 'Undefined') &&
-             !isType(options.refPreProcessor, 'Function')) {
+  } else if (!_.isUndefined(options.refPreProcessor) &&
+             !_.isFunction(options.refPreProcessor)) {
     throw new TypeError('options.refPreProcessor must be a Function');
-  } else if (!isType(options.refPostProcessor, 'Undefined') &&
-             !isType(options.refPostProcessor, 'Function')) {
+  } else if (!_.isUndefined(options.refPostProcessor) &&
+             !_.isFunction(options.refPostProcessor)) {
     throw new TypeError('options.refPostProcessor must be a Function');
-  } else if (!isType(options.subDocPath, 'Undefined') &&
-             !isType(options.subDocPath, 'Array') &&
+  } else if (!_.isUndefined(options.subDocPath) &&
+             !_.isArray(options.subDocPath) &&
              !isPtr(options.subDocPath)) {
     // If a pointer is provided, throw an error if it's not the proper type
     throw new TypeError('options.subDocPath must be an Array of path segments or a valid JSON Pointer');
@@ -516,7 +502,7 @@ function validateOptions (options, obj) {
   options.filter = makeRefFilter(options);
 
   // options.location is not officially supported yet but will be when Issue 88 is complete
-  if (isType(options.location, 'Undefined')) {
+  if (_.isUndefined(options.location)) {
     options.location = makeAbsolute('./root.json');
   }
 
@@ -533,7 +519,7 @@ function validateOptions (options, obj) {
   // Set the subDocPath to avoid everyone else having to compute it
   options.subDocPath = makeSubDocPath(options);
 
-  if (!isType(obj, 'Undefined')) {
+  if (!_.isUndefined(obj)) {
     try {
       findValue(obj, options.subDocPath);
     } catch (err) {
@@ -698,12 +684,12 @@ function clearCache () {
  * @alias module:JsonRefs.decodePath
  */
 function decodePath (path) {
-  if (!isType(path, 'Array')) {
+  if (!_.isArray(path)) {
     throw new TypeError('path must be an array');
   }
 
   return path.map(function (seg) {
-    if (!isType(seg, 'String')) {
+    if (!_.isString(seg)) {
       seg = JSON.stringify(seg);
     }
 
@@ -725,12 +711,12 @@ function decodePath (path) {
  * @alias module:JsonRefs.encodePath
  */
 function encodePath (path) {
-  if (!isType(path, 'Array')) {
+  if (!_.isArray(path)) {
     throw new TypeError('path must be an array');
   }
 
   return path.map(function (seg) {
-    if (!isType(seg, 'String')) {
+    if (!_.isString(seg)) {
       seg = JSON.stringify(seg);
     }
 
@@ -763,7 +749,7 @@ function findRefs (obj, options) {
   var refs = {};
 
   // Validate the provided document
-  if (!isType(obj, 'Array') && !isType(obj, 'Object')) {
+  if (!_.isArray(obj) && !_.isObject(obj)) {
     throw new TypeError('obj must be an Array or an Object');
   }
 
@@ -773,7 +759,7 @@ function findRefs (obj, options) {
   // Walk the document (or sub document) and find all JSON References
   walk(findAncestors(obj, options.subDocPath),
        findValue(obj, options.subDocPath),
-       clone(options.subDocPath),
+       _.cloneDeep(options.subDocPath),
        function (ancestors, node, path) {
          var processChildren = true;
          var refDetails;
@@ -781,14 +767,14 @@ function findRefs (obj, options) {
 
          if (isRefLike(node)) {
            // Pre-process the node when necessary
-           if (!isType(options.refPreProcessor, 'Undefined')) {
-             node = options.refPreProcessor(clone(node), path);
+           if (!_.isUndefined(options.refPreProcessor)) {
+             node = options.refPreProcessor(_.cloneDeep(node), path);
            }
 
            refDetails = getRefDetails(node);
 
            // Post-process the reference details
-           if (!isType(options.refPostProcessor, 'Undefined')) {
+           if (!_.isUndefined(options.refPostProcessor)) {
              refDetails = options.refPostProcessor(refDetails, path);
            }
 
@@ -847,15 +833,15 @@ function findRefsAt (location, options) {
   allTasks = allTasks
     .then(function () {
       // Validate the provided location
-      if (!isType(location, 'String')) {
+      if (!_.isString(location)) {
         throw new TypeError('location must be a string');
       }
 
-      if (isType(options, 'Undefined')) {
+      if (_.isUndefined(options)) {
         options = {};
       }
 
-      if (isType(options, 'Object')) {
+      if (_.isObject(options)) {
         // Add the location to the options for processing/validation
         options.location = location;
       }
@@ -866,11 +852,11 @@ function findRefsAt (location, options) {
       return getRemoteDocument(options.location, options);
     })
     .then(function (res) {
-      var cacheEntry = clone(remoteCache[options.location]);
-      var cOptions = clone(options);
+      var cacheEntry = _.cloneDeep(remoteCache[options.location]);
+      var cOptions = _.cloneDeep(options);
       var uriDetails = parseURI(options.location);
 
-      if (isType(cacheEntry.refs, 'Undefined')) {
+      if (_.isUndefined(cacheEntry.refs)) {
         // Do not filter any references so the cache is complete
         delete cOptions.filter;
         delete cOptions.subDocPath;
@@ -881,13 +867,13 @@ function findRefsAt (location, options) {
       }
 
       // Add the filter options back
-      if (!isType(options.filter, 'Undefined')) {
+      if (!_.isUndefined(options.filter)) {
         cOptions.filter = options.filter;
       }
 
-      if (!isType(uriDetails.fragment, 'Undefined')) {
+      if (!_.isUndefined(uriDetails.fragment)) {
         cOptions.subDocPath = pathFromPtr(decodeURI(uriDetails.fragment));
-      } else if (!isType(uriDetails.subDocPath, 'Undefined')) {
+      } else if (!_.isUndefined(uriDetails.subDocPath)) {
         cOptions.subDocPath = options.subDocPath;
       }
 
@@ -923,14 +909,14 @@ function getRefDetails (obj) {
       cacheKey = obj.$ref;
       uriDetails = uriDetailsCache[cacheKey];
 
-      if (isType(uriDetails, 'Undefined')) {
+      if (_.isUndefined(uriDetails)) {
         uriDetails = uriDetailsCache[cacheKey] = parseURI(cacheKey);
       }
 
       details.uri = cacheKey;
       details.uriDetails = uriDetails;
 
-      if (isType(uriDetails.error, 'Undefined')) {
+      if (_.isUndefined(uriDetails.error)) {
         details.type = getRefType(details);
       } else {
         details.error = details.uriDetails.error;
@@ -992,7 +978,7 @@ function isPtr (ptr, throwWithDetails) {
   var firstChar;
 
   try {
-    if (isType(ptr, 'String')) {
+    if (_.isString(ptr)) {
       if (ptr !== '') {
         firstChar = ptr.charAt(0);
 
@@ -1096,7 +1082,7 @@ function pathFromPtr (ptr) {
  * @alias module:JsonRefs.pathToPtr
  */
 function pathToPtr (path, hashPrefix) {
-  if (!isType(path, 'Array')) {
+  if (!_.isArray(path)) {
     throw new Error('path must be an Array');
   }
 
@@ -1136,7 +1122,7 @@ function resolveRefs (obj, options) {
   allTasks = allTasks
     .then(function () {
       // Validate the provided document
-      if (!isType(obj, 'Array') && !isType(obj, 'Object')) {
+      if (!_.isArray(obj) && !_.isObject(obj)) {
         throw new TypeError('obj must be an Array or an Object');
       }
 
@@ -1144,7 +1130,7 @@ function resolveRefs (obj, options) {
       options = validateOptions(options, obj);
 
       // Clone the input so we do not alter it
-      obj = clone(obj);
+      obj = _.cloneDeep(obj);
     })
     .then(function () {
       var metadata = {
@@ -1174,9 +1160,9 @@ function resolveRefs (obj, options) {
       });
 
       // Add edges
-      Object.keys(results.deps).forEach(function (node) {
-        Object.keys(results.deps[node]).forEach(function (prop) {
-          depGraph.setEdge(node, results.deps[node][prop]);
+      _.each(results.deps, function (props, node) {
+        _.each(props, function (dep) {
+          depGraph.setEdge(node, dep);
         });
       });
 
@@ -1185,21 +1171,22 @@ function resolveRefs (obj, options) {
       // Create a unique list of circulars
       circularPaths.forEach(function (path) {
         path.forEach(function (seg) {
-          addIfNotPresent(circulars, seg);
+          if (circulars.indexOf(seg) === -1) {
+            circulars.push(seg);
+          }
         });
       });
 
       // Process circulars
-      Object.keys(results.deps).forEach(function (node) {
-        Object.keys(results.deps[node]).forEach(function (prop) {
+      _.each(results.deps, function (props, node) {
+        _.each(props, function (dep, prop) {
           var isCircular = false;
           var refPtr = node + prop.slice(1);
-          var refd = results.deps[node][prop];
           var refDetails = results.refs[node + prop.slice(1)];
           var remote = isRemote(refDetails);
           var pathIndex;
 
-          if (circulars.indexOf(refd) > -1) {
+          if (circulars.indexOf(dep) > -1) {
             // Figure out if the circular is part of a circular chain or just a reference to a circular
             circularPaths.forEach(function (path) {
               // Short circuit
@@ -1207,7 +1194,7 @@ function resolveRefs (obj, options) {
                 return;
               }
 
-              pathIndex = path.indexOf(refd);
+              pathIndex = path.indexOf(dep);
 
               if (pathIndex > -1) {
                 // Check each path segment to see if the reference location is beneath one of its segments
@@ -1237,26 +1224,24 @@ function resolveRefs (obj, options) {
       });
 
       // Resolve the references
-      Object.keys(results.deps).forEach(function (parentPtr) {
+      _.each(results.deps, function (deps, parentPtr) {
         var pPtrParts = parentPtr.split('#');
         var pDocument = results.docs[pPtrParts[0]];
         var pPtrPath = pathFromPtr(pPtrParts[1]);
 
-        Object.keys(results.deps[parentPtr]).forEach(function (prop) {
-          var childPtr = results.deps[parentPtr][prop];
-          var cPtrParts = childPtr.split('#');
-          var cDocument = results.docs[cPtrParts[0]];
-          var cPtrPath = pPtrPath.concat(pathFromPtr(prop));
-          var refDetails = results.refs[pPtrParts[0] + pathToPtr(cPtrPath)];
+        _.each(deps, function (dep, prop) {
+          var depParts = dep.split('#');
+          var dDocument = results.docs[depParts[0]];
+          var dPtrPath = pPtrPath.concat(pathFromPtr(prop));
+          var refDetails = results.refs[pPtrParts[0] + pathToPtr(dPtrPath)];
 
           // Resolve reference if valid
-          if (isType(refDetails.error, 'Undefined')
-              && isType(refDetails.missing, 'Undefined')) {
+          if (_.isUndefined(refDetails.error) && _.isUndefined(refDetails.missing)) {
             if (refDetails.circular) {
               refDetails.value = refDetails.def;
             } else {
               try {
-                refDetails.value = findValue(cDocument, pathFromPtr(cPtrParts[1]));
+                refDetails.value = findValue(dDocument, pathFromPtr(depParts[1]));
               } catch (err) {
                 markMissing(refDetails, err);
 
@@ -1268,7 +1253,7 @@ function resolveRefs (obj, options) {
               if (pPtrParts[1] === '' && prop === '#') {
                 results.docs[pPtrParts[0]] = refDetails.value;
               } else {
-                setValue(pDocument, cPtrPath, refDetails.value);
+                setValue(pDocument, dPtrPath, refDetails.value);
               }
             }
           }
@@ -1327,44 +1312,10 @@ function resolveRefs (obj, options) {
       });
 
       // Sanitize the reference details
-      Object.keys(results.refs).forEach(function (refPtr) {
-        var refDetails = results.refs[refPtr];
-
+      _.each(results.refs, function (refDetails) {
         // Delete the reference id used for dependency tracking and circular identification
         delete refDetails.refdId;
       });
-
-      // circularPaths.forEach(function (path) {
-      //   console.log(path.join(' -> '));
-      // });
-
-      // Object.keys(allRefs).forEach(function (refPtr) {
-      //   var refDetails = allRefs[refPtr];
-
-      //   console.log('%s (c: %s, m: %s, v: %s)-> %s',
-      //               refPtr,
-      //               refDetails.circular ? 'yes': 'no',
-      //               refDetails.missing ? 'yes' : 'no',
-      //               refDetails.error ? 'yes' : 'no',
-      //               refDetails.refdId);
-      // });
-
-      // console.log('Dependencies');
-      // console.log('------------');
-      // Object.keys(results.deps).forEach(function (dep) {
-      //   console.log(dep);
-      //   Object.keys(results.deps[dep]).forEach(function (prop) {
-      //     console.log('  %s -> %s', prop, results.deps[dep][prop]);
-      //   });
-      // });
-      // console.log();
-
-      // console.log('References');
-      // console.log('----------');
-      // Object.keys(results.refs).forEach(function (refPtr) {
-      //   console.log('  %s -> %s', refPtr, results.refs[refPtr].uri);
-      // });
-      // console.log();
 
       return {
         refs: allRefs,
@@ -1410,15 +1361,15 @@ function resolveRefsAt (location, options) {
   allTasks = allTasks
     .then(function () {
       // Validate the provided location
-      if (!isType(location, 'String')) {
+      if (!_.isString(location)) {
         throw new TypeError('location must be a string');
       }
 
-      if (isType(options, 'Undefined')) {
+      if (_.isUndefined(options)) {
         options = {};
       }
 
-      if (isType(options, 'Object')) {
+      if (_.isObject(options)) {
         // Add the location to the options for processing/validation
         options.location = location;
       }
@@ -1429,11 +1380,11 @@ function resolveRefsAt (location, options) {
       return getRemoteDocument(options.location, options);
     })
     .then(function (res) {
-      var cOptions = clone(options);
+      var cOptions = _.cloneDeep(options);
       var uriDetails = parseURI(options.location);
 
       // Set the sub document path if necessary
-      if (!isType(uriDetails.fragment, 'Undefined')) {
+      if (!_.isUndefined(uriDetails.fragment)) {
         cOptions.subDocPath = pathFromPtr(decodeURI(uriDetails.fragment));
       }
 

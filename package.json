@@ -63,10 +63,10 @@
     "vinyl-source-stream": "~1.1.0"
   },
   "dependencies": {
-    "clone": "^2.1.1",
     "commander": "^2.9.0",
     "graphlib": "^2.1.1",
     "js-yaml": "^3.8.3",
+    "lodash": "^4.17.4",
     "native-promise-only": "^0.8.1",
     "path-loader": "^1.0.2",
     "slash": "^1.0.0",
