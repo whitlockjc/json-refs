@@ -11,6 +11,7 @@
 * Fixed issue where documents could be resolved more than once *(Issues #87, #89 and #103)*
 * Fixed issue with remote references not being fully resolved *(Issue #80)*
 * Rewrote resolver for accuracy and efficiency *(Issues #80, #87, #88, #89, #97, #100 and #103)*
+* Updated `#pathFromPtr` to include the reason why `#isPtr` fails *(Issue #85)*
 
 ### v2.1.7 (2017-04-22)
 

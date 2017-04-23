@@ -295,7 +295,6 @@ function makeSubDocPath (options) {
 }
 
 function markMissing (refDetails, err) {
-  // TODO: Store the full error
   refDetails.error = err.message;
   refDetails.missing = true;
 }
@@ -1056,8 +1055,10 @@ function isRef (obj, throwWithDetails) {
  * @alias module:JsonRefs.pathFromPtr
  */
 function pathFromPtr (ptr) {
-  if (!isPtr(ptr)) {
-    throw new Error('ptr must be a JSON Pointer');
+  try {
+    isPtr(ptr, true);
+  } catch (err) {
+    throw new Error('ptr must be a JSON Pointer: ' + err.message);
   }
 
   var segments = ptr.split('/');

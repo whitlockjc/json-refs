@@ -974,11 +974,9 @@ describe('json-refs API', function () {
 
   describe('#pathFromPtr', function () {
     it('should return the expected value', function () {
-      var invalidArgError = new Error('ptr must be a JSON Pointer');
-
       runTestScenarios([
-        [[undefined], invalidArgError],
-        [['./some/path'], invalidArgError],
+        [[undefined], new Error('ptr must be a JSON Pointer: ptr is not a String')],
+        [['./some/path'], new Error('ptr must be a JSON Pointer: ptr must start with a / or #/')],
         [['#'], []],
         [[''], []],
         [['#/some/path'], ['some', 'path']],
