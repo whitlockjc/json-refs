@@ -5,6 +5,7 @@
 * Added `options.location` to allow for better relative reference resolution
 * Removed `options.relativeBase` as it's too confusing and easier to get right using `options.location`
 * Fixed accidental feature of resolver that would that resolved remote references against parent documents *(Issue #100)*
+* Fixed issue where `json-refs resolve` did not handle a location with a fragment in it *(Issue #104)*
 * Fixed issue where circular reference in remote documents were not handled properly *(Issue #97)*
 * Fixed issue where references to the root document were not marked as circular at proper depth *(Issue #88)*
 * Fixed issue where documents could be resolved more than once *(Issues #87, #89 and #103)*

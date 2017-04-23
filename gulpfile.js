@@ -137,7 +137,6 @@ gulp.task('test-node', function (cb) {
         .on('finish', function () {
           gulp.src([
             './test/test-json-refs.js',
-            './test/test-issues.js',
             './test/test-cli.js'
           ])
             .pipe($.mocha({
@@ -189,8 +188,7 @@ gulp.task('test-browser', ['browserify'], function (cb) {
 
       return new Promise(function (resolve, reject) {
         var b = browserify([
-          './test/test-json-refs.js',
-          './test/test-issues.js'
+          './test/test-json-refs.js'
         ], {
           debug: true
         });

@@ -478,6 +478,8 @@ function walk (ancestors, node, path, fn) {
 }
 
 function validateOptions (options, obj) {
+  var locationParts;
+
   if (isType(options, 'Undefined')) {
     // Default to an empty options object
     options = {};
@@ -496,6 +498,8 @@ function validateOptions (options, obj) {
   } else if (!isType(options.includeInvalid, 'Undefined') &&
              !isType(options.includeInvalid, 'Boolean')) {
     throw new TypeError('options.includeInvalid must be a Boolean');
+  } else if (!isType(options.location, 'Undefined') && !isType(options.location, 'String')) {
+    throw new TypeError('options.location must be a String');
   } else if (!isType(options.refPreProcessor, 'Undefined') &&
              !isType(options.refPreProcessor, 'Function')) {
     throw new TypeError('options.refPreProcessor must be a Function');
@@ -511,6 +515,21 @@ function validateOptions (options, obj) {
 
   options.filter = makeRefFilter(options);
 
+  // options.location is not officially supported yet but will be when Issue 88 is complete
+  if (isType(options.location, 'Undefined')) {
+    options.location = makeAbsolute('./root.json');
+  }
+
+  locationParts = options.location.split('#');
+
+  // If options.location contains a fragment, turn it into an options.subDocPath
+  if (locationParts.length > 1) {
+    options.subDocPath = '#' + locationParts[1];
+  }
+
+  // Just to be safe, remove any accidental fragment as it would break things
+  options.location = combineURIs(options.location, undefined);
+
   // Set the subDocPath to avoid everyone else having to compute it
   options.subDocPath = makeSubDocPath(options);
 
@@ -523,14 +542,6 @@ function validateOptions (options, obj) {
       throw err;
     }
   }
-
-  // options.location is not officially supported yet but will be when Issue 88 is complete
-  if (isType(options.location, 'Undefined')) {
-    options.location = makeAbsolute('./root.json');
-  }
-
-  // Just to be safe, remove any accidental fragment as it would break things
-  options.location = combineURIs(options.location, undefined);
 
   return options;
 }

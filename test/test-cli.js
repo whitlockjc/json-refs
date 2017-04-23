@@ -92,6 +92,8 @@ var resolveHelp = [
   ''
 ].join('\n');
 
+var testDocumentLocation = path.join(__dirname, 'browser', 'documents', 'test-document.yaml');
+
 function executeJsonRefs (args, done, cwd) {
   var options;
 
@@ -239,7 +241,6 @@ describe('json-refs CLI', function () {
     });
 
     describe('valid location', function () {
-      var testDocumentLocation = path.join(__dirname, 'browser', 'documents', 'test-document.yaml');
       var httpServer;
 
       before(function (done) {
@@ -400,6 +401,28 @@ describe('json-refs CLI', function () {
     });
 
     describe('issues', function () {
+      describe('Issue 104', function () {
+        it('should handle locations with a fragment', function (done) {
+          var subDocPath = '#/array';
+
+          this.timeout(10000);
+
+          executeJsonRefs(['resolve', testDocumentLocation + subDocPath], function (stderr, stdout) {
+            var cOptions = _.cloneDeep(jsonRefsOptions);
+
+            assert.equal(stderr, '');
+
+            cOptions.subDocPath = subDocPath;
+
+            JsonRefs.resolveRefsAt(testDocumentLocation, cOptions)
+              .then(function (results) {
+                assert.equal(stdout, JSON.stringify(results.resolved, null, 2) + '\n');
+              })
+              .then(done, done);
+          });
+        });
+      });
+
       describe('Issue #67', function () {
         // Since the ancestor is a circular, the fact it is marked as such and not marked as missing is enough of a test
         var expectedOutput = [
