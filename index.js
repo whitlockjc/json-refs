@@ -323,6 +323,7 @@ function buildRefModel (document, options, metadata) {
   var allTasks = Promise.resolve();
   var subDocPtr = pathToPtr(options.subDocPath);
   var absLocation = makeAbsolute(options.location);
+  var relativeBase = path.dirname(options.location);
   var docDepKey = absLocation + subDocPtr;
   var refs;
   var rOptions;
@@ -344,7 +345,7 @@ function buildRefModel (document, options, metadata) {
       var refDetails = refs[refPtr];
       var refKey = makeAbsolute(options.location) + refPtr;
       var refdKey = refDetails.refdId = makeAbsolute(isRemote(refDetails) ?
-                                                       combineURIs(options.relativeBase, refDetails.uri) :
+                                                       combineURIs(relativeBase, refDetails.uri) :
                                                        options.location) + '#' +
                                           (refDetails.uri.indexOf('#') > -1 ?
                                              refDetails.uri.split('#')[1] :
@@ -379,8 +380,6 @@ function buildRefModel (document, options, metadata) {
       if (isRemote(refDetails)) {
         // The new location being referenced
         rOptions.location = refdKey.split('#')[0];
-        // When processing relative references in the referenced document, use its base as the relative base
-        rOptions.relativeBase = path.dirname(rOptions.location);
 
         allTasks = allTasks
           .then(function (nMetadata, nOptions) {
@@ -527,16 +526,11 @@ function validateOptions (options, obj) {
 
   // options.location is not officially supported yet but will be when Issue 88 is complete
   if (isType(options.location, 'Undefined')) {
-    options.location = combineURIs(options.relativeBase, './root.json');
+    options.location = makeAbsolute('./root.json');
   }
 
   // Just to be safe, remove any accidental fragment as it would break things
   options.location = combineURIs(options.location, undefined);
-
-  // TODO: Add warning for options.relativeBase usage
-
-  // Update the relative base based on the retrieved location
-  options.relativeBase = path.dirname(options.location);
 
   return options;
 }
@@ -566,15 +560,13 @@ function validateOptions (options, obj) {
  * the JSON References are invalid will be included in the returned metadata.)*
  * @param {object} [loaderOptions] - The options to pass to
  * {@link https://github.com/whitlockjc/path-loader/blob/master/docs/API.md#module_PathLoader.load|PathLoader~load}
- * @param {string} [location=root.json] - The location of the document being processed
+ * @param {string} [location=root.json] - The location of the document being processed *(If this value is relative,
+ * {@link https://github.com/whitlockjc/path-loader|path-loader} will use `window.location.href` for the browser and
+ * `process.cwd()` for Node.js.)*
  * @param {module:JsonRefs~RefPreProcessor} [refPreProcessor] - The callback used to pre-process a JSON Reference like
  * object *(This is called prior to validating the JSON Reference like object and getting its details)*
  * @param {module:JsonRefs~RefPostProcessor} [refPostProcessor] - The callback used to post-process the JSON Reference
  * metadata *(This is called prior filtering the references)*
- * @param {string} [options.relativeBase] - The base location to use when resolving relative references *(Deprecated,
- * use `options.location` instead.  Only useful for APIs that do remote reference resolution.  If this value is not
- * defined, {@link https://github.com/whitlockjc/path-loader|path-loader} will use `window.location.href` for the
- * browser and `process.cwd()` for Node.js.)*
  * @param {string|string[]} [options.subDocPath=[]] - The JSON Pointer or array of path segments to the sub document
  * location to search from
  */
@@ -853,8 +845,8 @@ function findRefsAt (location, options) {
       }
 
       if (isType(options, 'Object')) {
-        // Combine the location and the optional relative base
-        options.location = combineURIs(options.relativeBase, location);
+        // Add the location to the options for processing/validation
+        options.location = location;
       }
 
       // Validate options
@@ -1416,8 +1408,8 @@ function resolveRefsAt (location, options) {
       }
 
       if (isType(options, 'Object')) {
-        // Combine the location and the optional relative base
-        options.location = combineURIs(options.relativeBase, location);
+        // Add the location to the options for processing/validation
+        options.location = location;
       }
 
       // Validate options

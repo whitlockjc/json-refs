@@ -34,13 +34,15 @@ var path = require('path');
 var URI = require('uri-js');
 var YAML = require('js-yaml');
 
-var documentBase = path.join(__dirname, 'browser', 'documents');
 var ofTypeError = new TypeError('options.filter must be an Array, a Function of a String');
 var osdpTypeError = new TypeError('options.subDocPath must be an Array of path segments or a valid JSON Pointer');
 var osdpMissingError = new Error('options.subDocPath points to missing location: #/missing');
 var objTypeError = new TypeError('obj must be an Array or an Object');
 var optionsTypeError = new TypeError('options must be an Object');
-var relativeBase = typeof window === 'undefined' ? documentBase : 'base/documents';
+var testDocumentLocation = path.join(typeof window === 'undefined' ?
+                                       path.join(__dirname, 'browser', 'documents') :
+                                       'base/documents',
+                                     'test-document.yaml');
 // These variables do not use documentBase because doing so breaks browserify's brfs transform
 var testDocument = YAML.safeLoad(fs.readFileSync(path.join(__dirname, 'browser', 'documents', 'test-document.yaml'),
                                                  'utf-8'));
@@ -848,11 +850,10 @@ describe('json-refs API', function () {
     });
 
     it('should handle a valid location', function (done) {
-      JsonRefs.findRefsAt('./test-document.yaml', {
+      JsonRefs.findRefsAt(testDocumentLocation, {
         loaderOptions: {
           processContent: yamlContentProcessor
         },
-        relativeBase: relativeBase
       })
         .then(function (res) {
           assert.deepEqual(res, {
@@ -1007,7 +1008,6 @@ describe('json-refs API', function () {
         loaderOptions: {
           processContent: yamlContentProcessor
         },
-        relativeBase: relativeBase
       })
         .then(function (res) {
           var refDetails;
@@ -1037,7 +1037,7 @@ describe('json-refs API', function () {
         loaderOptions: {
           processContent: yamlContentProcessor
         },
-        relativeBase: relativeBase
+        location: testDocumentLocation
       })
         .then(function (res) {
           // Make sure the original document is unchanged
@@ -1068,7 +1068,7 @@ describe('json-refs API', function () {
         loaderOptions: {
           processContent: yamlContentProcessor
         },
-        location: path.join(relativeBase, 'test-document.yaml'),
+        location: testDocumentLocation,
         subDocPath: '#/remote/relative'
       })
         .then(function (res) {
@@ -1185,7 +1185,7 @@ describe('json-refs API', function () {
         loaderOptions: {
           processContent: yamlContentProcessor
         },
-        location: path.join(relativeBase, 'test-document.yaml'),
+        location: testDocumentLocation
       })
         .then(function (res) {
           var expectedAllResolvedRefs = _.cloneDeep(expectedValidResolveRefs);
@@ -1220,45 +1220,23 @@ describe('json-refs API', function () {
         .then(done, done);
     });
 
-    describe('should return the expected value', function () {
-      it('with options.relativeBase', function (done) {
-        JsonRefs.resolveRefsAt('./test-document.yaml', {
-          loaderOptions: {
-            processContent: yamlContentProcessor
-          },
-          relativeBase: relativeBase
+    it('should return the expected value', function (done) {
+      JsonRefs.resolveRefsAt(testDocumentLocation, {
+        loaderOptions: {
+          processContent: yamlContentProcessor
+        }
+      })
+        .then(function (res) {
+          // Validate the retrieved document
+          assert.deepEqual(res.value, testDocument);
+
+          // Validate the resolved document
+          assert.deepEqual(res.resolved, expectedFullyResolved);
+
+          // Validate the reference metadata
+          validateResolvedRefDetails(res.refs, expectedValidResolveRefs);
         })
-          .then(function (res) {
-            // Validate the retrieved document
-            assert.deepEqual(res.value, testDocument);
-
-            // Validate the resolved document
-            assert.deepEqual(res.resolved, expectedFullyResolved);
-
-            // Validate the reference metadata
-            validateResolvedRefDetails(res.refs, expectedValidResolveRefs);
-          })
-          .then(done, done);
-      });
-
-      it('without options.relativeBase', function (done) {
-        JsonRefs.resolveRefsAt(path.join(relativeBase, './test-document.yaml'), {
-          loaderOptions: {
-            processContent: yamlContentProcessor
-          }
-        })
-          .then(function (res) {
-            // Validate the retrieved document
-            assert.deepEqual(res.value, testDocument);
-
-            // Validate the resolved document
-            assert.deepEqual(res.resolved, expectedFullyResolved);
-
-            // Validate the reference metadata
-            validateResolvedRefDetails(res.refs, expectedValidResolveRefs);
-          })
-          .then(done, done);
-      });
+        .then(done, done);
     });
   });
 });

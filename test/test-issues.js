@@ -33,8 +33,7 @@ var path = require('path');
 var URI = require('uri-js');
 var YAML = require('js-yaml');
 
-var documentBase = path.join(__dirname, 'browser', 'documents');
-var relativeBase = typeof window === 'undefined' ? documentBase : 'base/documents';
+var documentBase = typeof window === 'undefined' ? path.join(__dirname, 'browser', 'documents') : 'base/documents';
 var personDocument = require('./browser/documents/{id}/person.json');
 
 describe('json-refs Issues', function () {
@@ -78,13 +77,14 @@ describe('json-refs Issues', function () {
 
   describe('Issue #67', function () {
     it('should handle relative locations for #findRefsAt and #resolveRefsAt', function (done) {
-      JsonRefs.resolveRefsAt('../documents/test-document.yaml', {
+      JsonRefs.resolveRefsAt('../' + path.relative(path.dirname(process.cwd()),
+                                                   path.join(documentBase, 'test-document.yaml')), {
         loaderOptions: {
           processContent: function (res, callback) {
             callback(undefined, YAML.safeLoad(res.text));
           }
         },
-        relativeBase: relativeBase
+        location: path.join(documentBase, 'test-document.yaml')
       })
         .then(function (results) {
           // Make sure there are no unresolvable references except the expected ones
@@ -259,7 +259,9 @@ describe('json-refs Issues', function () {
           }
         };
 
-        JsonRefs.resolveRefs(doc)
+        JsonRefs.resolveRefs(doc, {
+          location: path.join(documentBase, 'root.json')
+        })
           .then(function (results) {
             var refDetails = results.refs['#/ref'];
 
@@ -293,7 +295,7 @@ describe('json-refs Issues', function () {
         };
 
         JsonRefs.resolveRefs(doc, {
-          location: relativeBase + '/root.json'
+          location: path.join(documentBase, 'root.json')
         })
           .then(function (results) {
             assert.deepEqual(results, {
@@ -329,7 +331,7 @@ describe('json-refs Issues', function () {
         };
 
         JsonRefs.resolveRefs(doc, {
-          location: relativeBase + '/root.json'
+          location: path.join(documentBase, 'root.json')
         })
           .then(function (results) {
             assert.deepEqual(results, {
