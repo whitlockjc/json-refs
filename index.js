@@ -362,6 +362,8 @@ function buildRefModel (document, options, metadata) {
 
       // Resolve the reference
       if (isRemote(refDetails)) {
+        // Delete filter.options because all remote references should be fully resolved
+        delete rOptions.filter;
         // The new location being referenced
         rOptions.location = refdKey.split('#')[0];
 

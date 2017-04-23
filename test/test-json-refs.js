@@ -1081,6 +1081,31 @@ describe('json-refs API', function () {
       .then(done, done);
     });
 
+    it('should support options.filter', function (done) {
+      JsonRefs.resolveRefs(testDocument, {
+        filter: ['relative', 'remote'],
+        loaderOptions: {
+          processContent: yamlContentProcessor
+        },
+        location: testDocumentLocation
+      }).then(function (res) {
+        var rootRefs = JsonRefs.findRefs(testDocument);
+
+        _.each(rootRefs, function (refDetails, refPtr) {
+          var ptrPath = JsonRefs.pathFromPtr(refPtr);
+
+          if (['relative', 'remote'].indexOf(refDetails.type) > -1) {
+            assert.ok(!_.isUndefined(res.refs[refPtr]));
+            assert.deepEqual(_.get(res.resolved, ptrPath), _.get(expectedFullyResolved, ptrPath));
+          } else {
+            assert.ok(_.isUndefined(res.refs[refPtr]));
+            assert.deepEqual(_.get(res.resolved, ptrPath), _.get(testDocument, ptrPath));
+          }
+        });
+      })
+      .then(done, done);
+    });
+
     describe('should support options.resolveCirculars', function () {
       it('invalid type', function (done) {
         JsonRefs.resolveRefs({}, {resolveCirculars: 'nope'})
