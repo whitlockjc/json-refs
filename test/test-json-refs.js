@@ -1374,328 +1374,356 @@ describe('json-refs API', function () {
     });
   });
 
-  describe('Issue #73', function () {
-    it('should not create extra references', function (done) {
-      JsonRefs.resolveRefs({
-        definitions: {
+  describe('issues', function () {
+    describe('Issue #112', function () {
+      it('should report indirect references in source by their location', function (done) {
+        JsonRefs.resolveRefs({
           A: {
-            allOf: [
-              {
-                $ref: '#/definitions/B'
-              }
-            ]
+            b: {
+              $ref: '#/B'
+            }
           },
           B: {
-            allOf: [
-              {
-                $ref: '#/definitions/C'
-              }
-            ]
-          },
-          C: {}
-        }
-      })
-        .then(function (results) {
-          assert.equal(Object.keys(results.refs).length, 2);
-        })
-        .then(done, done);
-    });
-  });
-
-  describe('Issue #72', function () {
-    it('should fully resolve swagger-tools/samples/2.0/petstore.json', function (done) {
-      JsonRefs.resolveRefsAt('https://rawgit.com/apigee-127/swagger-tools/master/samples/2.0/petstore.json')
-        .then(function (results) {
-          assert.equal(Object.keys(JsonRefs.findRefs(results.resolved)).length, 0);
-        })
-        .then(done, done);
-    });
-  });
-
-  describe('Issue #67', function () {
-    it('should handle relative locations for #findRefsAt and #resolveRefsAt', function (done) {
-      JsonRefs.resolveRefsAt('../' + path.relative(path.dirname(process.cwd()),
-                                                   testDocumentLocation), {
-        loaderOptions: {
-          processContent: function (res, callback) {
-            callback(undefined, YAML.safeLoad(res.text));
-          }
-        },
-        location: testDocumentLocation
-      })
-        .then(function (results) {
-          // Make sure there are no unresolvable references except the expected ones
-          _.each(results, function (refDetails, refPtr) {
-            var expectedMissing = [
-              '#/missing',
-              '#/remote/relative/missing',
-              '#/remote/relative/child/missing',
-              '#/remote/relative/child/ancestor/missing'
-            ];
-
-            if (expectedMissing.indexOf(refPtr) === -1) {
-              assert.ok(!_.has(refDetails.missing));
+            c: {
+              $ref: '#/C'
             }
-          });
+          },
+          C: {
+            type: 'object'
+          }
+        }, {
+          subDocPath: '#/A'
+      })
+        .then(function (res) {
+          assert.deepEqual(Object.keys(res.refs), ['#/A/b', '#/B/c']);
         })
         .then(done, done);
+      });
     });
-  });
 
-  describe('Issue #65', function () {
-    it('should handle remote references with fragments replacing the whole document', function (done) {
-      var uri = 'https://rawgit.com/apigee-127/swagger-tools/master/test/browser/people.json';
-      var doc = {
-        $ref: uri + '#/paths/~1people~1{id}'
-      };
+    describe('Issue #73', function () {
+      it('should not create extra references', function (done) {
+        JsonRefs.resolveRefs({
+          definitions: {
+            A: {
+              allOf: [
+                {
+                  $ref: '#/definitions/B'
+                }
+              ]
+            },
+            B: {
+              allOf: [
+                {
+                  $ref: '#/definitions/C'
+                }
+              ]
+            },
+            C: {}
+          }
+        })
+          .then(function (results) {
+            assert.equal(Object.keys(results.refs).length, 2);
+          })
+          .then(done, done);
+      });
+    });
 
-      JsonRefs.resolveRefsAt(uri)
-        .then(function (results) {
-          return JsonRefs.resolveRefs(doc)
-            .then(function (results2) {
-              assert.deepEqual(results2, {
+    describe('Issue #72', function () {
+      it('should fully resolve swagger-tools/samples/2.0/petstore.json', function (done) {
+        JsonRefs.resolveRefsAt('https://rawgit.com/apigee-127/swagger-tools/master/samples/2.0/petstore.json')
+          .then(function (results) {
+            assert.equal(Object.keys(JsonRefs.findRefs(results.resolved)).length, 0);
+          })
+          .then(done, done);
+      });
+    });
+
+    describe('Issue #67', function () {
+      it('should handle relative locations for #findRefsAt and #resolveRefsAt', function (done) {
+        JsonRefs.resolveRefsAt('../' + path.relative(path.dirname(process.cwd()),
+                                                     testDocumentLocation), {
+                                                       loaderOptions: {
+                                                         processContent: function (res, callback) {
+                                                           callback(undefined, YAML.safeLoad(res.text));
+                                                         }
+                                                       },
+                                                       location: testDocumentLocation
+                                                     })
+          .then(function (results) {
+            // Make sure there are no unresolvable references except the expected ones
+            _.each(results, function (refDetails, refPtr) {
+              var expectedMissing = [
+                '#/missing',
+                '#/remote/relative/missing',
+                '#/remote/relative/child/missing',
+                '#/remote/relative/child/ancestor/missing'
+              ];
+
+              if (expectedMissing.indexOf(refPtr) === -1) {
+                assert.ok(!_.has(refDetails.missing));
+              }
+            });
+          })
+          .then(done, done);
+      });
+    });
+
+    describe('Issue #65', function () {
+      it('should handle remote references with fragments replacing the whole document', function (done) {
+        var uri = 'https://rawgit.com/apigee-127/swagger-tools/master/test/browser/people.json';
+        var doc = {
+          $ref: uri + '#/paths/~1people~1{id}'
+        };
+
+        JsonRefs.resolveRefsAt(uri)
+          .then(function (results) {
+            return JsonRefs.resolveRefs(doc)
+              .then(function (results2) {
+                assert.deepEqual(results2, {
+                  refs: {
+                    '#': {
+                      def: doc,
+                      uri: doc.$ref,
+                      uriDetails: {
+                        fragment: '/paths/~1people~1%7Bid%7D',
+                        host: 'rawgit.com',
+                        path: '/apigee-127/swagger-tools/master/test/browser/people.json',
+                        port: undefined,
+                        query: undefined,
+                        reference: 'uri',
+                        scheme: 'https',
+                        userinfo: undefined
+                      },
+                      type: 'remote',
+                      value: results.value.paths['/people/{id}']
+                    },
+                    '#/delete/responses/default/schema': {
+                      def: results.value.paths['/people/{id}'].delete.responses.default.schema,
+                      uri: results.value.paths['/people/{id}'].delete.responses.default.schema.$ref,
+                      uriDetails: {
+                        fragment: '/definitions/Error',
+                        host: undefined,
+                        path: '',
+                        port: undefined,
+                        query: undefined,
+                        reference: 'same-document',
+                        scheme: undefined,
+                        userinfo: undefined
+                      },
+                      type: 'local',
+                      error: 'JSON Pointer points to missing location: #/definitions/Error',
+                      missing: true
+                    },
+                    '#/get/responses/200/schema': {
+                      def: results.value.paths['/people/{id}'].get.responses['200'].schema,
+                      uri: results.value.paths['/people/{id}'].get.responses['200'].schema.$ref,
+                      uriDetails: {
+                        fragment: '/definitions/Pet',
+                        host: undefined,
+                        path: '',
+                        port: undefined,
+                        query: undefined,
+                        reference: 'same-document',
+                        scheme: undefined,
+                        userinfo: undefined
+                      },
+                      type: 'local',
+                      error: 'JSON Pointer points to missing location: #/definitions/Pet',
+                      missing: true
+                    },
+                    '#/get/responses/default/schema': {
+                      def: results.value.paths['/people/{id}'].get.responses.default.schema,
+                      uri: results.value.paths['/people/{id}'].get.responses.default.schema.$ref,
+                      uriDetails: {
+                        fragment: '/definitions/Error',
+                        host: undefined,
+                        path: '',
+                        port: undefined,
+                        query: undefined,
+                        reference: 'same-document',
+                        scheme: undefined,
+                        userinfo: undefined
+                      },
+                      type: 'local',
+                      error: 'JSON Pointer points to missing location: #/definitions/Error',
+                      missing: true
+                    }
+                  },
+                  resolved: results.resolved.paths['/people/{id}']
+                });
+              });
+          })
+          .then(done, done);
+      });
+    });
+
+    describe('Issue #63', function () {
+      it('should handle options.filter and options.includeInvalid combination', function () {
+        var doc = {
+          $ref: 'http://:8080'
+        };
+
+        assert.deepEqual(JsonRefs.findRefs(doc, {filter: 'remote', includeInvalid: true}), {
+          '#': {
+            def: doc,
+            uri: doc.$ref,
+            uriDetails: URI.parse(doc.$ref),
+            type: 'invalid',
+            error: 'HTTP URIs must have a host.'
+          }
+        });
+      });
+    });
+
+    describe('Issue #61', function () {
+      describe('local references', function () {
+        it('should handle references with unescaped URI characters', function (done) {
+          var refURI = '#/~1some~1{id}~1hello there';
+          var doc = {
+            '/some/{id}/hello there': 'hello',
+            'ref': {
+              $ref: refURI
+            }
+          };
+
+          JsonRefs.resolveRefs(doc)
+            .then(function (results) {
+              var refDetails = results.refs['#/ref'];
+
+              assert.equal(Object.keys(results.refs).length, 1);
+              assert.deepEqual(refDetails, {
+                def: doc.ref,
+                uri: refURI,
+                uriDetails: {
+                  scheme: undefined,
+                  userinfo: undefined,
+                  host: undefined,
+                  port: undefined,
+                  path: '',
+                  query: undefined,
+                  fragment: '/~1some~1%7Bid%7D~1hello%20there',
+                  reference: 'same-document'
+                },
+                type: 'local',
+                value: 'hello'
+              });
+            })
+            .then(done, done);
+        });
+
+        it('should handle references with escaped URI characters', function (done) {
+          var refURI = encodeURI('#/~1some~1{id}~1hello there/some nested path');
+          var doc = {
+            '/some/{id}/hello there': {
+              'some nested path': 'hello'
+            },
+            'ref': {
+              $ref: refURI
+            }
+          };
+
+          JsonRefs.resolveRefs(doc, {
+            location: path.join(path.dirname(testDocumentLocation), 'root.json')
+          })
+            .then(function (results) {
+              var refDetails = results.refs['#/ref'];
+
+              assert.equal(Object.keys(results.refs).length, 1);
+              assert.deepEqual(refDetails, {
+                def: doc.ref,
+                uri: refURI,
+                uriDetails: {
+                  scheme: undefined,
+                  userinfo: undefined,
+                  host: undefined,
+                  port: undefined,
+                  path: '',
+                  query: undefined,
+                  fragment: '/~1some~1%7Bid%7D~1hello%20there/some%20nested%20path',
+                  reference: 'same-document'
+                },
+                type: 'local',
+                value: 'hello'
+              });
+            })
+            .then(done, done);
+        });
+      });
+
+      describe('remote references', function () {
+        it('should handle references with unescaped URI characters', function (done) {
+          var relativePath = './{id}/person.json';
+          var doc = {
+            $ref: relativePath
+          };
+
+          JsonRefs.resolveRefs(doc, {
+            location: path.join(path.dirname(testDocumentLocation), 'root.json')
+          })
+            .then(function (results) {
+              assert.deepEqual(results, {
                 refs: {
                   '#': {
                     def: doc,
                     uri: doc.$ref,
                     uriDetails: {
-                      fragment: '/paths/~1people~1%7Bid%7D',
-                      host: 'rawgit.com',
-                      path: '/apigee-127/swagger-tools/master/test/browser/people.json',
-                      port: undefined,
-                      query: undefined,
-                      reference: 'uri',
-                      scheme: 'https',
-                      userinfo: undefined
-                    },
-                    type: 'remote',
-                    value: results.value.paths['/people/{id}']
-                  },
-                  '#/delete/responses/default/schema': {
-                    def: results.value.paths['/people/{id}'].delete.responses.default.schema,
-                    uri: results.value.paths['/people/{id}'].delete.responses.default.schema.$ref,
-                    uriDetails: {
-                      fragment: '/definitions/Error',
-                      host: undefined,
-                      path: '',
-                      port: undefined,
-                      query: undefined,
-                      reference: 'same-document',
                       scheme: undefined,
-                      userinfo: undefined
-                    },
-                    type: 'local',
-                    error: 'JSON Pointer points to missing location: #/definitions/Error',
-                    missing: true
-                  },
-                  '#/get/responses/200/schema': {
-                    def: results.value.paths['/people/{id}'].get.responses['200'].schema,
-                    uri: results.value.paths['/people/{id}'].get.responses['200'].schema.$ref,
-                    uriDetails: {
-                      fragment: '/definitions/Pet',
+                      userinfo: undefined,
                       host: undefined,
-                      path: '',
                       port: undefined,
+                      path: encodeURI(relativePath),
                       query: undefined,
-                      reference: 'same-document',
-                      scheme: undefined,
-                      userinfo: undefined
+                      fragment: undefined,
+                      reference: 'relative'
                     },
-                    type: 'local',
-                    error: 'JSON Pointer points to missing location: #/definitions/Pet',
-                    missing: true
-                  },
-                  '#/get/responses/default/schema': {
-                    def: results.value.paths['/people/{id}'].get.responses.default.schema,
-                    uri: results.value.paths['/people/{id}'].get.responses.default.schema.$ref,
-                    uriDetails: {
-                      fragment: '/definitions/Error',
-                      host: undefined,
-                      path: '',
-                      port: undefined,
-                      query: undefined,
-                      reference: 'same-document',
-                      scheme: undefined,
-                      userinfo: undefined
-                    },
-                    type: 'local',
-                    error: 'JSON Pointer points to missing location: #/definitions/Error',
-                    missing: true
+                    type: 'relative',
+                    value: personDocument
                   }
                 },
-                resolved: results.resolved.paths['/people/{id}']
+                resolved: personDocument
               });
-            });
-        })
-        .then(done, done);
-    });
-  });
+            })
+            .then(done, done);
+        });
 
-  describe('Issue #63', function () {
-    it('should handle options.filter and options.includeInvalid combination', function () {
-      var doc = {
-        $ref: 'http://:8080'
-      };
+        it('should handle references with escaped URI characters', function (done) {
+          var doc = {
+            ref: {
+              $ref: encodeURI('./{id}/person.json')
+            }
+          };
 
-      assert.deepEqual(JsonRefs.findRefs(doc, {filter: 'remote', includeInvalid: true}), {
-        '#': {
-          def: doc,
-          uri: doc.$ref,
-          uriDetails: URI.parse(doc.$ref),
-          type: 'invalid',
-          error: 'HTTP URIs must have a host.'
-        }
-      });
-    });
-  });
-
-  describe('Issue #61', function () {
-    describe('local references', function () {
-      it('should handle references with unescaped URI characters', function (done) {
-        var refURI = '#/~1some~1{id}~1hello there';
-        var doc = {
-          '/some/{id}/hello there': 'hello',
-          'ref': {
-            $ref: refURI
-          }
-        };
-
-        JsonRefs.resolveRefs(doc)
-          .then(function (results) {
-            var refDetails = results.refs['#/ref'];
-
-            assert.equal(Object.keys(results.refs).length, 1);
-            assert.deepEqual(refDetails, {
-              def: doc.ref,
-              uri: refURI,
-              uriDetails: {
-                scheme: undefined,
-                userinfo: undefined,
-                host: undefined,
-                port: undefined,
-                path: '',
-                query: undefined,
-                fragment: '/~1some~1%7Bid%7D~1hello%20there',
-                reference: 'same-document'
-              },
-              type: 'local',
-              value: 'hello'
-            });
+          JsonRefs.resolveRefs(doc, {
+            location: path.join(path.dirname(testDocumentLocation), 'root.json')
           })
-          .then(done, done);
-      });
-
-      it('should handle references with escaped URI characters', function (done) {
-        var refURI = encodeURI('#/~1some~1{id}~1hello there/some nested path');
-        var doc = {
-          '/some/{id}/hello there': {
-            'some nested path': 'hello'
-          },
-          'ref': {
-            $ref: refURI
-          }
-        };
-
-        JsonRefs.resolveRefs(doc, {
-          location: path.join(path.dirname(testDocumentLocation), 'root.json')
-        })
-          .then(function (results) {
-            var refDetails = results.refs['#/ref'];
-
-            assert.equal(Object.keys(results.refs).length, 1);
-            assert.deepEqual(refDetails, {
-              def: doc.ref,
-              uri: refURI,
-              uriDetails: {
-                scheme: undefined,
-                userinfo: undefined,
-                host: undefined,
-                port: undefined,
-                path: '',
-                query: undefined,
-                fragment: '/~1some~1%7Bid%7D~1hello%20there/some%20nested%20path',
-                reference: 'same-document'
-              },
-              type: 'local',
-              value: 'hello'
-            });
-          })
-          .then(done, done);
-      });
-    });
-
-    describe('remote references', function () {
-      it('should handle references with unescaped URI characters', function (done) {
-        var relativePath = './{id}/person.json';
-        var doc = {
-          $ref: relativePath
-        };
-
-        JsonRefs.resolveRefs(doc, {
-          location: path.join(path.dirname(testDocumentLocation), 'root.json')
-        })
-          .then(function (results) {
-            assert.deepEqual(results, {
-              refs: {
-                '#': {
-                  def: doc,
-                  uri: doc.$ref,
-                  uriDetails: {
-                    scheme: undefined,
-                    userinfo: undefined,
-                    host: undefined,
-                    port: undefined,
-                    path: encodeURI(relativePath),
-                    query: undefined,
-                    fragment: undefined,
-                    reference: 'relative'
-                  },
-                  type: 'relative',
-                  value: personDocument
+            .then(function (results) {
+              assert.deepEqual(results, {
+                refs: {
+                  '#/ref': {
+                    def: doc.ref,
+                    uri: doc.ref.$ref,
+                    uriDetails: {
+                      scheme: undefined,
+                      userinfo: undefined,
+                      host: undefined,
+                      port: undefined,
+                      path: doc.ref.$ref,
+                      query: undefined,
+                      fragment: undefined,
+                      reference: 'relative'
+                    },
+                    type: 'relative',
+                    value: personDocument
+                  }
+                },
+                resolved: {
+                  ref: personDocument
                 }
-              },
-              resolved: personDocument
-            });
-          })
-          .then(done, done);
-      });
-
-      it('should handle references with escaped URI characters', function (done) {
-        var doc = {
-          ref: {
-            $ref: encodeURI('./{id}/person.json')
-          }
-        };
-
-        JsonRefs.resolveRefs(doc, {
-          location: path.join(path.dirname(testDocumentLocation), 'root.json')
-        })
-          .then(function (results) {
-            assert.deepEqual(results, {
-              refs: {
-                '#/ref': {
-                  def: doc.ref,
-                  uri: doc.ref.$ref,
-                  uriDetails: {
-                    scheme: undefined,
-                    userinfo: undefined,
-                    host: undefined,
-                    port: undefined,
-                    path: doc.ref.$ref,
-                    query: undefined,
-                    fragment: undefined,
-                    reference: 'relative'
-                  },
-                  type: 'relative',
-                  value: personDocument
-                }
-              },
-              resolved: {
-                ref: personDocument
-              }
-            });
-          })
-          .then(done, done);
+              });
+            })
+            .then(done, done);
+        });
       });
     });
   });

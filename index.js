@@ -1274,11 +1274,14 @@ function resolveRefs (obj, options) {
       });
 
       function walkRefs (root, refPtr, refPath) {
+        var refPtrParts = refPtr.split('#');
         var refDetails = results.refs[refPtr];
         var refDeps;
 
-        // Record the reference (relative to the root document)
-        allRefs[pathToPtr(options.subDocPath.concat(refPath))] = refDetails;
+        // Record the reference (relative to the root document unless the reference is in the root document)
+        allRefs[refPtrParts[0] === options.location ?
+                  '#' + refPtrParts[1] :
+                  pathToPtr(options.subDocPath.concat(refPath))] = refDetails;
 
         // Do not walk invalid references
         if (refDetails.circular || !isValid(refDetails)) {
