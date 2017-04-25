@@ -1,6 +1,6 @@
 ## Release Notes
 
-### TBD
+### v3.0.0 (2017-04-25)
 
 * Added `options.location` to allow for better relative reference resolution
 * Added `options.resolveCirculars` to allow for resolving circular references *(Issue #74)*
