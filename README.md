@@ -43,6 +43,8 @@ To use the Bower install, your HTML includes might look like this:
 
 ``` html
 <!-- ... -->
+<script src="bower_components/lodash/dist/lodash.min.js"></script>
+<script src="bower_components/graphlib/dist/graphlib.core.min.js"></script>
 <script src="bower_components/path-loader/browser/path-loader-min.js"></script>
 <script src="bower_components/json-refs/browser/json-refs-min.js"></script>
 <!-- ... -->
@@ -84,4 +86,3 @@ After this, feel free to run `json-refs help` to see what you can do or view the
 [npm]: https://www.npmjs.com/
 [json-reference-draft-spec]: http://tools.ietf.org/html/draft-pbryan-zyp-json-ref-03
 [json-pointer-spec]: http://tools.ietf.org/html/rfc6901
-[path-loader]: https://github.com/whitlockjc/path-loader
