@@ -92,7 +92,8 @@ var resolveHelp = [
   ''
 ].join('\n');
 
-var testDocumentLocation = path.join(__dirname, 'browser', 'documents', 'test-document.yaml');
+var testDocumentLocationYaml = path.join(__dirname, 'browser', 'documents', 'test-document.yaml');
+var testDocumentLocationJson = path.join(__dirname, 'browser', 'documents', 'test-document.json');
 
 function executeJsonRefs (args, done, cwd) {
   var options;
@@ -267,7 +268,7 @@ describe('json-refs CLI', function () {
       it('no options', function (done) {
         this.timeout(10000);
 
-        executeJsonRefs(['resolve', testDocumentLocation], function (stderr, stdout) {
+        executeJsonRefs(['resolve', testDocumentLocationYaml], function (stderr, stdout) {
           assert.equal(stdout, '');
 
           assert.equal(stderr, [
@@ -294,7 +295,7 @@ describe('json-refs CLI', function () {
 
         var cliArgs = [
           'resolve',
-          testDocumentLocation,
+          testDocumentLocationJson,
           '--filter', 'relative',
           '-I', 'remote',
           '--force'
@@ -306,7 +307,7 @@ describe('json-refs CLI', function () {
         executeJsonRefs(cliArgs, function (stderr, stdout) {
           assert.equal(stderr, '');
 
-          JsonRefs.resolveRefsAt(testDocumentLocation, cOptions)
+          JsonRefs.resolveRefsAt(testDocumentLocationYaml, cOptions)
             .then(function (results) {
               assert.equal(stdout, JSON.stringify(results.resolved, null, 2) + '\n');
             })
@@ -317,10 +318,10 @@ describe('json-refs CLI', function () {
       it('--force option', function (done) {
         this.timeout(10000);
 
-        executeJsonRefs(['resolve', testDocumentLocation, '--force'], function (stderr, stdout) {
+        executeJsonRefs(['resolve', testDocumentLocationJson, '--force'], function (stderr, stdout) {
           assert.equal(stderr, '');
 
-          JsonRefs.resolveRefsAt(testDocumentLocation, jsonRefsOptions)
+          JsonRefs.resolveRefsAt(testDocumentLocationYaml, jsonRefsOptions)
             .then(function (results) {
               assert.equal(stdout, JSON.stringify(results.resolved, null, 2) + '\n');
             })
@@ -362,7 +363,7 @@ describe('json-refs CLI', function () {
       it('--warnings-as-errors option', function (done) {
         this.timeout(10000);
 
-        executeJsonRefs(['resolve', testDocumentLocation, '--warnings-as-errors'], function (stderr, stdout) {
+        executeJsonRefs(['resolve', testDocumentLocationYaml, '--warnings-as-errors'], function (stderr, stdout) {
           assert.equal(stdout, '');
 
           assert.equal(stderr, [
@@ -388,10 +389,10 @@ describe('json-refs CLI', function () {
       it('--yaml option', function (done) {
         this.timeout(10000);
 
-        executeJsonRefs(['resolve', testDocumentLocation, '-fy'], function (stderr, stdout) {
+        executeJsonRefs(['resolve', testDocumentLocationJson, '-fy'], function (stderr, stdout) {
           assert.equal(stderr, '');
 
-          JsonRefs.resolveRefsAt(testDocumentLocation, jsonRefsOptions)
+          JsonRefs.resolveRefsAt(testDocumentLocationYaml, jsonRefsOptions)
             .then(function (results) {
               assert.equal(stdout, YAML.safeDump(results.resolved, {noRefs: true}) + '\n');
             })
@@ -407,14 +408,14 @@ describe('json-refs CLI', function () {
 
           this.timeout(10000);
 
-          executeJsonRefs(['resolve', testDocumentLocation + subDocPath], function (stderr, stdout) {
+          executeJsonRefs(['resolve', testDocumentLocationYaml + subDocPath], function (stderr, stdout) {
             var cOptions = _.cloneDeep(jsonRefsOptions);
 
             assert.equal(stderr, '');
 
             cOptions.subDocPath = subDocPath;
 
-            JsonRefs.resolveRefsAt(testDocumentLocation, cOptions)
+            JsonRefs.resolveRefsAt(testDocumentLocationYaml, cOptions)
               .then(function (results) {
                 assert.equal(stdout, JSON.stringify(results.resolved, null, 2) + '\n');
               })
@@ -457,6 +458,21 @@ describe('json-refs CLI', function () {
             done();
           }, __dirname);
         });
+      });
+      describe('Issue #66', function () {
+      it('json-refs resolve output the same language that was input', function (done) {
+        this.timeout(10000);
+
+        executeJsonRefs(['resolve', testDocumentLocationYaml, '-f'], function (stderr, stdout) {
+          assert.equal(stderr, '');
+
+          JsonRefs.resolveRefsAt(testDocumentLocationYaml, jsonRefsOptions)
+            .then(function (results) {
+              assert.equal(stdout, YAML.safeDump(results.resolved, {noRefs: true}) + '\n');
+            })
+            .then(done, done);
+        });
+      });
       });
     });
   });
