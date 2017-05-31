@@ -146,7 +146,7 @@ program
         if (errors.length > 0 && !that.force) {
           throw new Error('Document has invalid references:\n\n' + errors.join('\n'));
         } else {
-          console.log(that.yaml ?
+          console.log(that.yaml || location.endsWith('.yaml') ?
                         YAML.safeDump(results.resolved, {noRefs: true}) :
                         JSON.stringify(results.resolved, null, 2));
         }

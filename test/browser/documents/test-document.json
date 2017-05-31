@@ -1,0 +1,119 @@
+{
+  "project": {
+    "description": "Various utilities for JSON References and JSON Pointers.",
+    "name": "json-refs"
+  },
+  "array": [
+    {
+      "$ref": "#/project/name"
+    },
+    {
+      "$ref": "#/project/description"
+    }
+  ],
+  "circular": {
+    "root": {
+      "$ref": "#"
+    },
+    "ancestor": {
+      "$ref": "#/circular"
+    },
+    "User": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "$ref": "#/circular/Status"
+        }
+      }
+    },
+    "Status": {
+      "type": "object",
+      "properties": {
+        "user": {
+          "$ref": "#/circular/User"
+        },
+        "message": {
+          "$ref": "#/circular/Message"
+        }
+      }
+    },
+    "Message": {
+      "type": "object",
+      "properties": {
+        "author": {
+          "$ref": "#/circular/User"
+        }
+      }
+    },
+    "StatusWrapper": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "$ref": "#/circular/Status"
+        }
+      }
+    }
+  },
+  "definitions": {
+    "HumanName": {
+      "type": "object",
+      "properties": {
+        "given": {
+          "type": "string"
+        },
+        "family": {
+          "type": "string"
+        }
+      }
+    },
+    "Person": {
+      "type": "object",
+      "properties": {
+        "age": {
+          "type": "integer"
+        },
+        "name": {
+          "$ref": "#/definitions/HumanName"
+        }
+      }
+    }
+  },
+  "invalid": {
+    "$ref": "http://:8080"
+  },
+  "local": {
+    "$ref": "#/project/name"
+  },
+  "missing": {
+    "$ref": "#/some/missing/path"
+  },
+  "remote": {
+    "absolute": {
+      "$ref": "https://rawgit.com/whitlockjc/json-refs/master/package.json"
+    },
+    "absolute-with-hash": {
+      "$ref": "https://rawgit.com/whitlockjc/json-refs/master/package.json#/name"
+    },
+    "relative": {
+      "$ref": "./nested/test-nested.yaml"
+    },
+    "relative-missing": {
+      "$ref": "./missing.yaml"
+    },
+    "relative-with-hash": {
+      "$ref": "./nested/test-nested.yaml#/name"
+    },
+    "relative-with-hash2": {
+      "$ref": "./test-types.yaml#/definitions/Person"
+    },
+    "relative-with-hash3": {
+      "$ref": "./test-types.yaml#/missing"
+    }
+  },
+  "warning": {
+    "$ref": "#/project/name",
+    "ignored": {
+      "$ref": "#/project/name"
+    }
+  }
+}
