@@ -48,16 +48,16 @@ var globalHelp = [
   '  Usage: json-refs [options] [command]',
   '',
   '',
+  '  Options:',
+  '',
+  '    -V, --version  output the version number',
+  '    -h, --help     output usage information',
+  '',
+  '',
   '  Commands:',
   '',
   '    help [command]                Display help information',
   '    resolve [options] <location>  Prints document at location with its JSON References resolved',
-  '',
-  '  Options:',
-  '',
-  '    -h, --help     output usage information',
-  '    -V, --version  output the version number',
-  '',
   '',
 ].join('\n');
 
@@ -67,10 +67,10 @@ var helpHelp = [
   '',
   '  Display help information',
   '',
+  '',
   '  Options:',
   '',
   '    -h, --help  output usage information',
-  '',
   ''
 ].join('\n');
 
@@ -80,15 +80,15 @@ var resolveHelp = [
   '',
   '  Prints document at location with its JSON References resolved',
   '',
+  '',
   '  Options:',
   '',
-  '    -h, --help                output usage information',
   '    -f, --force               Do not fail when the document has invalid JSON References',
   '    -H, --header <header>     The header to use when retrieving a remote document',
   '    -I, --filter <type>       The type of JSON References to resolved',
   '    -w, --warnings-as-errors  Treat warnings as errors',
   '    -y, --yaml                Output as YAML',
-  '',
+  '    -h, --help                output usage information',
   ''
 ].join('\n');
 

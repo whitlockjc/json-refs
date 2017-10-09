@@ -125,6 +125,12 @@ gulp.task('lint', function () {
     .pipe($.eslint.failAfterError());
 });
 
+gulp.task('nsp', function (cb) {
+  $.nsp({
+    package: path.join(__dirname, 'package.json')
+  }, cb);
+});
+
 gulp.task('test-node', function (cb) {
   Promise.resolve()
     .then(function () {
@@ -245,4 +251,4 @@ gulp.task('test', function (cb) {
   runSequence('test-node', 'test-browser', cb);
 });
 
-gulp.task('default', ['lint', 'test', 'browserify', 'docs']);
+gulp.task('default', ['lint', 'nsp', 'test', 'browserify', 'docs']);
