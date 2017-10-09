@@ -1,5 +1,9 @@
 ## Release Notes
 
+### v3.0.1 (2017-10-09)
+
+* Updated dependencies for security
+
 ### v3.0.0 (2017-04-25)
 
 * Added `options.location` to allow for better relative reference resolution
