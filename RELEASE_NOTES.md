@@ -1,5 +1,9 @@
 ## Release Notes
 
+### v3.0.2 (2017-10-11)
+
+* Fix bug where local references containing remote references were unresolved *(Issue #125)*
+
 ### v3.0.1 (2017-10-09)
 
 * Updated dependencies for security

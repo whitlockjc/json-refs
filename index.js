@@ -1236,8 +1236,9 @@ function resolveRefs (obj, options) {
         });
       });
 
-      // Resolve the references
-      _.each(results.deps, function (deps, parentPtr) {
+      // Resolve the references in reverse order since the current order is top-down
+      _.each(Object.keys(results.deps).reverse(), function (parentPtr) {
+        var deps = results.deps[parentPtr];
         var pPtrParts = parentPtr.split('#');
         var pDocument = results.docs[pPtrParts[0]];
         var pPtrPath = pathFromPtr(pPtrParts[1]);

@@ -1375,6 +1375,24 @@ describe('json-refs API', function () {
   });
 
   describe('issues', function () {
+    describe('Issue #125', function () {
+      it('should resolve local reference containing a remote reference', function (done) {
+        JsonRefs.resolveRefs({
+          A: {
+            $ref: '#/B'
+          },
+          B: {
+            $ref: 'https://rawgit.com/apigee-127/swagger-tools/master/samples/2.0/petstore.json'
+          }
+        })
+          .then(function (res) {
+            assert.equal(Object.keys(JsonRefs.findRefs(res.resolved)).length, 0);
+            assert.deepEqual(res.resolved.A, res.resolved.B);
+          })
+          .then(done, done);
+      });
+    });
+
     describe('Issue #112', function () {
       it('should report indirect references in source by their location', function (done) {
         JsonRefs.resolveRefs({
