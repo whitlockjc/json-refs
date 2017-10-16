@@ -86,7 +86,7 @@ Below is the list of projects being used by json-refs and the purpose(s) they ar
 json-refs' resolution is pretty straight forward: Find JSON Reference definitions in the source document, lookup the
 location being referenced and then replace the JSON Reference definition with the referenced value.  During this process
 json-refs will also record _metadata_ that provides more information about the JSON Reference and its resolution _(or
-attempted resolution)_.  From a performance perspective, two things must be mentioend:
+attempted resolution)_.  From a performance perspective, two things must be mentioned:
 
 1. json-refs will never process the same node in any document more than once
 2. json-refs will never clone a referenced value _(JavaScript rules apply)_
@@ -251,7 +251,7 @@ root of the source document."_  Instead of getting all wordy, let's use an examp
 }
 ```
 
-Based on the eexample above, the following metadata keys would be collected as part of resolving `root.json`:
+Based on the example above, the following metadata keys would be collected as part of resolving `root.json`:
 
 * `#/definitions/Person/properties/address`
 * `#/definitions/Person/properties/address/properties/street`
