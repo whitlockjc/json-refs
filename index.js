@@ -453,7 +453,7 @@ function walk (ancestors, node, path, fn) {
           walkItem(member, index.toString());
         });
       } else if (_.isObject(node)) {
-        _.each(node, function (cNode, key) {
+        _.forOwn(node, function (cNode, key) {
           walkItem(cNode, key);
         });
       }

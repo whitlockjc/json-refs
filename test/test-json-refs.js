@@ -816,6 +816,24 @@ describe('json-refs API', function () {
           });
         });
       });
+
+      describe('should not treat objects as arrays when they have a length property', function () {
+        it('object with length property and property with ref', function () {
+          var doc = {
+            name: 'doc name',
+            objectWithLengthProperty: {
+              length: 200,
+              propertyWithRef: {
+                $ref: '#/name'
+              }
+            }
+          };
+
+          runRefDetailsTestScenarios(JsonRefs.findRefs(doc, {}), {
+            '#/objectWithLengthProperty/propertyWithRef': doc.objectWithLengthProperty.propertyWithRef
+          });
+        });
+      });
     });
   });
 
