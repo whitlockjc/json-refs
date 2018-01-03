@@ -1,5 +1,9 @@
 ## Release Notes
 
+### TBD
+
+* Fix bug where objects containing a `length` property were not processed properly *(PR #129)*
+
 ### v3.0.2 (2017-10-11)
 
 * Fix bug where local references containing remote references were unresolved *(Issue #125)*
