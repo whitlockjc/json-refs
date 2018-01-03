@@ -31,7 +31,6 @@
  * @module JsonRefs
  */
 
-// Cherry-pick lodash components to help with size
 var _ = require('lodash');
 var gl = require('graphlib');
 var path = require('path');
@@ -58,7 +57,7 @@ function combineQueryParams (qs1, qs2) {
   var combined = {};
 
   function mergeQueryParams (obj) {
-    _.each(obj, function (val, key) {
+    _.forOwn(obj, function (val, key) {
       combined[key] = val;
     });
   }
@@ -326,7 +325,7 @@ function buildRefModel (document, options, metadata) {
     refs = findRefs(document, options);
 
     // Iterate over the references and process
-    _.each(refs, function (refDetails, refPtr) {
+    _.forOwn(refs, function (refDetails, refPtr) {
       var refKey = makeAbsolute(options.location) + refPtr;
       var refdKey = refDetails.refdId = makeAbsolute(isRemote(refDetails) ?
                                                        combineURIs(relativeBase, refDetails.uri) :
@@ -1173,8 +1172,8 @@ function resolveRefs (obj, options) {
       });
 
       // Add edges
-      _.each(results.deps, function (props, node) {
-        _.each(props, function (dep) {
+      _.forOwn(results.deps, function (props, node) {
+        _.forOwn(props, function (dep) {
           depGraph.setEdge(node, dep);
         });
       });
@@ -1191,8 +1190,8 @@ function resolveRefs (obj, options) {
       });
 
       // Process circulars
-      _.each(results.deps, function (props, node) {
-        _.each(props, function (dep, prop) {
+      _.forOwn(results.deps, function (props, node) {
+        _.forOwn(props, function (dep, prop) {
           var isCircular = false;
           var refPtr = node + prop.slice(1);
           var refDetails = results.refs[node + prop.slice(1)];
@@ -1237,13 +1236,13 @@ function resolveRefs (obj, options) {
       });
 
       // Resolve the references in reverse order since the current order is top-down
-      _.each(Object.keys(results.deps).reverse(), function (parentPtr) {
+      _.forOwn(Object.keys(results.deps).reverse(), function (parentPtr) {
         var deps = results.deps[parentPtr];
         var pPtrParts = parentPtr.split('#');
         var pDocument = results.docs[pPtrParts[0]];
         var pPtrPath = pathFromPtr(pPtrParts[1]);
 
-        _.each(deps, function (dep, prop) {
+        _.forOwn(deps, function (dep, prop) {
           var depParts = dep.split('#');
           var dDocument = results.docs[depParts[0]];
           var dPtrPath = pPtrPath.concat(pathFromPtr(prop));
@@ -1329,7 +1328,7 @@ function resolveRefs (obj, options) {
       });
 
       // Sanitize the reference details
-      _.each(results.refs, function (refDetails) {
+      _.forOwn(results.refs, function (refDetails) {
         // Delete the reference id used for dependency tracking and circular identification
         delete refDetails.refdId;
       });
