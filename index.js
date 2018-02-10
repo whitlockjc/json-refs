@@ -928,6 +928,18 @@ function getRefDetails (obj) {
 
       if (_.isUndefined(uriDetails.error)) {
         details.type = getRefType(details);
+
+        // Validate the JSON Pointer
+        try {
+          if (['#', '/'].indexOf(cacheKey[0]) > -1) {
+            isPtr(cacheKey, true);
+          } else if (cacheKey.indexOf('#') > -1) {
+            isPtr(uriDetails.fragment, true);
+          }
+        } catch (err) {
+          details.error = err.message;
+          details.type = 'invalid';
+        }
       } else {
         details.error = details.uriDetails.error;
         details.type = 'invalid';

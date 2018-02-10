@@ -188,16 +188,18 @@ function validateUnresolvedRefDetails (actual, defPtr, def) {
     assert.deepEqual(actual.uriDetails, uriDetails);
 
     if (_.isUndefined(actual.uriDetails.error)) {
-      switch (uriDetails.reference) {
-        case 'absolute':
-        case 'uri':
-          type = 'remote';
-          break;
-        case 'same-document':
-          type = 'local';
-          break;
-        default:
-          type = uriDetails.reference;
+      if (_.isUndefined(actual.error)) {
+        switch (uriDetails.reference) {
+          case 'absolute':
+          case 'uri':
+            type = 'remote';
+            break;
+          case 'same-document':
+            type = 'local';
+            break;
+          default:
+            type = uriDetails.reference;
+        }
       }
     } else {
       assert.equal(actual.error, uriDetails.error);
@@ -817,21 +819,19 @@ describe('json-refs API', function () {
         });
       });
 
-      describe('should not treat objects as arrays when they have a length property', function () {
-        it('object with length property and property with ref', function () {
-          var doc = {
-            name: 'doc name',
-            objectWithLengthProperty: {
-              length: 200,
-              propertyWithRef: {
-                $ref: '#/name'
-              }
+      it('should not automatically treat objects as arrays when they have a length property', function () {
+        var doc = {
+          name: 'doc name',
+          objectWithLengthProperty: {
+            length: 200,
+            propertyWithRef: {
+              $ref: '#/name'
             }
-          };
+          }
+        };
 
-          runRefDetailsTestScenarios(JsonRefs.findRefs(doc, {}), {
-            '#/objectWithLengthProperty/propertyWithRef': doc.objectWithLengthProperty.propertyWithRef
-          });
+        runRefDetailsTestScenarios(JsonRefs.findRefs(doc, {}), {
+          '#/objectWithLengthProperty/propertyWithRef': doc.objectWithLengthProperty.propertyWithRef
         });
       });
     });
@@ -914,6 +914,28 @@ describe('json-refs API', function () {
 
     it('should return proper reference details (invalid reference)', function () {
       validateUnresolvedRefDetails(JsonRefs.getRefDetails(testDocument.project), '#/project', testDocument.project);
+    });
+
+    it('should mark invalid references (local)', function () {
+      var doc = {
+        $ref: '#definitions/Pet'
+      };
+      var results = JsonRefs.getRefDetails(doc);
+
+      validateUnresolvedRefDetails(results, '#', doc);
+
+      assert.equal(results.error, 'ptr must start with a / or #/');
+    });
+
+    it('should mark invalid references (remote)', function () {
+      var doc = {
+        $ref: 'http://example.com#definitions/Pet'
+      };
+      var results = JsonRefs.getRefDetails(doc);
+
+      validateUnresolvedRefDetails(results, '#', doc);
+
+      assert.equal(results.error, 'ptr must start with a / or #/');
     });
   });
 

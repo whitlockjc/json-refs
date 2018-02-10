@@ -1,5 +1,10 @@
 ## Release Notes
 
+### TBD
+
+* Fixed issue where `#getRefDetails` did not validate JSON Pointer values leading to runtime failure later when
+resolving references *(Issue 131)*
+
 ### v3.0.3 (2018-01-03)
 
 * Fix bug where objects containing a `length` property were not processed properly *(PR #129)*
