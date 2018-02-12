@@ -3,7 +3,8 @@
 ### TBD
 
 * Fixed issue where `#getRefDetails` did not validate JSON Pointer values leading to runtime failure later when
-resolving references *(Issue 131)*
+resolving references *(Issue #131)*
+* Fixed issue where URI encoded JSON References were not resolved properly *(Issue #130)*
 
 ### v3.0.3 (2018-01-03)
 

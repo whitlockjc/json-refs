@@ -140,8 +140,6 @@ function findValue (obj, path) {
 
   // Using this manual approach instead of _.get since we have to decodeURI the segments
   path.forEach(function (seg) {
-    seg = decodeURI(seg);
-
     if (seg in value) {
       value = value[seg];
     } else {
@@ -300,7 +298,7 @@ function markMissing (refDetails, err) {
 
 function parseURI (uri) {
   // We decode first to avoid doubly encoding
-  return URI.parse(encodeURI(decodeURI(uri)));
+  return URI.parse(uri);
 }
 
 function buildRefModel (document, options, metadata) {
@@ -327,12 +325,12 @@ function buildRefModel (document, options, metadata) {
     // Iterate over the references and process
     _.forOwn(refs, function (refDetails, refPtr) {
       var refKey = makeAbsolute(options.location) + refPtr;
-      var refdKey = refDetails.refdId = makeAbsolute(isRemote(refDetails) ?
+      var refdKey = refDetails.refdId = decodeURI(makeAbsolute(isRemote(refDetails) ?
                                                        combineURIs(relativeBase, refDetails.uri) :
                                                        options.location) + '#' +
                                           (refDetails.uri.indexOf('#') > -1 ?
                                              refDetails.uri.split('#')[1] :
-                                             '');
+                                             ''));
 
       // Record reference metadata
       metadata.refs[refKey] = refDetails;
@@ -425,7 +423,7 @@ function buildRefModel (document, options, metadata) {
 }
 
 function setValue (obj, refPath, value) {
-  findValue(obj, refPath.slice(0, refPath.length - 1))[decodeURI(refPath[refPath.length - 1])] = value;
+  findValue(obj, refPath.slice(0, refPath.length - 1))[refPath[refPath.length - 1]] = value;
 }
 
 function walk (ancestors, node, path, fn) {
@@ -703,7 +701,7 @@ function decodePath (path) {
       seg = JSON.stringify(seg);
     }
 
-    return decodeURI(seg.replace(/~1/g, '/').replace(/~0/g, '~'));
+    return seg.replace(/~1/g, '/').replace(/~0/g, '~');
   });
 }
 
@@ -1343,6 +1341,12 @@ function resolveRefs (obj, options) {
       _.forOwn(results.refs, function (refDetails) {
         // Delete the reference id used for dependency tracking and circular identification
         delete refDetails.refdId;
+
+        // To avoid the error message being URI encoded/decoded by mistake, replace the current JSON Pointer with the
+        // value in the JSON Reference definition.
+        if (refDetails.missing) {
+          refDetails.error = refDetails.error.split(': ')[0] + ': ' + refDetails.def.$ref;
+        }
       });
 
       return {

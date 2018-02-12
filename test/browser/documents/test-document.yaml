@@ -8,6 +8,31 @@ array:
   - $ref: '#/project/name'
   - $ref: '#/project/description'
 
+# Not a URI encoded reference
+nonURIEncoded:
+  $ref: '#/foo bar'
+
+nonURIEncodedMissing:
+  $ref: '#/foo bar missing'
+
+# URI Encoded reference
+uriEncoded1:
+  $ref: '#/foo%20bar'
+
+uriEncoded1Missing:
+  $ref: '#/foo%20bar%20missing'
+
+# Another URI encoded reference
+uriEncoded2:
+  $ref: '#/foo%2520bar'
+
+uriEncoded2Missing:
+  $ref: '#/foo%2520bar%2520missing'
+
+# Values that require URI encoding to reference properly
+foo bar: foo bar
+foo%20bar: foo%20bar
+
 # Various circular references
 circular:
   # Reference to the root of the document

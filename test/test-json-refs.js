@@ -319,6 +319,51 @@ describe('json-refs API', function () {
             type: 'local',
             value: testDocument.project.description
           },
+          '#/nonURIEncoded': {
+            def: testDocument.nonURIEncoded,
+            uri: testDocument.nonURIEncoded.$ref,
+            uriDetails: URI.parse(testDocument.nonURIEncoded.$ref),
+            type: 'local',
+            value: testDocument['foo bar'],
+          },
+          '#/nonURIEncodedMissing': {
+            def: testDocument.nonURIEncodedMissing,
+            uri: testDocument.nonURIEncodedMissing.$ref,
+            uriDetails: URI.parse(testDocument.nonURIEncodedMissing.$ref),
+            type: 'local',
+            error: new Error('JSON Pointer points to missing location: ' + testDocument.nonURIEncodedMissing.$ref),
+            missing: true
+          },
+          '#/uriEncoded1': {
+            def: testDocument.uriEncoded1,
+            uri: testDocument.uriEncoded1.$ref,
+            uriDetails: URI.parse(testDocument.uriEncoded1.$ref),
+            type: 'local',
+            value: testDocument['foo bar'],
+          },
+          '#/uriEncoded1Missing': {
+            def: testDocument.uriEncoded1Missing,
+            uri: testDocument.uriEncoded1Missing.$ref,
+            uriDetails: URI.parse(testDocument.uriEncoded1Missing.$ref),
+            type: 'local',
+            error: new Error('JSON Pointer points to missing location: ' + testDocument.uriEncoded1Missing.$ref),
+            missing: true
+          },
+          '#/uriEncoded2': {
+            def: testDocument.uriEncoded2,
+            uri: testDocument.uriEncoded2.$ref,
+            uriDetails: URI.parse(testDocument.uriEncoded2.$ref),
+            type: 'local',
+            value: testDocument['foo%20bar'],
+          },
+          '#/uriEncoded2Missing': {
+            def: testDocument.uriEncoded2Missing,
+            uri: testDocument.uriEncoded2Missing.$ref,
+            uriDetails: URI.parse(testDocument.uriEncoded2Missing.$ref),
+            type: 'local',
+            error: new Error('JSON Pointer points to missing location: ' + testDocument.uriEncoded2Missing.$ref),
+            missing: true
+          },
           '#/circular/ancestor': {
             def: testDocument.circular.ancestor,
             uri: testDocument.circular.ancestor.$ref,
@@ -563,6 +608,14 @@ describe('json-refs API', function () {
             testDocument.project.name,
             testDocument.project.description
           ],
+          nonURIEncoded: testDocument['foo bar'],
+          nonURIEncodedMissing: testDocument.nonURIEncodedMissing,
+          uriEncoded1: testDocument['foo bar'],
+          uriEncoded1Missing: testDocument.uriEncoded1Missing,
+          uriEncoded2: testDocument['foo%20bar'],
+          uriEncoded2Missing: testDocument.uriEncoded2Missing,
+          'foo bar': testDocument['foo bar'],
+          'foo%20bar': testDocument['foo%20bar'],
           circular: {
             root: testDocument.circular.root,
             ancestor: testDocument.circular.ancestor,
@@ -673,6 +726,12 @@ describe('json-refs API', function () {
     var expectedAllReferences = {
       '#/array/0': testDocument.array[0],
       '#/array/1': testDocument.array[1],
+      '#/nonURIEncoded': testDocument.nonURIEncoded,
+      '#/nonURIEncodedMissing': testDocument.nonURIEncodedMissing,
+      '#/uriEncoded1': testDocument.uriEncoded1,
+      '#/uriEncoded1Missing': testDocument.uriEncoded1Missing,
+      '#/uriEncoded2': testDocument.uriEncoded2,
+      '#/uriEncoded2Missing': testDocument.uriEncoded2Missing,
       '#/circular/root': testDocument.circular.root,
       '#/circular/ancestor': testDocument.circular.ancestor,
       '#/circular/User/properties/status': testDocument.circular.User.properties.status,
@@ -1203,8 +1262,16 @@ describe('json-refs API', function () {
           assert.deepEqual(res.resolved, {
             project: testDocument.project,
             array: testDocument.array,
+            nonURIEncoded: testDocument.nonURIEncoded,
+            nonURIEncodedMissing: testDocument.nonURIEncodedMissing,
+            uriEncoded1: testDocument.uriEncoded1,
+            uriEncoded1Missing: testDocument.uriEncoded1Missing,
+            uriEncoded2: testDocument.uriEncoded2,
+            uriEncoded2Missing: testDocument.uriEncoded2Missing,
             circular: testDocument.circular,
             definitions: testDocument.definitions,
+            'foo bar': testDocument['foo bar'],
+            'foo%20bar': testDocument['foo%20bar'],
             invalid: testDocument.invalid,
             local: testDocument.local,
             missing: testDocument.missing,

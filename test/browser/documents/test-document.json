@@ -11,6 +11,26 @@
       "$ref": "#/project/description"
     }
   ],
+  "nonURIEncoded": {
+    "$ref": "#/foo bar"
+  },
+  "nonURIEncodedMissing": {
+    "$ref": "#/foo bar missing"
+  },
+  "uriEncoded1": {
+    "$ref": "#/foo%20bar"
+  },
+  "uriEncoded1Missing": {
+    "$ref": "#/foo%20bar%20missing"
+  },
+  "uriEncoded2": {
+    "$ref": "#/foo%2520bar"
+  },
+  "uriEncoded2Missing": {
+    "$ref": "#/foo%2520bar%2520missing"
+  },
+  "foo bar": "foo bar",
+  "foo%20bar": "foo%20bar",
   "circular": {
     "root": {
       "$ref": "#"
