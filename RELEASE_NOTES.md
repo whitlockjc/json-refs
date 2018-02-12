@@ -1,6 +1,6 @@
 ## Release Notes
 
-### TBD
+### v3.0.4 (2018-02-11)
 
 * Fixed issue where `#getRefDetails` did not validate JSON Pointer values leading to runtime failure later when
 resolving references *(Issue #131)*
