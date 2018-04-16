@@ -46,6 +46,7 @@ The options used for various JsonRefs APIs.
 | [refPreProcessor] | <code>[RefPreProcessor](#module_JsonRefs..RefPreProcessor)</code> |  | The callback used to pre-process a JSON Reference like object *(This is called prior to validating the JSON Reference like object and getting its details)* |
 | [refPostProcessor] | <code>[RefPostProcessor](#module_JsonRefs..RefPostProcessor)</code> |  | The callback used to post-process the JSON Reference metadata *(This is called prior filtering the references)* |
 | [resolveCirculars] | <code>boolean</code> | <code>false</code> | Whether to resolve circular references |
+| [noCache] | <code>boolean</code> | <code>false</code> | Whether to cache remote references |
 | [options.subDocPath] | <code>string</code> &#124; <code>Array.&lt;string&gt;</code> | <code>&quot;[]&quot;</code> | The JSON Pointer or array of path segments to the sub document location to search from |
 
 <a name="module_JsonRefs..RefDetailsFilter"></a>

@@ -180,7 +180,7 @@ function getRemoteDocument (url, options) {
   var allTasks = Promise.resolve();
   var loaderOptions = _.cloneDeep(options.loaderOptions || {});
 
-  if (_.isUndefined(cacheEntry)) {
+  if (_.isUndefined(cacheEntry) || options.noCache) {
     // If there is no content processor, default to processing the raw response as JSON
     if (_.isUndefined(loaderOptions.processContent)) {
       loaderOptions.processContent = function (res, callback) {
@@ -192,21 +192,23 @@ function getRemoteDocument (url, options) {
     allTasks = PathLoader.load(decodeURI(url), loaderOptions);
 
     // Update the cache
-    allTasks = allTasks
-      .then(function (res) {
-        remoteCache[url] = {
-          value: res
-        };
+    if (!options.noCache) {
+      allTasks = allTasks
+        .then(function (res) {
+          remoteCache[url] = {
+            value: res
+          };
 
-        return res;
-      })
-      .catch(function (err) {
-        remoteCache[url] = {
-          error: err
-        };
+          return res;
+        })
+        .catch(function (err) {
+          remoteCache[url] = {
+            error: err
+          };
 
-        throw err;
-      });
+          throw err;
+        });
+    }
   } else {
     // Return the cached version
     allTasks = allTasks.then(function () {
@@ -860,11 +862,10 @@ function findRefsAt (location, options) {
       return getRemoteDocument(options.location, options);
     })
     .then(function (res) {
-      var cacheEntry = _.cloneDeep(remoteCache[options.location]);
       var cOptions = _.cloneDeep(options);
       var uriDetails = parseURI(options.location);
 
-      if (_.isUndefined(cacheEntry.refs)) {
+      if (_.isUndefined(remoteCache[options.location].refs) && !options.noCache) {
         // Do not filter any references so the cache is complete
         delete cOptions.filter;
         delete cOptions.subDocPath;
