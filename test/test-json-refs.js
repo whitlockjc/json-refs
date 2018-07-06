@@ -44,12 +44,19 @@ var testDocumentLocation = path.join(typeof window === 'undefined' ?
                                        'base/documents',
                                      'test-document.yaml');
 // These variables do not use documentBase because doing so breaks browserify's brfs transform
+var circularRoot = YAML.safeLoad(fs.readFileSync(path.join(__dirname, 'browser', 'documents', 'circular-root.yaml'),
+                                                 'utf-8'));
+var circularChild = YAML.safeLoad(fs.readFileSync(path.join(__dirname, 'browser', 'documents', 'circular-child.yaml'),
+                                                  'utf-8'));
 var personDocument = require('./browser/documents/{id}/person.json');
 var testDocument = YAML.safeLoad(fs.readFileSync(path.join(__dirname, 'browser', 'documents', 'test-document.yaml'),
                                                  'utf-8'));
 var testDocument1 = YAML.safeLoad(fs.readFileSync(path.join(__dirname, 'browser', 'documents', 'test-document-1.yaml'),
                                                   'utf-8'));
-var testDocumentSame = YAML.safeLoad(fs.readFileSync(path.join(__dirname, 'browser', 'documents', 'test-document-same.yaml'),
+var testDocumentSame = YAML.safeLoad(fs.readFileSync(path.join(__dirname,
+                                                               'browser',
+                                                               'documents',
+                                                               'test-document-same.yaml'),
                                                      'utf-8'));
 var testNestedDocument = YAML.safeLoad(fs.readFileSync(path.join(__dirname, 'browser', 'documents', 'nested',
                                                                  'test-nested.yaml'), 'utf-8'));
@@ -1482,6 +1489,71 @@ describe('json-refs API', function () {
   });
 
   describe('issues', function () {
+    describe('Issue #135', function () {
+      it('should handle multi-document circular references', function (done) {
+        JsonRefs.resolveRefsAt(path.join(typeof window === 'undefined' ?
+                                           path.join(__dirname, 'browser', 'documents') :
+                                           'base/documents',
+                                         'circular-root.yaml'), {
+          loaderOptions: {
+            processContent: yamlContentProcessor
+          }
+        })
+          .then(function (res) {
+            var response = circularRoot.paths['/test'].get.responses['200'];
+            var cCRoot = _.cloneDeep(circularRoot);
+            var cCChild = _.cloneDeep(circularChild);
+
+            cCRoot.components.schemas.A = cCChild.definitions.A;
+            cCRoot.components.schemas.B = cCChild.definitions.B;
+            cCRoot.paths['/test'].get.responses['200'].content['application/json'].schema.properties.A =
+              cCRoot.components.schemas.A;
+
+            assert.deepEqual(res.refs, {
+              '#/components/schemas/A': {
+                def: circularRoot.components.schemas.A,
+                uri: circularRoot.components.schemas.A.$ref,
+                uriDetails: URI.parse(circularRoot.components.schemas.A.$ref),
+                type: 'relative',
+                value: circularChild.definitions.A
+              },
+              '#/components/schemas/A/properties/children/items': {
+                def: circularChild.definitions.A.properties.children.items,
+                uri: circularChild.definitions.A.properties.children.items.$ref,
+                uriDetails: URI.parse(circularChild.definitions.A.properties.children.items.$ref),
+                type: 'relative',
+                value: circularChild.definitions.A.properties.children.items,
+                circular: true
+              },
+              '#/components/schemas/B': {
+                def: circularRoot.components.schemas.B,
+                uri: circularRoot.components.schemas.B.$ref,
+                uriDetails: URI.parse(circularRoot.components.schemas.B.$ref),
+                type: 'relative',
+                value: circularChild.definitions.B
+              },
+              '#/components/schemas/B/properties/parent': {
+                def: circularChild.definitions.B.properties.parent,
+                uri: circularChild.definitions.B.properties.parent.$ref,
+                uriDetails: URI.parse(circularChild.definitions.B.properties.parent.$ref),
+                type: 'relative',
+                value: circularChild.definitions.B.properties.parent,
+                circular: true
+              },
+              '#/paths/~1test/get/responses/200/content/application~1json/schema/properties/A': {
+                def: response.content['application/json'].schema.properties.A,
+                uri: response.content['application/json'].schema.properties.A.$ref,
+                uriDetails: URI.parse(response.content['application/json'].schema.properties.A.$ref),
+                type: 'local',
+                value: cCRoot.paths['/test'].get.responses['200'].content['application/json'].schema.properties.A
+              }
+            });
+            assert.deepEqual(res.resolved, cCRoot);
+          })
+          .then(done, done);
+      });
+    });
+
     describe('Issue #125', function () {
       it('should resolve local reference containing a remote reference', function (done) {
         JsonRefs.resolveRefs({

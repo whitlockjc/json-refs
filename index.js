@@ -1228,8 +1228,8 @@ function resolveRefs (obj, options) {
 
                   if (refPtr.indexOf(seg + '/') === 0) {
                     // If the reference is local, mark it as circular but if it's a remote reference, only mark it
-                    // circular if the matching path is the last path segment.
-                    if ((remote && pathIndex === path.length - 1) || !remote) {
+                    // circular if the matching path is the last path segment or its match is not to a document root
+                    if (!remote || pathIndex === path.length - 1 || dep[dep.length - 1] !== '#') {
                       isCircular = true;
                     }
                   }

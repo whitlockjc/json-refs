@@ -1,0 +1,27 @@
+openapi: 3.0.0
+info:
+  title: Test
+  version: 0.0.1
+  description: |
+    testing circular reference
+
+components:
+  schemas:
+    A:
+      $ref: './circular-child.yaml#/definitions/A'
+    B:
+      $ref: './circular-child.yaml#/definitions/B'
+
+paths:
+  '/test':
+    get:
+      responses:
+        '200':
+          description: test
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  A:
+                    $ref: '#/components/schemas/A'

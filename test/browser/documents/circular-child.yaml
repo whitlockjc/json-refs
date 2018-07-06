@@ -1,0 +1,13 @@
+definitions:
+  A:
+    type: object
+    properties:
+      children:
+        type: array
+        items:
+          $ref: './circular-root.yaml#/components/schemas/B'
+  B:
+    type: object
+    properties:
+      parent:
+        $ref: './circular-root.yaml#/components/schemas/A'

@@ -1,5 +1,9 @@
 ## Release Notes
 
+### TBD
+
+* Fixed bug in circular reference processing where circular references span multiple documents *(Issue #135)*
+
 ### v3.0.4 (2018-02-11)
 
 * Fixed issue where `#getRefDetails` did not validate JSON Pointer values leading to runtime failure later when
