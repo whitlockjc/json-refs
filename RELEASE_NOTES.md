@@ -1,6 +1,6 @@
 ## Release Notes
 
-### TBD
+### v3.0.5 (2018-07-06)
 
 * Added the `fqURI` property to the resolved reference metadata *(Issue #136)*
 * Fixed bug in circular reference processing where circular references span multiple documents *(Issue #135)*
