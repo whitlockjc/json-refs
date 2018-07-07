@@ -98,6 +98,7 @@ Detailed information about resolved JSON References.
 | Name | Type | Description |
 | --- | --- | --- |
 | circular | <code>boolean</code> | Whether or not the JSON Reference is circular *(Will not be set if the JSON Reference is not circular)* |
+| fqURI | <code>string</code> | The fully-qualified version of the `uri` property for                            [UnresolvedRefDetails](#module_JsonRefs..UnresolvedRefDetails) but with the value being relative to the root                            document |
 | missing | <code>boolean</code> | Whether or not the referenced value was missing or not *(Will not be set if the referenced value is not missing)* |
 | value | <code>\*</code> | The referenced value *(Will not be set if the referenced value is missing)* |
 

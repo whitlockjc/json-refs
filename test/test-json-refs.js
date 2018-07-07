@@ -291,6 +291,7 @@ describe('json-refs API', function () {
         expectedValidResolveRefs = {
           '#/local': {
             def: testDocument.local,
+            fqURI: testDocument.local.$ref,
             uri: testDocument.local.$ref,
             uriDetails: URI.parse(testDocument.local.$ref),
             type: 'local',
@@ -298,6 +299,7 @@ describe('json-refs API', function () {
           },
           '#/missing': {
             def: testDocument.missing,
+            fqURI: testDocument.missing.$ref,
             uri: testDocument.missing.$ref,
             uriDetails: URI.parse(testDocument.missing.$ref),
             type: 'local',
@@ -306,6 +308,7 @@ describe('json-refs API', function () {
           },
           '#/warning': {
             def: testDocument.warning,
+            fqURI: testDocument.warning.$ref,
             uri: testDocument.warning.$ref,
             uriDetails: URI.parse(testDocument.warning.$ref),
             type: 'local',
@@ -314,6 +317,7 @@ describe('json-refs API', function () {
           },
           '#/array/0': {
             def: testDocument.array[0],
+            fqURI: testDocument.array[0].$ref,
             uri: testDocument.array[0].$ref,
             uriDetails: URI.parse(testDocument.array[0].$ref),
             type: 'local',
@@ -321,6 +325,7 @@ describe('json-refs API', function () {
           },
           '#/array/1': {
             def: testDocument.array[1],
+            fqURI: testDocument.array[1].$ref,
             uri: testDocument.array[1].$ref,
             uriDetails: URI.parse(testDocument.array[1].$ref),
             type: 'local',
@@ -328,6 +333,7 @@ describe('json-refs API', function () {
           },
           '#/nonURIEncoded': {
             def: testDocument.nonURIEncoded,
+            fqURI: testDocument.nonURIEncoded.$ref,
             uri: testDocument.nonURIEncoded.$ref,
             uriDetails: URI.parse(testDocument.nonURIEncoded.$ref),
             type: 'local',
@@ -335,6 +341,7 @@ describe('json-refs API', function () {
           },
           '#/nonURIEncodedMissing': {
             def: testDocument.nonURIEncodedMissing,
+            fqURI: testDocument.nonURIEncodedMissing.$ref,
             uri: testDocument.nonURIEncodedMissing.$ref,
             uriDetails: URI.parse(testDocument.nonURIEncodedMissing.$ref),
             type: 'local',
@@ -343,6 +350,7 @@ describe('json-refs API', function () {
           },
           '#/uriEncoded1': {
             def: testDocument.uriEncoded1,
+            fqURI: testDocument.uriEncoded1.$ref,
             uri: testDocument.uriEncoded1.$ref,
             uriDetails: URI.parse(testDocument.uriEncoded1.$ref),
             type: 'local',
@@ -350,6 +358,7 @@ describe('json-refs API', function () {
           },
           '#/uriEncoded1Missing': {
             def: testDocument.uriEncoded1Missing,
+            fqURI: testDocument.uriEncoded1Missing.$ref,
             uri: testDocument.uriEncoded1Missing.$ref,
             uriDetails: URI.parse(testDocument.uriEncoded1Missing.$ref),
             type: 'local',
@@ -358,6 +367,7 @@ describe('json-refs API', function () {
           },
           '#/uriEncoded2': {
             def: testDocument.uriEncoded2,
+            fqURI: testDocument.uriEncoded2.$ref,
             uri: testDocument.uriEncoded2.$ref,
             uriDetails: URI.parse(testDocument.uriEncoded2.$ref),
             type: 'local',
@@ -365,6 +375,7 @@ describe('json-refs API', function () {
           },
           '#/uriEncoded2Missing': {
             def: testDocument.uriEncoded2Missing,
+            fqURI: testDocument.uriEncoded2Missing.$ref,
             uri: testDocument.uriEncoded2Missing.$ref,
             uriDetails: URI.parse(testDocument.uriEncoded2Missing.$ref),
             type: 'local',
@@ -373,6 +384,7 @@ describe('json-refs API', function () {
           },
           '#/circular/ancestor': {
             def: testDocument.circular.ancestor,
+            fqURI: testDocument.circular.ancestor.$ref,
             uri: testDocument.circular.ancestor.$ref,
             uriDetails: URI.parse(testDocument.circular.ancestor.$ref),
             type: 'local',
@@ -381,6 +393,7 @@ describe('json-refs API', function () {
           },
           '#/circular/root': {
             def: testDocument.circular.root,
+            fqURI: testDocument.circular.root.$ref,
             uri: testDocument.circular.root.$ref,
             uriDetails: URI.parse(testDocument.circular.root.$ref),
             type: 'local',
@@ -389,6 +402,7 @@ describe('json-refs API', function () {
           },
           '#/circular/User/properties/status': {
             def: testDocument.circular.User.properties.status,
+            fqURI: testDocument.circular.User.properties.status.$ref,
             uri: testDocument.circular.User.properties.status.$ref,
             uriDetails: URI.parse(testDocument.circular.User.properties.status.$ref),
             type: 'local',
@@ -397,6 +411,7 @@ describe('json-refs API', function () {
           },
           '#/circular/Status/properties/user': {
             def: testDocument.circular.Status.properties.user,
+            fqURI: testDocument.circular.Status.properties.user.$ref,
             uri: testDocument.circular.Status.properties.user.$ref,
             uriDetails: URI.parse(testDocument.circular.Status.properties.user.$ref),
             type: 'local',
@@ -405,6 +420,7 @@ describe('json-refs API', function () {
           },
           '#/circular/Status/properties/message': {
             def: testDocument.circular.Status.properties.message,
+            fqURI: testDocument.circular.Status.properties.message.$ref,
             uri: testDocument.circular.Status.properties.message.$ref,
             uriDetails: URI.parse(testDocument.circular.Status.properties.message.$ref),
             type: 'local',
@@ -413,6 +429,7 @@ describe('json-refs API', function () {
           },
           '#/circular/Message/properties/author': {
             def: testDocument.circular.Message.properties.author,
+            fqURI: testDocument.circular.Message.properties.author.$ref,
             uri: testDocument.circular.Message.properties.author.$ref,
             uriDetails: URI.parse(testDocument.circular.Message.properties.author.$ref),
             type: 'local',
@@ -421,6 +438,7 @@ describe('json-refs API', function () {
           },
           '#/circular/StatusWrapper/properties/status': {
             def: testDocument.circular.StatusWrapper.properties.status,
+            fqURI: testDocument.circular.StatusWrapper.properties.status.$ref,
             uri: testDocument.circular.StatusWrapper.properties.status.$ref,
             uriDetails: URI.parse(testDocument.circular.StatusWrapper.properties.status.$ref),
             type: 'local',
@@ -428,6 +446,7 @@ describe('json-refs API', function () {
           },
           '#/remote/absolute': {
             def: testDocument.remote.absolute,
+            fqURI: testDocument.remote.absolute.$ref,
             uri: testDocument.remote.absolute.$ref,
             uriDetails: URI.parse(testDocument.remote.absolute.$ref),
             type: 'remote',
@@ -435,6 +454,7 @@ describe('json-refs API', function () {
           },
           '#/remote/absolute-with-hash': {
             def: testDocument.remote['absolute-with-hash'],
+            fqURI: testDocument.remote['absolute-with-hash'].$ref,
             uri: testDocument.remote['absolute-with-hash'].$ref,
             uriDetails: URI.parse(testDocument.remote['absolute-with-hash'].$ref),
             type: 'remote',
@@ -442,6 +462,7 @@ describe('json-refs API', function () {
           },
           '#/remote/relative': {
             def: testDocument.remote.relative,
+            fqURI: testDocument.remote.relative.$ref,
             uri: testDocument.remote.relative.$ref,
             uriDetails: URI.parse(testDocument.remote.relative.$ref),
             type: 'relative',
@@ -449,6 +470,7 @@ describe('json-refs API', function () {
           },
           '#/remote/relative-missing': {
             def: testDocument.remote['relative-missing'],
+            fqURI: testDocument.remote['relative-missing'].$ref,
             uri: testDocument.remote['relative-missing'].$ref,
             uriDetails: URI.parse(testDocument.remote['relative-missing'].$ref),
             type: 'relative',
@@ -457,6 +479,7 @@ describe('json-refs API', function () {
           },
           '#/remote/relative-with-hash': {
             def: testDocument.remote['relative-with-hash'],
+            fqURI: testDocument.remote['relative-with-hash'].$ref,
             uri: testDocument.remote['relative-with-hash'].$ref,
             uriDetails: URI.parse(testDocument.remote['relative-with-hash'].$ref),
             type: 'relative',
@@ -464,6 +487,7 @@ describe('json-refs API', function () {
           },
           '#/remote/relative-with-hash2': {
             def: testDocument.remote['relative-with-hash2'],
+            fqURI: testDocument.remote['relative-with-hash2'].$ref,
             uri: testDocument.remote['relative-with-hash2'].$ref,
             uriDetails: URI.parse(testDocument.remote['relative-with-hash2'].$ref),
             type: 'relative',
@@ -471,6 +495,7 @@ describe('json-refs API', function () {
           },
           '#/remote/relative-with-hash3': {
             def: testDocument.remote['relative-with-hash3'],
+            fqURI: testDocument.remote['relative-with-hash3'].$ref,
             uri: testDocument.remote['relative-with-hash3'].$ref,
             uriDetails: URI.parse(testDocument.remote['relative-with-hash3'].$ref),
             type: 'relative',
@@ -479,6 +504,7 @@ describe('json-refs API', function () {
           },
           '#/remote/relative/child': {
             def: testNestedDocument.child,
+            fqURI: './nested/test-nested-1.yaml',
             uri: testNestedDocument.child.$ref,
             uriDetails: URI.parse(testNestedDocument.child.$ref),
             type: 'relative',
@@ -486,6 +512,7 @@ describe('json-refs API', function () {
           },
           '#/remote/relative/local': {
             def: testNestedDocument.local,
+            fqURI: './nested/test-nested.yaml' + testNestedDocument.local.$ref,
             uri: testNestedDocument.local.$ref,
             uriDetails: URI.parse(testNestedDocument.local.$ref),
             type: 'local',
@@ -493,6 +520,7 @@ describe('json-refs API', function () {
           },
           '#/remote/relative/missing': {
             def: testNestedDocument.missing,
+            fqURI: './nested/test-nested.yaml' + testNestedDocument.missing.$ref,
             uri: testNestedDocument.missing.$ref,
             uriDetails: URI.parse(testNestedDocument.missing.$ref),
             type: 'local',
@@ -501,6 +529,7 @@ describe('json-refs API', function () {
           },
           '#/definitions/Person/properties/name': {
             def: testDocument.definitions.Person.properties.name,
+            fqURI: testDocument.definitions.Person.properties.name.$ref,
             uri: testDocument.definitions.Person.properties.name.$ref,
             uriDetails: URI.parse(testDocument.definitions.Person.properties.name.$ref),
             type: 'local',
@@ -508,6 +537,7 @@ describe('json-refs API', function () {
           },
           '#/remote/relative/child/ancestor': {
             def: testNestedDocument1.ancestor,
+            fqURI: './test-document-1.yaml',
             uri: testNestedDocument1.ancestor.$ref,
             uriDetails: URI.parse(testNestedDocument1.ancestor.$ref),
             type: 'relative',
@@ -515,6 +545,7 @@ describe('json-refs API', function () {
           },
           '#/remote/relative/child/local': {
             def: testNestedDocument1.local,
+            fqURI: './nested/test-nested-1.yaml' + testNestedDocument1.local.$ref,
             uri: testNestedDocument1.local.$ref,
             uriDetails: URI.parse(testNestedDocument1.local.$ref),
             type: 'local',
@@ -522,6 +553,7 @@ describe('json-refs API', function () {
           },
           '#/remote/relative/child/missing': {
             def: testNestedDocument1.missing,
+            fqURI: './nested/test-nested-1.yaml' + testNestedDocument1.missing.$ref,
             uri: testNestedDocument1.missing.$ref,
             uriDetails: URI.parse(testNestedDocument1.missing.$ref),
             type: 'local',
@@ -530,6 +562,7 @@ describe('json-refs API', function () {
           },
           '#/remote/relative/child/ancestor/local': {
             def: testDocument1.local,
+            fqURI: './test-document-1.yaml#/name',
             uri: testDocument1.local.$ref,
             uriDetails: URI.parse(testDocument1.local.$ref),
             type: 'local',
@@ -537,6 +570,7 @@ describe('json-refs API', function () {
           },
           '#/remote/relative/child/ancestor/missing': {
             def: testDocument1.missing,
+            fqURI: './test-document-1.yaml' + testDocument1.missing.$ref,
             uri: testDocument1.missing.$ref,
             uriDetails: URI.parse(testDocument1.missing.$ref),
             type: 'local',
@@ -545,6 +579,7 @@ describe('json-refs API', function () {
           },
           '#/remote/relative/child/ancestor/nested': {
             def: testDocument1.nested,
+            fqURI: testDocument1.nested.$ref,
             uri: testDocument1.nested.$ref,
             uriDetails: URI.parse(testDocument1.nested.$ref),
             type: 'relative',
@@ -553,6 +588,7 @@ describe('json-refs API', function () {
           },
           '#/remote/relative-with-hash2/properties/age': {
             def: testTypesDocument.definitions.Person.properties.age,
+            fqURI: './test-types.yaml' + testTypesDocument.definitions.Person.properties.age.$ref,
             uri: testTypesDocument.definitions.Person.properties.age.$ref,
             uriDetails: URI.parse(testTypesDocument.definitions.Person.properties.age.$ref),
             type: 'local',
@@ -560,6 +596,7 @@ describe('json-refs API', function () {
           },
           '#/remote/relative-with-hash2/properties/name': {
             def: testTypesDocument.definitions.Person.properties.name,
+            fqURI: './test-types.yaml' + testTypesDocument.definitions.Person.properties.name.$ref,
             uri: testTypesDocument.definitions.Person.properties.name.$ref,
             uriDetails: URI.parse(testTypesDocument.definitions.Person.properties.name.$ref),
             type: 'local',
@@ -567,6 +604,7 @@ describe('json-refs API', function () {
           },
           '#/remote/relative-with-hash2/properties/addresses/items': {
             def: testTypesDocument.definitions.Person.properties.addresses.items,
+            fqURI: './test-types.yaml' + testTypesDocument.definitions.Person.properties.addresses.items.$ref,
             uri: testTypesDocument.definitions.Person.properties.addresses.items.$ref,
             uriDetails: URI.parse(testTypesDocument.definitions.Person.properties.addresses.items.$ref),
             type: 'local',
@@ -574,6 +612,7 @@ describe('json-refs API', function () {
           },
           '#/remote/relative-with-hash2/properties/addresses/items/properties/name': {
             def: testTypesDocument.definitions.Address.properties.name,
+            fqURI: './test-types.yaml' + testTypesDocument.definitions.Address.properties.name.$ref,
             uri: testTypesDocument.definitions.Address.properties.name.$ref,
             uriDetails: URI.parse(testTypesDocument.definitions.Address.properties.name.$ref),
             type: 'local',
@@ -581,6 +620,7 @@ describe('json-refs API', function () {
           },
           '#/remote/relative-with-hash2/properties/addresses/items/properties/street/items': {
             def: testTypesDocument.definitions.Address.properties.street.items,
+            fqURI: './test-types.yaml' + testTypesDocument.definitions.Address.properties.street.items.$ref,
             uri: testTypesDocument.definitions.Address.properties.street.items.$ref,
             uriDetails: URI.parse(testTypesDocument.definitions.Address.properties.street.items.$ref),
             type: 'local',
@@ -588,6 +628,7 @@ describe('json-refs API', function () {
           },
           '#/remote/relative-with-hash2/properties/addresses/items/properties/city': {
             def: testTypesDocument.definitions.Address.properties.city,
+            fqURI: './test-types.yaml' + testTypesDocument.definitions.Address.properties.city.$ref,
             uri: testTypesDocument.definitions.Address.properties.city.$ref,
             uriDetails: URI.parse(testTypesDocument.definitions.Address.properties.city.$ref),
             type: 'local',
@@ -595,6 +636,7 @@ describe('json-refs API', function () {
           },
           '#/remote/relative-with-hash2/properties/addresses/items/properties/state': {
             def: testTypesDocument.definitions.Address.properties.state,
+            fqURI: './test-types.yaml' + testTypesDocument.definitions.Address.properties.state.$ref,
             uri: testTypesDocument.definitions.Address.properties.state.$ref,
             uriDetails: URI.parse(testTypesDocument.definitions.Address.properties.state.$ref),
             type: 'local',
@@ -602,6 +644,7 @@ describe('json-refs API', function () {
           },
           '#/remote/relative-with-hash2/properties/family/items': {
             def: testTypesDocument.definitions.Person.properties.family.items,
+            fqURI: './test-types.yaml' + testTypesDocument.definitions.Person.properties.family.items.$ref,
             uri: testTypesDocument.definitions.Person.properties.family.items.$ref,
             uriDetails: URI.parse(testTypesDocument.definitions.Person.properties.family.items.$ref),
             type: 'local',
@@ -1298,6 +1341,7 @@ describe('json-refs API', function () {
           validateResolvedRefDetails(res.refs, {
             '#/remote/relative': {
               def: testDocument.remote.relative,
+              fqURI: testDocument.remote.relative.$ref,
               uri: testDocument.remote.relative.$ref,
               uriDetails: URI.parse(testDocument.remote.relative.$ref),
               type: 'relative',
@@ -1310,6 +1354,7 @@ describe('json-refs API', function () {
             },
             '#/remote/relative/child': {
               def: testNestedDocument.child,
+              fqURI: './nested/test-nested-1.yaml',
               uri: testNestedDocument.child.$ref,
               uriDetails: URI.parse(testNestedDocument.child.$ref),
               type: 'relative',
@@ -1317,6 +1362,7 @@ describe('json-refs API', function () {
             },
             '#/remote/relative/child/ancestor': {
               def: testNestedDocument1.ancestor,
+              fqURI: './test-document-1.yaml',
               uri: testNestedDocument1.ancestor.$ref,
               uriDetails: URI.parse(testNestedDocument1.ancestor.$ref),
               type: 'relative',
@@ -1324,6 +1370,7 @@ describe('json-refs API', function () {
             },
             '#/remote/relative/child/ancestor/local': {
               def: testDocument1.local,
+              fqURI: './test-document-1.yaml' + testDocument1.local.$ref,
               uri: testDocument1.local.$ref,
               uriDetails: URI.parse(testDocument1.local.$ref),
               type: 'local',
@@ -1331,6 +1378,7 @@ describe('json-refs API', function () {
             },
             '#/remote/relative/child/ancestor/missing': {
               def: testDocument1.missing,
+              fqURI: './test-document-1.yaml' + testDocument1.missing.$ref,
               uri: testDocument1.missing.$ref,
               uriDetails: URI.parse(testDocument1.missing.$ref),
               type: 'local',
@@ -1339,6 +1387,7 @@ describe('json-refs API', function () {
             },
             '#/remote/relative/child/ancestor/nested': {
               def: testDocument1.nested,
+              fqURI: testDocument1.nested.$ref,
               uri: testDocument1.nested.$ref,
               uriDetails: URI.parse(testDocument1.nested.$ref),
               type: 'relative',
@@ -1347,6 +1396,7 @@ describe('json-refs API', function () {
             },
             '#/remote/relative/child/local': {
               def: testNestedDocument1.local,
+              fqURI: './nested/test-nested-1.yaml' + testNestedDocument1.local.$ref,
               uri: testNestedDocument1.local.$ref,
               uriDetails: URI.parse(testNestedDocument1.local.$ref),
               type: 'local',
@@ -1354,6 +1404,7 @@ describe('json-refs API', function () {
             },
             '#/remote/relative/child/missing': {
               def: testNestedDocument1.missing,
+              fqURI: './nested/test-nested-1.yaml' + testNestedDocument1.missing.$ref,
               uri: testNestedDocument1.missing.$ref,
               uriDetails: URI.parse(testNestedDocument1.missing.$ref),
               type: 'local',
@@ -1362,6 +1413,7 @@ describe('json-refs API', function () {
             },
             '#/remote/relative/local': {
               def: testNestedDocument.local,
+              fqURI: './nested/test-nested.yaml' + testNestedDocument.local.$ref,
               uri: testNestedDocument.local.$ref,
               uriDetails: URI.parse(testNestedDocument.local.$ref),
               type: 'local',
@@ -1369,6 +1421,7 @@ describe('json-refs API', function () {
             },
             '#/remote/relative/missing': {
               def: testNestedDocument.missing,
+              fqURI: './nested/test-nested.yaml' + testNestedDocument.missing.$ref,
               uri: testNestedDocument.missing.$ref,
               uriDetails: URI.parse(testNestedDocument.missing.$ref),
               type: 'local',
@@ -1512,6 +1565,7 @@ describe('json-refs API', function () {
             assert.deepEqual(res.refs, {
               '#/components/schemas/A': {
                 def: circularRoot.components.schemas.A,
+                fqURI: circularRoot.components.schemas.A.$ref,
                 uri: circularRoot.components.schemas.A.$ref,
                 uriDetails: URI.parse(circularRoot.components.schemas.A.$ref),
                 type: 'relative',
@@ -1519,6 +1573,7 @@ describe('json-refs API', function () {
               },
               '#/components/schemas/A/properties/children/items': {
                 def: circularChild.definitions.A.properties.children.items,
+                fqURI: '#/components/schemas/B', // Relative to root so no mention of root document
                 uri: circularChild.definitions.A.properties.children.items.$ref,
                 uriDetails: URI.parse(circularChild.definitions.A.properties.children.items.$ref),
                 type: 'relative',
@@ -1527,6 +1582,7 @@ describe('json-refs API', function () {
               },
               '#/components/schemas/B': {
                 def: circularRoot.components.schemas.B,
+                fqURI: circularRoot.components.schemas.B.$ref,
                 uri: circularRoot.components.schemas.B.$ref,
                 uriDetails: URI.parse(circularRoot.components.schemas.B.$ref),
                 type: 'relative',
@@ -1534,6 +1590,7 @@ describe('json-refs API', function () {
               },
               '#/components/schemas/B/properties/parent': {
                 def: circularChild.definitions.B.properties.parent,
+                fqURI: '#/components/schemas/A', // Relative to root so no mention of root document
                 uri: circularChild.definitions.B.properties.parent.$ref,
                 uriDetails: URI.parse(circularChild.definitions.B.properties.parent.$ref),
                 type: 'relative',
@@ -1542,6 +1599,7 @@ describe('json-refs API', function () {
               },
               '#/paths/~1test/get/responses/200/content/application~1json/schema/properties/A': {
                 def: response.content['application/json'].schema.properties.A,
+                fqURI: response.content['application/json'].schema.properties.A.$ref,
                 uri: response.content['application/json'].schema.properties.A.$ref,
                 uriDetails: URI.parse(response.content['application/json'].schema.properties.A.$ref),
                 type: 'local',
@@ -1677,10 +1735,91 @@ describe('json-refs API', function () {
           .then(function (results) {
             return JsonRefs.resolveRefs(doc)
               .then(function (results2) {
+                if (typeof window !== 'undefined') {
+                  console.log(JSON.stringify(results2, null, 2));
+                  console.log(JSON.stringify({
+                    refs: {
+                      '#': {
+                        def: doc,
+                        fqURI: doc.$ref,
+                        uri: doc.$ref,
+                        uriDetails: {
+                          fragment: '/paths/~1people~1%7Bid%7D',
+                          host: 'rawgit.com',
+                          path: '/apigee-127/swagger-tools/master/test/browser/people.json',
+                          port: undefined,
+                          query: undefined,
+                          reference: 'uri',
+                          scheme: 'https',
+                          userinfo: undefined
+                        },
+                        type: 'remote',
+                        value: results.value.paths['/people/{id}']
+                      },
+                      '#/delete/responses/default/schema': {
+                        def: results.value.paths['/people/{id}'].delete.responses.default.schema,
+                        fqURI: uri + results.value.paths['/people/{id}'].delete.responses.default.schema.$ref,
+                        uri: results.value.paths['/people/{id}'].delete.responses.default.schema.$ref,
+                        uriDetails: {
+                          fragment: '/definitions/Error',
+                          host: undefined,
+                          path: '',
+                          port: undefined,
+                          query: undefined,
+                          reference: 'same-document',
+                          scheme: undefined,
+                          userinfo: undefined
+                        },
+                        type: 'local',
+                        error: 'JSON Pointer points to missing location: #/definitions/Error',
+                        missing: true
+                      },
+                      '#/get/responses/200/schema': {
+                        def: results.value.paths['/people/{id}'].get.responses['200'].schema,
+                        fqURI: uri + results.value.paths['/people/{id}'].get.responses['200'].schema.$ref,
+                        uri: results.value.paths['/people/{id}'].get.responses['200'].schema.$ref,
+                        uriDetails: {
+                          fragment: '/definitions/Pet',
+                          host: undefined,
+                          path: '',
+                          port: undefined,
+                          query: undefined,
+                          reference: 'same-document',
+                          scheme: undefined,
+                          userinfo: undefined
+                        },
+                        type: 'local',
+                        error: 'JSON Pointer points to missing location: #/definitions/Pet',
+                        missing: true
+                      },
+                      '#/get/responses/default/schema': {
+                        def: results.value.paths['/people/{id}'].get.responses.default.schema,
+                        fqURI: uri + results.value.paths['/people/{id}'].get.responses.default.schema.$ref,
+                        uri: results.value.paths['/people/{id}'].get.responses.default.schema.$ref,
+                        uriDetails: {
+                          fragment: '/definitions/Error',
+                          host: undefined,
+                          path: '',
+                          port: undefined,
+                          query: undefined,
+                          reference: 'same-document',
+                          scheme: undefined,
+                          userinfo: undefined
+                        },
+                        type: 'local',
+                        error: 'JSON Pointer points to missing location: #/definitions/Error',
+                        missing: true
+                      }
+                    },
+                    resolved: results.resolved.paths['/people/{id}']
+                  }, null, 2));
+                }
+
                 assert.deepEqual(results2, {
                   refs: {
                     '#': {
                       def: doc,
+                      fqURI: doc.$ref,
                       uri: doc.$ref,
                       uriDetails: {
                         fragment: '/paths/~1people~1%7Bid%7D',
@@ -1697,6 +1836,7 @@ describe('json-refs API', function () {
                     },
                     '#/delete/responses/default/schema': {
                       def: results.value.paths['/people/{id}'].delete.responses.default.schema,
+                      fqURI: uri + results.value.paths['/people/{id}'].delete.responses.default.schema.$ref,
                       uri: results.value.paths['/people/{id}'].delete.responses.default.schema.$ref,
                       uriDetails: {
                         fragment: '/definitions/Error',
@@ -1714,6 +1854,7 @@ describe('json-refs API', function () {
                     },
                     '#/get/responses/200/schema': {
                       def: results.value.paths['/people/{id}'].get.responses['200'].schema,
+                      fqURI: uri + results.value.paths['/people/{id}'].get.responses['200'].schema.$ref,
                       uri: results.value.paths['/people/{id}'].get.responses['200'].schema.$ref,
                       uriDetails: {
                         fragment: '/definitions/Pet',
@@ -1731,6 +1872,7 @@ describe('json-refs API', function () {
                     },
                     '#/get/responses/default/schema': {
                       def: results.value.paths['/people/{id}'].get.responses.default.schema,
+                      fqURI: uri + results.value.paths['/people/{id}'].get.responses.default.schema.$ref,
                       uri: results.value.paths['/people/{id}'].get.responses.default.schema.$ref,
                       uriDetails: {
                         fragment: '/definitions/Error',
@@ -1791,6 +1933,7 @@ describe('json-refs API', function () {
               assert.equal(Object.keys(results.refs).length, 1);
               assert.deepEqual(refDetails, {
                 def: doc.ref,
+                fqURI: refURI,
                 uri: refURI,
                 uriDetails: {
                   scheme: undefined,
@@ -1829,6 +1972,7 @@ describe('json-refs API', function () {
               assert.equal(Object.keys(results.refs).length, 1);
               assert.deepEqual(refDetails, {
                 def: doc.ref,
+                fqURI: refURI,
                 uri: refURI,
                 uriDetails: {
                   scheme: undefined,
@@ -1863,6 +2007,7 @@ describe('json-refs API', function () {
                 refs: {
                   '#': {
                     def: doc,
+                    fqURI: doc.$ref,
                     uri: doc.$ref,
                     uriDetails: {
                       scheme: undefined,
@@ -1899,6 +2044,7 @@ describe('json-refs API', function () {
                 refs: {
                   '#/ref': {
                     def: doc.ref,
+                    fqURI: doc.ref.$ref,
                     uri: doc.ref.$ref,
                     uriDetails: {
                       scheme: undefined,

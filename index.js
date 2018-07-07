@@ -340,6 +340,9 @@ function buildRefModel (document, options, metadata) {
         return;
       }
 
+      // Record the fully-qualified URI
+      refDetails.fqURI = refdKey;
+
       // Record dependency (relative to the document's sub-document path)
       metadata.deps[docDepKey][refPtr === subDocPtr ? '#' : refPtr.replace(subDocPtr + '/', '#/')] = refdKey;
 
@@ -616,6 +619,9 @@ function validateOptions (options, obj) {
  *
  * @property {boolean} [circular] - Whether or not the JSON Reference is circular *(Will not be set if the JSON
  * Reference is not circular)*
+ * @property {string} fqURI - The fully-qualified version of the `uri` property for
+ *                            {@link module:JsonRefs~UnresolvedRefDetails} but with the value being relative to the root
+ *                            document
  * @property {boolean} [missing] - Whether or not the referenced value was missing or not *(Will not be set if the
  * referenced value is not missing)*
  * @property {*} [value] - The referenced value *(Will not be set if the referenced value is missing)*
@@ -1173,6 +1179,7 @@ function resolveRefs (obj, options) {
       var depGraph = new gl.Graph();
       var fullLocation = makeAbsolute(options.location);
       var refsRoot = fullLocation + pathToPtr(options.subDocPath);
+      var relativeBase = path.dirname(fullLocation);
 
       // Identify circulars
 
@@ -1199,7 +1206,7 @@ function resolveRefs (obj, options) {
         });
       });
 
-      // Process circulars
+      // Identify circulars
       _.forOwn(results.deps, function (props, node) {
         _.forOwn(props, function (dep, prop) {
           var isCircular = false;
@@ -1329,6 +1336,50 @@ function resolveRefs (obj, options) {
       // of a reference, we have to take our fully-qualified reference locations and expand them to be all local based
       // on the original document.
       Object.keys(results.refs).forEach(function (refPtr) {
+        var refDetails = results.refs[refPtr];
+        var fqURISegments;
+        var uriSegments;
+
+        // Make all fully-qualified reference URIs relative to the document root (if necessary).  This step is done here
+        // for performance reasons instead of below when the official sanitization process runs.
+        if (refDetails.type !== 'invalid') {
+          // Remove the trailing hash from document root references if they weren't in the original URI
+          if (refDetails.fqURI[refDetails.fqURI.length - 1] === '#' &&
+                refDetails.uri[refDetails.uri.length - 1] !== '#') {
+            refDetails.fqURI = refDetails.fqURI.substr(0, refDetails.fqURI.length - 1);
+          }
+
+          fqURISegments = refDetails.fqURI.split('/');
+          uriSegments = refDetails.uri.split('/');
+
+          // The fully-qualified URI is unencoded so to keep the original formatting of the URI (encoded vs. unencoded),
+          // we need to replace each URI segment in reverse order.
+          _.times(uriSegments.length - 1, function (time) {
+            var nSeg = uriSegments[uriSegments.length - time - 1];
+            var fqSegIndex = fqURISegments.length - time - 1;
+            var fqSeg = fqURISegments[fqSegIndex];
+
+            if (nSeg === '.' || nSeg === '..') {
+              nSeg = fqSeg;
+            }
+
+            fqURISegments[fqSegIndex] = nSeg;
+          });
+
+          refDetails.fqURI = fqURISegments.join('/');
+
+          // Make the fully-qualified URIs relative to the document root
+          if (refDetails.fqURI.indexOf(fullLocation) === 0) {
+            refDetails.fqURI = refDetails.fqURI.replace(fullLocation, '');
+          } else if (refDetails.fqURI.indexOf(relativeBase) === 0) {
+            refDetails.fqURI = refDetails.fqURI.replace(relativeBase, '');
+          }
+
+          if (refDetails.fqURI[0] === '/') {
+            refDetails.fqURI = '.' + refDetails.fqURI;
+          }
+        }
+
         // We only want to process references found at or beneath the provided document and sub-document path
         if (refPtr.indexOf(refsRoot) !== 0) {
           return;

@@ -2,6 +2,7 @@
 
 ### TBD
 
+* Added the `fqURI` property to the resolved reference metadata *(Issue #136)*
 * Fixed bug in circular reference processing where circular references span multiple documents *(Issue #135)*
 
 ### v3.0.4 (2018-02-11)
