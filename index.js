@@ -465,6 +465,7 @@ function walk (ancestors, node, path, fn) {
 
 function validateOptions (options, obj) {
   var locationParts;
+  var shouldDecode;
 
   if (_.isUndefined(options)) {
     // Default to an empty options object
@@ -522,8 +523,15 @@ function validateOptions (options, obj) {
     options.subDocPath = '#' + locationParts[1];
   }
 
+  shouldDecode = decodeURI(options.location) === options.location;
+
   // Just to be safe, remove any accidental fragment as it would break things
   options.location = combineURIs(options.location, undefined);
+
+  // If the location was not encoded, meke sure it's not when we get it back (Issue #138)
+  if (shouldDecode) {
+    options.location = decodeURI(options.location);
+  }
 
   // Set the subDocPath to avoid everyone else having to compute it
   options.subDocPath = makeSubDocPath(options);

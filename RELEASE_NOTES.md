@@ -1,5 +1,9 @@
 ## Release Notes
 
+### TBD
+
+* Fix bug where `options.location` having URI escapable characters in it breaks resolution *(Issue #138)*
+
 ### v3.0.5 (2018-07-06)
 
 * Added the `fqURI` property to the resolved reference metadata *(Issue #136)*
