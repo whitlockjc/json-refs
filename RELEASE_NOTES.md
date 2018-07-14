@@ -1,6 +1,6 @@
 ## Release Notes
 
-### TBD
+### v3.0.6 (2018-07-14)
 
 * Fix bug where `options.location` having URI escapable characters in it breaks resolution *(Issue #138)*
 
