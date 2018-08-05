@@ -1,5 +1,9 @@
 ## Release Notes
 
+### v3.0.7 (2018-08-04)
+
+* Upgraded `path-loader` to upgrade `superagent`
+
 ### v3.0.6 (2018-07-14)
 
 * Fix bug where `options.location` having URI escapable characters in it breaks resolution *(Issue #138)*
