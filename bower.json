@@ -24,7 +24,7 @@
   "dependencies": {
     "graphlib": "^2.1.1",
     "lodash": "^4.17.4",
-    "path-loader": "^1.0.4"
+    "path-loader": "^1.0.5"
   },
   "devDependencies": {
     "mocha": "~3.2.0"
