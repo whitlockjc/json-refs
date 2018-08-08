@@ -542,162 +542,6 @@ function validateOptions (options, obj) {
   return options;
 }
 
-/* Module Members */
-
-/*
- * Each of the functions below are defined as function statements and *then* exported in two steps instead of one due
- * to a bug in jsdoc (https://github.com/jsdoc2md/jsdoc-parse/issues/18) that causes our documentation to be
- * generated improperly.  The impact to the user is significant enough for us to warrant working around it until this
- * is fixed.
- */
-
-/**
- * The options used for various JsonRefs APIs.
- *
- * @typedef {object} JsonRefsOptions
- *
- * @property {string|string[]|function} [filter=function () {return true;}] - The filter to use when gathering JSON
- * References *(If this value is a single string or an array of strings, the value(s) are expected to be the `type(s)`
- * you are interested in collecting as described in {@link getRefDetails}.  If it is a function, it is
- * expected that the function behaves like {@link RefDetailsFilter}.)*
- * @property {boolean} [includeInvalid=false] - Whether or not to include invalid JSON Reference details *(This will
- * make it so that objects that are like JSON Reference objects, as in they are an `Object` and the have a `$ref`
- * property, but fail validation will be included.  This is very useful for when you want to know if you have invalid
- * JSON Reference definitions.  This will not mean that APIs will process invalid JSON References but the reasons as to
- * why the JSON References are invalid will be included in the returned metadata.)*
- * @property {object} [loaderOptions] - The options to pass to
- * {@link https://github.com/whitlockjc/path-loader/blob/master/docs/API.md#module_PathLoader.load|PathLoader~load}
- * @property {string} [location=root.json] - The location of the document being processed  *(This property is only
- * useful when resolving references as it will be used to locate relative references found within the document being
- * resolved. If this value is relative, {@link https://github.com/whitlockjc/path-loader|path-loader} will use
- * `window.location.href` for the browser and `process.cwd()` for Node.js.)*
- * @property {RefPreProcessor} [refPreProcessor] - The callback used to pre-process a JSON Reference like
- * object *(This is called prior to validating the JSON Reference like object and getting its details)*
- * @property {RefPostProcessor} [refPostProcessor] - The callback used to post-process the JSON Reference
- * metadata *(This is called prior filtering the references)*
- * @property {boolean} [resolveCirculars=false] - Whether to resolve circular references
- * @property {string|string[]} [subDocPath=[]] - The JSON Pointer or array of path segments to the sub document
- * location to search from
- */
-
-/**
- * Simple function used to filter out JSON References.
- *
- * @typedef {function} RefDetailsFilter
- *
- * @param {UnresolvedRefDetails} refDetails - The JSON Reference details to test
- * @param {string[]} path - The path to the JSON Reference
- *
- * @returns {boolean} whether the JSON Reference should be filtered *(out)* or not
- */
-
-/**
- * Simple function used to pre-process a JSON Reference like object.
- *
- * @typedef {function} RefPreProcessor
- *
- * @param {object} obj - The JSON Reference like object
- * @param {string[]} path - The path to the JSON Reference like object
- *
- * @returns {object} the processed JSON Reference like object
- */
-
-/**
- * Simple function used to post-process a JSON Reference details.
- *
- * @typedef {function} RefPostProcessor
- *
- * @param {UnresolvedRefDetails} refDetails - The JSON Reference details to test
- * @param {string[]} path - The path to the JSON Reference
- *
- * @returns {object} the processed JSON Reference details object
- */
-
-/**
- * Detailed information about resolved JSON References.
- *
- * @typedef {UnresolvedRefDetails} ResolvedRefDetails
- *
- * @property {boolean} [circular] - Whether or not the JSON Reference is circular *(Will not be set if the JSON
- * Reference is not circular)*
- * @property {string} fqURI - The fully-qualified version of the `uri` property for
- *                            {@link UnresolvedRefDetails} but with the value being relative to the root
- *                            document
- * @property {boolean} [missing] - Whether or not the referenced value was missing or not *(Will not be set if the
- * referenced value is not missing)*
- * @property {*} [value] - The referenced value *(Will not be set if the referenced value is missing)*
- */
-
-/**
- * The results of resolving the JSON References of an array/object.
- *
- * @typedef {object} ResolvedRefsResults
- *
- * @property {ResolvedRefDetails} refs - An object whose keys are JSON Pointers *(fragment version)*
- * to where the JSON Reference is defined and whose values are {@link ResolvedRefDetails}
- * @property {object} resolved - The array/object with its JSON References fully resolved
- */
-
-/**
- * An object containing the retrieved document and detailed information about its JSON References.
- *
- * @typedef {ResolvedRefsResults} RetrievedRefsResults
- *
- * @property {object} value - The retrieved document
- */
-
-/**
- * An object containing the retrieved document, the document with its references resolved and  detailed information
- * about its JSON References.
- *
- * @typedef {object} RetrievedResolvedRefsResults
- *
- * @property {UnresolvedRefDetails} refs - An object whose keys are JSON Pointers *(fragment version)*
- * to where the JSON Reference is defined and whose values are {@link UnresolvedRefDetails}
- * @property {ResolvedRefsResults} - An object whose keys are JSON Pointers *(fragment version)*
- * to where the JSON Reference is defined and whose values are {@link ResolvedRefDetails}
- * @property {object} value - The retrieved document
- */
-
-/**
- * Detailed information about unresolved JSON References.
- *
- * @typedef {object} UnresolvedRefDetails
- *
- * @property {object} def - The JSON Reference definition
- * @property {string} [error] - The error information for invalid JSON Reference definition *(Only present when the
- * JSON Reference definition is invalid or there was a problem retrieving a remote reference during resolution)*
- * @property {string} uri - The URI portion of the JSON Reference
- * @property {object} uriDetails - Detailed information about the URI as provided by
- * {@link https://github.com/garycourt/uri-js|URI.parse}.
- * @property {string} type - The JSON Reference type *(This value can be one of the following: `invalid`, `local`,
- * `relative` or `remote`.)*
- * @property {string} [warning] - The warning information *(Only present when the JSON Reference definition produces a
- * warning)*
- */
-
-/**
- * Clears the internal cache of remote documents, reference details, etc.
- *
- * @alias clearCache
- */
-function clearCache () {
-  remoteCache = {};
-}
-
-/**
- * Takes an array of path segments and decodes the JSON Pointer tokens in them.
- *
- * @param {string[]} path - The array of path segments
- *
- * @returns {string} the array of path segments with their JSON Pointer tokens decoded
- *
- * @throws {Error} if the path is not an `Array`
- *
- * @see {@link https://tools.ietf.org/html/rfc6901#section-3}
- *
- * @alias decodePath
- */
 function decodePath (path) {
   if (!_.isArray(path)) {
     throw new TypeError('path must be an array');
@@ -712,19 +556,6 @@ function decodePath (path) {
   });
 }
 
-/**
- * Takes an array of path segments and encodes the special JSON Pointer characters in them.
- *
- * @param {string[]} path - The array of path segments
- *
- * @returns {string} the array of path segments with their JSON Pointer tokens encoded
- *
- * @throws {Error} if the path is not an `Array`
- *
- * @see {@link https://tools.ietf.org/html/rfc6901#section-3}
- *
- * @alias encodePath
- */
 function encodePath (path) {
   if (!_.isArray(path)) {
     throw new TypeError('path must be an array');
@@ -739,27 +570,6 @@ function encodePath (path) {
   });
 }
 
-/**
- * Finds JSON References defined within the provided array/object.
- *
- * @param {array|object} obj - The structure to find JSON References within
- * @param {JsonRefsOptions} [options] - The JsonRefs options
- *
- * @returns {object} an object whose keys are JSON Pointers *(fragment version)* to where the JSON Reference is defined
- * and whose values are {@link UnresolvedRefDetails}.
- *
- * @throws {Error} when the input arguments fail validation or if `options.subDocPath` points to an invalid location
- *
- * @alias findRefs
- *
- * @example
- * // Finding all valid references
- * var allRefs = JsonRefs.findRefs(obj);
- * // Finding all remote references
- * var remoteRefs = JsonRefs.findRefs(obj, {filter: ['relative', 'remote']});
- * // Finding all invalid references
- * var invalidRefs = JsonRefs.findRefs(obj, {filter: 'invalid', includeInvalid: true});
- */
 function findRefs (obj, options) {
   var refs = {};
 
@@ -812,36 +622,6 @@ function findRefs (obj, options) {
   return refs;
 }
 
-/**
- * Finds JSON References defined within the document at the provided location.
- *
- * This API is identical to {@link findRefs} except this API will retrieve a remote document and then
- * return the result of {@link findRefs} on the retrieved document.
- *
- * @param {string} location - The location to retrieve *(Can be relative or absolute, just make sure you look at the
- * {@link JsonRefsOptions|options documentation} to see how relative references are handled.)*
- * @param {JsonRefsOptions} [options] - The JsonRefs options
- *
- * @returns {Promise} a promise that resolves a {@link RetrievedRefsResults} and rejects with an
- * `Error` when the input arguments fail validation, when `options.subDocPath` points to an invalid location or when
- *  the location argument points to an unloadable resource
- *
- * @alias findRefsAt
- *
- * @example
- * // Example that only resolves references within a sub document
- * JsonRefs.findRefsAt('http://petstore.swagger.io/v2/swagger.json', {
- *     subDocPath: '#/definitions'
- *   })
- *   .then(function (res) {
- *      // Do something with the response
- *      //
- *      // res.refs: JSON Reference locations and details
- *      // res.value: The retrieved document
- *   }, function (err) {
- *     console.log(err.stack);
- *   });
- */
 function findRefsAt (location, options) {
   var allTasks = Promise.resolve();
 
@@ -902,15 +682,6 @@ function findRefsAt (location, options) {
   return allTasks;
 }
 
-/**
- * Returns detailed information about the JSON Reference.
- *
- * @param {object} obj - The JSON Reference definition
- *
- * @returns {UnresolvedRefDetails} the detailed information
- *
- * @alias getRefDetails
- */
 function getRefDetails (obj) {
   var details = {
     def: obj
@@ -967,39 +738,6 @@ function getRefDetails (obj) {
   return details;
 }
 
-/**
- * Returns whether the argument represents a JSON Pointer.
- *
- * A string is a JSON Pointer if the following are all true:
- *
- *   * The string is of type `String`
- *   * The string must be empty, `#` or start with a `/` or `#/`
- *
- * @param {string} ptr - The string to check
- * @param {boolean} [throwWithDetails=false] - Whether or not to throw an `Error` with the details as to why the value
- * provided is invalid
- *
- * @returns {boolean} the result of the check
- *
- * @throws {error} when the provided value is invalid and the `throwWithDetails` argument is `true`
- *
- * @alias isPtr
- *
- * @see {@link https://tools.ietf.org/html/rfc6901#section-3}
- *
- * @example
- * // Separating the different ways to invoke isPtr for demonstration purposes
- * if (isPtr(str)) {
- *   // Handle a valid JSON Pointer
- * } else {
- *   // Get the reason as to why the value is not a JSON Pointer so you can fix/report it
- *   try {
- *     isPtr(str, true);
- *   } catch (err) {
- *     // The error message contains the details as to why the provided value is not a JSON Pointer
- *   }
- * }
- */
 function isPtr (ptr, throwWithDetails) {
   var valid = true;
   var firstChar;
@@ -1031,56 +769,10 @@ function isPtr (ptr, throwWithDetails) {
   return valid;
 }
 
-/**
- * Returns whether the argument represents a JSON Reference.
- *
- * An object is a JSON Reference only if the following are all true:
- *
- *   * The object is of type `Object`
- *   * The object has a `$ref` property
- *   * The `$ref` property is a valid URI *(We do not require 100% strict URIs and will handle unescaped special
- *     characters.)*
- *
- * @param {object} obj - The object to check
- * @param {boolean} [throwWithDetails=false] - Whether or not to throw an `Error` with the details as to why the value
- * provided is invalid
- *
- * @returns {boolean} the result of the check
- *
- * @throws {error} when the provided value is invalid and the `throwWithDetails` argument is `true`
- *
- * @alias isRef
- *
- * @see {@link http://tools.ietf.org/html/draft-pbryan-zyp-json-ref-03#section-3}
- *
- * @example
- * // Separating the different ways to invoke isRef for demonstration purposes
- * if (isRef(obj)) {
- *   // Handle a valid JSON Reference
- * } else {
- *   // Get the reason as to why the value is not a JSON Reference so you can fix/report it
- *   try {
- *     isRef(str, true);
- *   } catch (err) {
- *     // The error message contains the details as to why the provided value is not a JSON Reference
- *   }
- * }
- */
 function isRef (obj, throwWithDetails) {
   return isRefLike(obj, throwWithDetails) && getRefDetails(obj, throwWithDetails).type !== 'invalid';
 }
 
-/**
- * Returns an array of path segments for the provided JSON Pointer.
- *
- * @param {string} ptr - The JSON Pointer
- *
- * @returns {string[]} the path segments
- *
- * @throws {Error} if the provided `ptr` argument is not a JSON Pointer
- *
- * @alias pathFromPtr
- */
 function pathFromPtr (ptr) {
   try {
     isPtr(ptr, true);
@@ -1096,20 +788,6 @@ function pathFromPtr (ptr) {
   return decodePath(segments);
 }
 
-/**
- * Returns a JSON Pointer for the provided array of path segments.
- *
- * **Note:** If a path segment in `path` is not a `String`, it will be converted to one using `JSON.stringify`.
- *
- * @param {string[]} path - The array of path segments
- * @param {boolean} [hashPrefix=true] - Whether or not create a hash-prefixed JSON Pointer
- *
- * @returns {string} the corresponding JSON Pointer
- *
- * @throws {Error} if the `path` argument is not an array
- *
- * @alias pathToPtr
- */
 function pathToPtr (path, hashPrefix) {
   if (!_.isArray(path)) {
     throw new Error('path must be an Array');
@@ -1119,32 +797,6 @@ function pathToPtr (path, hashPrefix) {
   return (hashPrefix !== false ? '#' : '') + (path.length > 0 ? '/' : '') + encodePath(path).join('/');
 }
 
-/**
- * Finds JSON References defined within the provided array/object and resolves them.
- *
- * @param {array|object} obj - The structure to find JSON References within
- * @param {JsonRefsOptions} [options] - The JsonRefs options
- *
- * @returns {Promise} a promise that resolves a {@link ResolvedRefsResults} and rejects with an
- * `Error` when the input arguments fail validation, when `options.subDocPath` points to an invalid location or when
- *  the location argument points to an unloadable resource
- *
- * @alias resolveRefs
- *
- * @example
- * // Example that only resolves relative and remote references
- * JsonRefs.resolveRefs(swaggerObj, {
- *     filter: ['relative', 'remote']
- *   })
- *   .then(function (res) {
- *      // Do something with the response
- *      //
- *      // res.refs: JSON Reference locations and details
- *      // res.resolved: The document with the appropriate JSON References resolved
- *   }, function (err) {
- *     console.log(err.stack);
- *   });
- */
 function resolveRefs (obj, options) {
   var allTasks = Promise.resolve();
 
@@ -1410,35 +1062,6 @@ function resolveRefs (obj, options) {
   return allTasks;
 }
 
-/**
- * Resolves JSON References defined within the document at the provided location.
- *
- * This API is identical to {@link resolveRefs} except this API will retrieve a remote document and then
- * return the result of {@link resolveRefs} on the retrieved document.
- *
- * @param {string} location - The location to retrieve *(Can be relative or absolute, just make sure you look at the
- * {@link JsonRefsOptions|options documentation} to see how relative references are handled.)*
- * @param {JsonRefsOptions} [options] - The JsonRefs options
- *
- * @returns {Promise} a promise that resolves a {@link RetrievedResolvedRefsResults} and rejects with an
- * `Error` when the input arguments fail validation, when `options.subDocPath` points to an invalid location or when
- *  the location argument points to an unloadable resource
- *
- * @alias resolveRefsAt
- *
- * @example
- * // Example that loads a JSON document (No options.loaderOptions.processContent required) and resolves all references
- * JsonRefs.resolveRefsAt('./swagger.json')
- *   .then(function (res) {
- *      // Do something with the response
- *      //
- *      // res.refs: JSON Reference locations and details
- *      // res.resolved: The document with the appropriate JSON References resolved
- *      // res.value: The retrieved document
- *   }, function (err) {
- *     console.log(err.stack);
- *   });
- */
 function resolveRefsAt (location, options) {
   var allTasks = Promise.resolve();
 
@@ -1485,16 +1108,404 @@ function resolveRefsAt (location, options) {
   return allTasks;
 }
 
-/* Export the module members */
-module.exports.clearCache = clearCache;
-module.exports.decodePath = decodePath;
-module.exports.encodePath = encodePath;
-module.exports.findRefs = findRefs;
-module.exports.findRefsAt = findRefsAt;
-module.exports.getRefDetails = getRefDetails;
-module.exports.isPtr = isPtr;
-module.exports.isRef = isRef;
-module.exports.pathFromPtr = pathFromPtr;
-module.exports.pathToPtr = pathToPtr;
-module.exports.resolveRefs = resolveRefs;
-module.exports.resolveRefsAt = resolveRefsAt;
+/**
+ * Various utilities for JSON References *(http://tools.ietf.org/html/draft-pbryan-zyp-json-ref-03)* and
+ * JSON Pointers *(https://tools.ietf.org/html/rfc6901)*.
+ *
+ * @module json-refs
+ */
+
+/**
+ * A number of functions exported below are used within the exported functions.  Typically, I would use a function
+ * declaration _(with documenation)_ above and then just export a reference to the function but due to a bug in JSDoc
+ * (https://github.com/jsdoc3/jsdoc/issues/679), this breaks the generated API documentation and TypeScript
+ * declarations.  So that's why each `module.exports` below basically just wraps a call to the function declaration.
+ */
+
+/**
+ * The options used for various JsonRefs APIs.
+ *
+ * @typedef {object} JsonRefsOptions
+ *
+ * @property {string|string[]|function} [filter=function () {return true;}] - The filter to use when gathering JSON
+ * References *(If this value is a single string or an array of strings, the value(s) are expected to be the `type(s)`
+ * you are interested in collecting as described in {@link getRefDetails}.  If it is a function, it is
+ * expected that the function behaves like {@link RefDetailsFilter}.)*
+ * @property {boolean} [includeInvalid=false] - Whether or not to include invalid JSON Reference details *(This will
+ * make it so that objects that are like JSON Reference objects, as in they are an `Object` and the have a `$ref`
+ * property, but fail validation will be included.  This is very useful for when you want to know if you have invalid
+ * JSON Reference definitions.  This will not mean that APIs will process invalid JSON References but the reasons as to
+ * why the JSON References are invalid will be included in the returned metadata.)*
+ * @property {object} [loaderOptions] - The options to pass to
+ * {@link https://github.com/whitlockjc/path-loader/blob/master/docs/API.md#module_PathLoader.load|PathLoader~load}
+ * @property {string} [location=root.json] - The location of the document being processed  *(This property is only
+ * useful when resolving references as it will be used to locate relative references found within the document being
+ * resolved. If this value is relative, {@link https://github.com/whitlockjc/path-loader|path-loader} will use
+ * `window.location.href` for the browser and `process.cwd()` for Node.js.)*
+ * @property {RefPreProcessor} [refPreProcessor] - The callback used to pre-process a JSON Reference like
+ * object *(This is called prior to validating the JSON Reference like object and getting its details)*
+ * @property {RefPostProcessor} [refPostProcessor] - The callback used to post-process the JSON Reference
+ * metadata *(This is called prior filtering the references)*
+ * @property {boolean} [resolveCirculars=false] - Whether to resolve circular references
+ * @property {string|string[]} [subDocPath=[]] - The JSON Pointer or array of path segments to the sub document
+ * location to search from
+ */
+
+/**
+ * Simple function used to filter out JSON References.
+ *
+ * @typedef {function} RefDetailsFilter
+ *
+ * @param {UnresolvedRefDetails} refDetails - The JSON Reference details to test
+ * @param {string[]} path - The path to the JSON Reference
+ *
+ * @returns {boolean} whether the JSON Reference should be filtered *(out)* or not
+ */
+
+/**
+ * Simple function used to pre-process a JSON Reference like object.
+ *
+ * @typedef {function} RefPreProcessor
+ *
+ * @param {object} obj - The JSON Reference like object
+ * @param {string[]} path - The path to the JSON Reference like object
+ *
+ * @returns {object} the processed JSON Reference like object
+ */
+
+/**
+ * Simple function used to post-process a JSON Reference details.
+ *
+ * @typedef {function} RefPostProcessor
+ *
+ * @param {UnresolvedRefDetails} refDetails - The JSON Reference details to test
+ * @param {string[]} path - The path to the JSON Reference
+ *
+ * @returns {object} the processed JSON Reference details object
+ */
+
+/**
+ * Detailed information about resolved JSON References.
+ *
+ * @typedef {UnresolvedRefDetails} ResolvedRefDetails
+ *
+ * @property {boolean} [circular] - Whether or not the JSON Reference is circular *(Will not be set if the JSON
+ * Reference is not circular)*
+ * @property {string} fqURI - The fully-qualified version of the `uri` property for
+ *                            {@link UnresolvedRefDetails} but with the value being relative to the root
+ *                            document
+ * @property {boolean} [missing] - Whether or not the referenced value was missing or not *(Will not be set if the
+ * referenced value is not missing)*
+ * @property {*} [value] - The referenced value *(Will not be set if the referenced value is missing)*
+ */
+
+/**
+ * The results of resolving the JSON References of an array/object.
+ *
+ * @typedef {object} ResolvedRefsResults
+ *
+ * @property {ResolvedRefDetails} refs - An object whose keys are JSON Pointers *(fragment version)*
+ * to where the JSON Reference is defined and whose values are {@link ResolvedRefDetails}
+ * @property {object} resolved - The array/object with its JSON References fully resolved
+ */
+
+/**
+ * An object containing the retrieved document and detailed information about its JSON References.
+ *
+ * @typedef {ResolvedRefsResults} RetrievedRefsResults
+ *
+ * @property {object} value - The retrieved document
+ */
+
+/**
+ * An object containing the retrieved document, the document with its references resolved and  detailed information
+ * about its JSON References.
+ *
+ * @typedef {object} RetrievedResolvedRefsResults
+ *
+ * @property {UnresolvedRefDetails} refs - An object whose keys are JSON Pointers *(fragment version)*
+ * to where the JSON Reference is defined and whose values are {@link UnresolvedRefDetails}
+ * @property {ResolvedRefsResults} - An object whose keys are JSON Pointers *(fragment version)*
+ * to where the JSON Reference is defined and whose values are {@link ResolvedRefDetails}
+ * @property {object} value - The retrieved document
+ */
+
+/**
+ * Detailed information about unresolved JSON References.
+ *
+ * @typedef {object} UnresolvedRefDetails
+ *
+ * @property {object} def - The JSON Reference definition
+ * @property {string} [error] - The error information for invalid JSON Reference definition *(Only present when the
+ * JSON Reference definition is invalid or there was a problem retrieving a remote reference during resolution)*
+ * @property {string} uri - The URI portion of the JSON Reference
+ * @property {object} uriDetails - Detailed information about the URI as provided by
+ * {@link https://github.com/garycourt/uri-js|URI.parse}.
+ * @property {string} type - The JSON Reference type *(This value can be one of the following: `invalid`, `local`,
+ * `relative` or `remote`.)*
+ * @property {string} [warning] - The warning information *(Only present when the JSON Reference definition produces a
+ * warning)*
+ */
+
+ /**
+ * Clears the internal cache of remote documents, reference details, etc.
+ */
+module.exports.clearCache = function () {
+  remoteCache = {};
+};
+
+/**
+ * Takes an array of path segments and decodes the JSON Pointer tokens in them.
+ *
+ * @param {string[]} path - The array of path segments
+ *
+ * @returns {string} the array of path segments with their JSON Pointer tokens decoded
+ *
+ * @throws {Error} if the path is not an `Array`
+ *
+ * @see {@link https://tools.ietf.org/html/rfc6901#section-3}
+ */
+module.exports.decodePath = function (path) {
+  return decodePath(path);
+};
+
+/**
+ * Takes an array of path segments and encodes the special JSON Pointer characters in them.
+ *
+ * @param {string[]} path - The array of path segments
+ *
+ * @returns {string} the array of path segments with their JSON Pointer tokens encoded
+ *
+ * @throws {Error} if the path is not an `Array`
+ *
+ * @see {@link https://tools.ietf.org/html/rfc6901#section-3}
+ */
+module.exports.encodePath = function (path) {
+  return encodePath(path);
+};
+
+/**
+ * Finds JSON References defined within the provided array/object.
+ *
+ * @param {array|object} obj - The structure to find JSON References within
+ * @param {JsonRefsOptions} [options] - The JsonRefs options
+ *
+ * @returns {object} an object whose keys are JSON Pointers *(fragment version)* to where the JSON Reference is defined
+ * and whose values are {@link UnresolvedRefDetails}.
+ *
+ * @throws {Error} when the input arguments fail validation or if `options.subDocPath` points to an invalid location
+ *
+ * @example
+ * // Finding all valid references
+ * var allRefs = JsonRefs.findRefs(obj);
+ * // Finding all remote references
+ * var remoteRefs = JsonRefs.findRefs(obj, {filter: ['relative', 'remote']});
+ * // Finding all invalid references
+ * var invalidRefs = JsonRefs.findRefs(obj, {filter: 'invalid', includeInvalid: true});
+ */
+module.exports.findRefs = function (obj, options) {
+  return findRefs(obj, options);
+};
+
+/**
+ * Finds JSON References defined within the document at the provided location.
+ *
+ * This API is identical to {@link findRefs} except this API will retrieve a remote document and then
+ * return the result of {@link findRefs} on the retrieved document.
+ *
+ * @param {string} location - The location to retrieve *(Can be relative or absolute, just make sure you look at the
+ * {@link JsonRefsOptions|options documentation} to see how relative references are handled.)*
+ * @param {JsonRefsOptions} [options] - The JsonRefs options
+ *
+ * @returns {Promise<RetrievedRefsResults>} a promise that resolves a {@link RetrievedRefsResults} and rejects with an
+ * `Error` when the input arguments fail validation, when `options.subDocPath` points to an invalid location or when
+ *  the location argument points to an unloadable resource
+ *
+ * @example
+ * // Example that only resolves references within a sub document
+ * JsonRefs.findRefsAt('http://petstore.swagger.io/v2/swagger.json', {
+ *     subDocPath: '#/definitions'
+ *   })
+ *   .then(function (res) {
+ *      // Do something with the response
+ *      //
+ *      // res.refs: JSON Reference locations and details
+ *      // res.value: The retrieved document
+ *   }, function (err) {
+ *     console.log(err.stack);
+ *   });
+ */
+module.exports.findRefsAt = function (location, options) {
+  return findRefsAt(location, options);
+};
+
+/**
+ * Returns detailed information about the JSON Reference.
+ *
+ * @param {object} obj - The JSON Reference definition
+ *
+ * @returns {UnresolvedRefDetails} the detailed information
+ */
+module.exports.getRefDetails = function (obj) {
+  return getRefDetails(obj);
+};
+
+/**
+ * Returns whether the argument represents a JSON Pointer.
+ *
+ * A string is a JSON Pointer if the following are all true:
+ *
+ *   * The string is of type `String`
+ *   * The string must be empty, `#` or start with a `/` or `#/`
+ *
+ * @param {string} ptr - The string to check
+ * @param {boolean} [throwWithDetails=false] - Whether or not to throw an `Error` with the details as to why the value
+ * provided is invalid
+ *
+ * @returns {boolean} the result of the check
+ *
+ * @throws {error} when the provided value is invalid and the `throwWithDetails` argument is `true`
+ *
+ * @see {@link https://tools.ietf.org/html/rfc6901#section-3}
+ *
+ * @example
+ * // Separating the different ways to invoke isPtr for demonstration purposes
+ * if (isPtr(str)) {
+ *   // Handle a valid JSON Pointer
+ * } else {
+ *   // Get the reason as to why the value is not a JSON Pointer so you can fix/report it
+ *   try {
+ *     isPtr(str, true);
+ *   } catch (err) {
+ *     // The error message contains the details as to why the provided value is not a JSON Pointer
+ *   }
+ * }
+ */
+module.exports.isPtr = function (ptr, throwWithDetails) {
+  return isPtr(ptr, throwWithDetails);
+};
+
+/**
+ * Returns whether the argument represents a JSON Reference.
+ *
+ * An object is a JSON Reference only if the following are all true:
+ *
+ *   * The object is of type `Object`
+ *   * The object has a `$ref` property
+ *   * The `$ref` property is a valid URI *(We do not require 100% strict URIs and will handle unescaped special
+ *     characters.)*
+ *
+ * @param {object} obj - The object to check
+ * @param {boolean} [throwWithDetails=false] - Whether or not to throw an `Error` with the details as to why the value
+ * provided is invalid
+ *
+ * @returns {boolean} the result of the check
+ *
+ * @throws {error} when the provided value is invalid and the `throwWithDetails` argument is `true`
+ *
+ * @see {@link http://tools.ietf.org/html/draft-pbryan-zyp-json-ref-03#section-3}
+ *
+ * @example
+ * // Separating the different ways to invoke isRef for demonstration purposes
+ * if (isRef(obj)) {
+ *   // Handle a valid JSON Reference
+ * } else {
+ *   // Get the reason as to why the value is not a JSON Reference so you can fix/report it
+ *   try {
+ *     isRef(str, true);
+ *   } catch (err) {
+ *     // The error message contains the details as to why the provided value is not a JSON Reference
+ *   }
+ * }
+ */
+module.exports.isRef = function (obj, throwWithDetails) {
+  return isRef(obj, throwWithDetails);
+};
+
+/**
+ * Returns an array of path segments for the provided JSON Pointer.
+ *
+ * @param {string} ptr - The JSON Pointer
+ *
+ * @returns {string[]} the path segments
+ *
+ * @throws {Error} if the provided `ptr` argument is not a JSON Pointer
+ */
+module.exports.pathFromPtr = function (ptr) {
+  return pathFromPtr(ptr);
+};
+
+/**
+ * Returns a JSON Pointer for the provided array of path segments.
+ *
+ * **Note:** If a path segment in `path` is not a `String`, it will be converted to one using `JSON.stringify`.
+ *
+ * @param {string[]} path - The array of path segments
+ * @param {boolean} [hashPrefix=true] - Whether or not create a hash-prefixed JSON Pointer
+ *
+ * @returns {string} the corresponding JSON Pointer
+ *
+ * @throws {Error} if the `path` argument is not an array
+ */
+module.exports.pathToPtr = function (path, hashPrefix) {
+  return pathToPtr(path, hashPrefix);
+};
+
+/**
+ * Finds JSON References defined within the provided array/object and resolves them.
+ *
+ * @param {array|object} obj - The structure to find JSON References within
+ * @param {JsonRefsOptions} [options] - The JsonRefs options
+ *
+ * @returns {Promise<ResolvedRefsResults>} a promise that resolves a {@link ResolvedRefsResults} and rejects with an
+ * `Error` when the input arguments fail validation, when `options.subDocPath` points to an invalid location or when
+ *  the location argument points to an unloadable resource
+ *
+ * @example
+ * // Example that only resolves relative and remote references
+ * JsonRefs.resolveRefs(swaggerObj, {
+ *     filter: ['relative', 'remote']
+ *   })
+ *   .then(function (res) {
+ *      // Do something with the response
+ *      //
+ *      // res.refs: JSON Reference locations and details
+ *      // res.resolved: The document with the appropriate JSON References resolved
+ *   }, function (err) {
+ *     console.log(err.stack);
+ *   });
+ */
+module.exports.resolveRefs = function (obj, options) {
+  return resolveRefs(obj, options);
+};
+
+/**
+ * Resolves JSON References defined within the document at the provided location.
+ *
+ * This API is identical to {@link resolveRefs} except this API will retrieve a remote document and then
+ * return the result of {@link resolveRefs} on the retrieved document.
+ *
+ * @param {string} location - The location to retrieve *(Can be relative or absolute, just make sure you look at the
+ * {@link JsonRefsOptions|options documentation} to see how relative references are handled.)*
+ * @param {JsonRefsOptions} [options] - The JsonRefs options
+ *
+ * @returns {Promise<RetrievedResolvedRefsResults>} a promise that resolves a {@link RetrievedResolvedRefsResults} and
+ * rejects with an `Error` when the input arguments fail validation, when `options.subDocPath` points to an invalid
+ * location or when the location argument points to an unloadable resource
+ *
+ * @example
+ * // Example that loads a JSON document (No options.loaderOptions.processContent required) and resolves all references
+ * JsonRefs.resolveRefsAt('./swagger.json')
+ *   .then(function (res) {
+ *      // Do something with the response
+ *      //
+ *      // res.refs: JSON Reference locations and details
+ *      // res.resolved: The document with the appropriate JSON References resolved
+ *      // res.value: The retrieved document
+ *   }, function (err) {
+ *     console.log(err.stack);
+ *   });
+ */
+module.exports.resolveRefsAt = function (location, options) {
+  return resolveRefsAt(location, options);
+};
