@@ -1,5 +1,9 @@
 ## Release Notes
 
+### v3.0.8 (2018-08-08)
+
+* Fixed API documentation and TypeScript declarations *(Issue #139)*
+
 ### v3.0.7 (2018-08-04)
 
 * Upgraded `path-loader` to upgrade `superagent`
