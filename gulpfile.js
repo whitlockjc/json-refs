@@ -106,16 +106,18 @@ gulp.task('clean', function (done) {
 
 gulp.task('docs', function () {
   return gulp.src([
-    './index.js'
+    './index.js',
+    './lib/typedefs.js'
   ])
     .pipe($.concat('API.md'))
     .pipe($.jsdoc2MD({'sort-by': ['category', 'name']}))
     .pipe(gulp.dest('docs'));
 });
 
-gulp.task('docs-ts', function (cb) {
+gulp.task('docs-ts-raw', function (cb) {
   gulp.src([
-    './index.js'
+    './index.js',
+    './lib/typedefs.js'
   ])
     .pipe($.jsdoc3({
       opts: {
@@ -125,9 +127,21 @@ gulp.task('docs-ts', function (cb) {
     }, cb));
 });
 
+// Due to bugs in @otris/jsdoc-tsd, we need to "fix" the generated TSD.
+//
+//  * https://github.com/otris/jsdoc-tsd/issues/38
+//  * https://github.com/otris/jsdoc-tsd/issues/39
+gulp.task('docs-ts', ['docs-ts-raw'], function () {
+  gulp.src(['index.d.ts'])
+    .pipe($.replace('<*>', '<any>'))
+    .pipe($.replace('module:json-refs~', ''))
+    .pipe(gulp.dest('.'));
+});
+
 gulp.task('lint', function () {
   return gulp.src([
       'index.js',
+      'lib/typedefs.js',
       'test/**/*.js',
       '!test/browser/**/*.js',
       'gulpfile.js'
