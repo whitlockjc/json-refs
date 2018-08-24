@@ -49,7 +49,7 @@ declare module 'json-refs' {
      *          when `options.subDocPath` points to an invalid location or when the location argument points to an unloadable
      *          resource
      */
-    export function findRefsAt(location: string, options?: JsonRefsOptions): Promise.<RetrievedRefsResults>;
+    export function findRefsAt(location: string, options?: JsonRefsOptions): Promise<RetrievedRefsResults>;
 
     /**
      * Returns detailed information about the JSON Reference.
@@ -120,7 +120,7 @@ declare module 'json-refs' {
      *          when `options.subDocPath` points to an invalid location or when the location argument points to an unloadable
      *          resource
      */
-    export function resolveRefs(obj: any | object, options?: JsonRefsOptions): Promise.<ResolvedRefsResults>;
+    export function resolveRefs(obj: any | object, options?: JsonRefsOptions): Promise<ResolvedRefsResults>;
 
     /**
      * Resolves JSON References defined within the document at the provided location.
@@ -135,188 +135,188 @@ declare module 'json-refs' {
      *          validation, when `options.subDocPath` points to an invalid location or when the location argument points to an
      *          unloadable resource
      */
-    export function resolveRefsAt(location: string, options?: JsonRefsOptions): Promise.<RetrievedResolvedRefsResults>;
+    export function resolveRefsAt(location: string, options?: JsonRefsOptions): Promise<RetrievedResolvedRefsResults>;
 
-}
+    /**
+     * The options used for various JsonRefs APIs.
+     */
+    declare interface JsonRefsOptions {
+        /**
+         * The filter to use when gathering JSON
+         * References *(If this value is a single string or an array of strings, the value(s) are expected to be the `type(s)`
+         * you are interested in collecting as described in {@link module:json-refs.getRefDetails}.  If it is a function, it is
+         * expected that the function behaves like {@link RefDetailsFilter}.)*
+         */
+        filter?: string | string[] | Function;
+        /**
+         * Whether or not to include invalid JSON Reference details *(This will
+         * make it so that objects that are like JSON Reference objects, as in they are an `Object` and the have a `$ref`
+         * property, but fail validation will be included.  This is very useful for when you want to know if you have invalid
+         * JSON Reference definitions.  This will not mean that APIs will process invalid JSON References but the reasons as to
+         * why the JSON References are invalid will be included in the returned metadata.)*
+         */
+        includeInvalid?: boolean;
+        /**
+         * The options to pass to
+         * {@link https://github.com/whitlockjc/path-loader/blob/master/docs/API.md#module_PathLoader.load|PathLoader~load}
+         */
+        loaderOptions?: object;
+        /**
+         * The location of the document being processed  *(This property is only
+         * useful when resolving references as it will be used to locate relative references found within the document being
+         * resolved. If this value is relative, {@link https://github.com/whitlockjc/path-loader|path-loader} will use
+         * `window.location.href` for the browser and `process.cwd()` for Node.js.)*
+         */
+        location?: string;
+        /**
+         * The callback used to pre-process a JSON Reference like
+         * object *(This is called prior to validating the JSON Reference like object and getting its details)*
+         */
+        refPreProcessor?: RefPreProcessor;
+        /**
+         * The callback used to post-process the JSON Reference
+         * metadata *(This is called prior filtering the references)*
+         */
+        refPostProcessor?: RefPostProcessor;
+        /**
+         * Whether to resolve circular references
+         */
+        resolveCirculars?: boolean;
+        /**
+         * The JSON Pointer or array of path segments to the sub document
+         * location to search from
+         */
+        subDocPath?: string | string[];
+    }
 
-/**
- * The options used for various JsonRefs APIs.
- */
-declare interface JsonRefsOptions {
     /**
-     * The filter to use when gathering JSON
-     * References *(If this value is a single string or an array of strings, the value(s) are expected to be the `type(s)`
-     * you are interested in collecting as described in {@link module:json-refs.getRefDetails}.  If it is a function, it is
-     * expected that the function behaves like {@link RefDetailsFilter}.)*
+     * Simple function used to filter out JSON References.
+     * @param refDetails - The JSON Reference details to test
+     * @param path - The path to the JSON Reference
+     * @returns whether the JSON Reference should be filtered *(out)* or not
      */
-    filter?: string | string[] | Function;
-    /**
-     * Whether or not to include invalid JSON Reference details *(This will
-     * make it so that objects that are like JSON Reference objects, as in they are an `Object` and the have a `$ref`
-     * property, but fail validation will be included.  This is very useful for when you want to know if you have invalid
-     * JSON Reference definitions.  This will not mean that APIs will process invalid JSON References but the reasons as to
-     * why the JSON References are invalid will be included in the returned metadata.)*
-     */
-    includeInvalid?: boolean;
-    /**
-     * The options to pass to
-     * {@link https://github.com/whitlockjc/path-loader/blob/master/docs/API.md#module_PathLoader.load|PathLoader~load}
-     */
-    loaderOptions?: object;
-    /**
-     * The location of the document being processed  *(This property is only
-     * useful when resolving references as it will be used to locate relative references found within the document being
-     * resolved. If this value is relative, {@link https://github.com/whitlockjc/path-loader|path-loader} will use
-     * `window.location.href` for the browser and `process.cwd()` for Node.js.)*
-     */
-    location?: string;
-    /**
-     * The callback used to pre-process a JSON Reference like
-     * object *(This is called prior to validating the JSON Reference like object and getting its details)*
-     */
-    refPreProcessor?: RefPreProcessor;
-    /**
-     * The callback used to post-process the JSON Reference
-     * metadata *(This is called prior filtering the references)*
-     */
-    refPostProcessor?: RefPostProcessor;
-    /**
-     * Whether to resolve circular references
-     */
-    resolveCirculars?: boolean;
-    /**
-     * The JSON Pointer or array of path segments to the sub document
-     * location to search from
-     */
-    subDocPath?: string | string[];
-}
+    export type RefDetailsFilter = (refDetails: UnresolvedRefDetails, path: string[])=>boolean;
 
-/**
- * Simple function used to filter out JSON References.
- * @param refDetails - The JSON Reference details to test
- * @param path - The path to the JSON Reference
- * @returns whether the JSON Reference should be filtered *(out)* or not
- */
-declare type RefDetailsFilter = (refDetails: UnresolvedRefDetails, path: string[])=>boolean;
+    /**
+     * Simple function used to pre-process a JSON Reference like object.
+     * @param obj - The JSON Reference like object
+     * @param path - The path to the JSON Reference like object
+     * @returns the processed JSON Reference like object
+     */
+    export type RefPreProcessor = (obj: object, path: string[])=>object;
 
-/**
- * Simple function used to pre-process a JSON Reference like object.
- * @param obj - The JSON Reference like object
- * @param path - The path to the JSON Reference like object
- * @returns the processed JSON Reference like object
- */
-declare type RefPreProcessor = (obj: object, path: string[])=>object;
+    /**
+     * Simple function used to post-process a JSON Reference details.
+     * @param refDetails - The JSON Reference details to test
+     * @param path - The path to the JSON Reference
+     * @returns the processed JSON Reference details object
+     */
+    export type RefPostProcessor = (refDetails: UnresolvedRefDetails, path: string[])=>object;
 
-/**
- * Simple function used to post-process a JSON Reference details.
- * @param refDetails - The JSON Reference details to test
- * @param path - The path to the JSON Reference
- * @returns the processed JSON Reference details object
- */
-declare type RefPostProcessor = (refDetails: UnresolvedRefDetails, path: string[])=>object;
+    /**
+     * Detailed information about resolved JSON References.
+     */
+    declare interface ResolvedRefDetails {
+        /**
+         * Whether or not the JSON Reference is circular *(Will not be set if the JSON
+         * Reference is not circular)*
+         */
+        circular?: boolean;
+        /**
+         * The fully-qualified version of the `uri` property for
+         * {@link UnresolvedRefDetails} but with the value being relative to the root document
+         */
+        fqURI: string;
+        /**
+         * Whether or not the referenced value was missing or not *(Will not be set if the
+         * referenced value is not missing)*
+         */
+        missing?: boolean;
+        /**
+         * The referenced value *(Will not be set if the referenced value is missing)*
+         */
+        value?: any;
+    }
 
-/**
- * Detailed information about resolved JSON References.
- */
-declare interface ResolvedRefDetails {
     /**
-     * Whether or not the JSON Reference is circular *(Will not be set if the JSON
-     * Reference is not circular)*
+     * The results of resolving the JSON References of an array/object.
      */
-    circular?: boolean;
-    /**
-     * The fully-qualified version of the `uri` property for
-     * {@link UnresolvedRefDetails} but with the value being relative to the root document
-     */
-    fqURI: string;
-    /**
-     * Whether or not the referenced value was missing or not *(Will not be set if the
-     * referenced value is not missing)*
-     */
-    missing?: boolean;
-    /**
-     * The referenced value *(Will not be set if the referenced value is missing)*
-     */
-    value?: any;
-}
+    declare interface ResolvedRefsResults {
+        /**
+         * An object whose keys are JSON Pointers *(fragment version)*
+         * to where the JSON Reference is defined and whose values are {@link ResolvedRefDetails}
+         */
+        refs: ResolvedRefDetails;
+        /**
+         * The array/object with its JSON References fully resolved
+         */
+        resolved: object;
+    }
 
-/**
- * The results of resolving the JSON References of an array/object.
- */
-declare interface ResolvedRefsResults {
     /**
-     * An object whose keys are JSON Pointers *(fragment version)*
-     * to where the JSON Reference is defined and whose values are {@link ResolvedRefDetails}
+     * An object containing the retrieved document and detailed information about its JSON References.
      */
-    refs: ResolvedRefDetails;
-    /**
-     * The array/object with its JSON References fully resolved
-     */
-    resolved: object;
-}
+    declare interface RetrievedRefsResults {
+        /**
+         * The retrieved document
+         */
+        value: object;
+    }
 
-/**
- * An object containing the retrieved document and detailed information about its JSON References.
- */
-declare interface RetrievedRefsResults {
     /**
-     * The retrieved document
+     * An object containing the retrieved document, the document with its references resolved and  detailed information
+     * about its JSON References.
      */
-    value: object;
-}
+    declare interface RetrievedResolvedRefsResults {
+        /**
+         * An object whose keys are JSON Pointers *(fragment version)*
+         * to where the JSON Reference is defined and whose values are {@link UnresolvedRefDetails}
+         */
+        refs: UnresolvedRefDetails;
+        /**
+         * An object whose keys are JSON Pointers *(fragment version)*
+         * to where the JSON Reference is defined and whose values are {@link ResolvedRefDetails}
+         */
+        undefined: ResolvedRefsResults;
+        /**
+         * The retrieved document
+         */
+        value: object;
+    }
 
-/**
- * An object containing the retrieved document, the document with its references resolved and  detailed information
- * about its JSON References.
- */
-declare interface RetrievedResolvedRefsResults {
     /**
-     * An object whose keys are JSON Pointers *(fragment version)*
-     * to where the JSON Reference is defined and whose values are {@link UnresolvedRefDetails}
+     * Detailed information about unresolved JSON References.
      */
-    refs: UnresolvedRefDetails;
-    /**
-     * An object whose keys are JSON Pointers *(fragment version)*
-     * to where the JSON Reference is defined and whose values are {@link ResolvedRefDetails}
-     */
-    undefined: ResolvedRefsResults;
-    /**
-     * The retrieved document
-     */
-    value: object;
-}
+    declare interface UnresolvedRefDetails {
+        /**
+         * The JSON Reference definition
+         */
+        def: object;
+        /**
+         * The error information for invalid JSON Reference definition *(Only present when the
+         * JSON Reference definition is invalid or there was a problem retrieving a remote reference during resolution)*
+         */
+        error?: string;
+        /**
+         * The URI portion of the JSON Reference
+         */
+        uri: string;
+        /**
+         * Detailed information about the URI as provided by
+         * {@link https://github.com/garycourt/uri-js|URI.parse}.
+         */
+        uriDetails: object;
+        /**
+         * The JSON Reference type *(This value can be one of the following: `invalid`, `local`,
+         * `relative` or `remote`.)*
+         */
+        type: string;
+        /**
+         * The warning information *(Only present when the JSON Reference definition produces a
+         * warning)*
+         */
+        warning?: string;
+    }
 
-/**
- * Detailed information about unresolved JSON References.
- */
-declare interface UnresolvedRefDetails {
-    /**
-     * The JSON Reference definition
-     */
-    def: object;
-    /**
-     * The error information for invalid JSON Reference definition *(Only present when the
-     * JSON Reference definition is invalid or there was a problem retrieving a remote reference during resolution)*
-     */
-    error?: string;
-    /**
-     * The URI portion of the JSON Reference
-     */
-    uri: string;
-    /**
-     * Detailed information about the URI as provided by
-     * {@link https://github.com/garycourt/uri-js|URI.parse}.
-     */
-    uriDetails: object;
-    /**
-     * The JSON Reference type *(This value can be one of the following: `invalid`, `local`,
-     * `relative` or `remote`.)*
-     */
-    type: string;
-    /**
-     * The warning information *(Only present when the JSON Reference definition produces a
-     * warning)*
-     */
-    warning?: string;
 }
 
