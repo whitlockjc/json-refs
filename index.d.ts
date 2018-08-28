@@ -38,7 +38,7 @@ declare module 'json-refs' {
 
     /**
      * Finds JSON References defined within the document at the provided location.
-     * 
+     *
      * This API is identical to {@link findRefs} except this API will retrieve a remote document and then
      * return the result of {@link findRefs} on the retrieved document.
      * @param location - The location to retrieve *(Can be relative or absolute, just make sure you look at the
@@ -60,9 +60,9 @@ declare module 'json-refs' {
 
     /**
      * Returns whether the argument represents a JSON Pointer.
-     * 
+     *
      * A string is a JSON Pointer if the following are all true:
-     * 
+     *
      * * The string is of type `String`
      * * The string must be empty, `#` or start with a `/` or `#/`
      * @param ptr - The string to check
@@ -76,9 +76,9 @@ declare module 'json-refs' {
 
     /**
      * Returns whether the argument represents a JSON Reference.
-     * 
+     *
      * An object is a JSON Reference only if the following are all true:
-     * 
+     *
      * * The object is of type `Object`
      * * The object has a `$ref` property
      * * The `$ref` property is a valid URI *(We do not require 100% strict URIs and will handle unescaped special
@@ -102,7 +102,7 @@ declare module 'json-refs' {
 
     /**
      * Returns a JSON Pointer for the provided array of path segments.
-     * 
+     *
      * **Note:** If a path segment in `path` is not a `String`, it will be converted to one using `JSON.stringify`.
      * @param path - The array of path segments
      * @param hashPrefix - Whether or not create a hash-prefixed JSON Pointer
@@ -124,7 +124,7 @@ declare module 'json-refs' {
 
     /**
      * Resolves JSON References defined within the document at the provided location.
-     * 
+     *
      * This API is identical to {@link module:json-refs.resolveRefs} except this API will retrieve a remote document and
      * then return the result of {@link module:json-refs.resolveRefs} on the retrieved document.
      * @param location - The location to retrieve *(Can be relative or absolute, just make sure you look at the
@@ -140,7 +140,7 @@ declare module 'json-refs' {
     /**
      * The options used for various JsonRefs APIs.
      */
-    declare interface JsonRefsOptions {
+    interface JsonRefsOptions {
         /**
          * The filter to use when gathering JSON
          * References *(If this value is a single string or an array of strings, the value(s) are expected to be the `type(s)`
@@ -216,7 +216,7 @@ declare module 'json-refs' {
     /**
      * Detailed information about resolved JSON References.
      */
-    declare interface ResolvedRefDetails {
+    interface ResolvedRefDetails {
         /**
          * Whether or not the JSON Reference is circular *(Will not be set if the JSON
          * Reference is not circular)*
@@ -241,7 +241,7 @@ declare module 'json-refs' {
     /**
      * The results of resolving the JSON References of an array/object.
      */
-    declare interface ResolvedRefsResults {
+    interface ResolvedRefsResults {
         /**
          * An object whose keys are JSON Pointers *(fragment version)*
          * to where the JSON Reference is defined and whose values are {@link ResolvedRefDetails}
@@ -256,7 +256,7 @@ declare module 'json-refs' {
     /**
      * An object containing the retrieved document and detailed information about its JSON References.
      */
-    declare interface RetrievedRefsResults {
+    interface RetrievedRefsResults {
         /**
          * The retrieved document
          */
@@ -267,7 +267,7 @@ declare module 'json-refs' {
      * An object containing the retrieved document, the document with its references resolved and  detailed information
      * about its JSON References.
      */
-    declare interface RetrievedResolvedRefsResults {
+    interface RetrievedResolvedRefsResults {
         /**
          * An object whose keys are JSON Pointers *(fragment version)*
          * to where the JSON Reference is defined and whose values are {@link UnresolvedRefDetails}
@@ -287,7 +287,7 @@ declare module 'json-refs' {
     /**
      * Detailed information about unresolved JSON References.
      */
-    declare interface UnresolvedRefDetails {
+    interface UnresolvedRefDetails {
         /**
          * The JSON Reference definition
          */
@@ -319,4 +319,3 @@ declare module 'json-refs' {
     }
 
 }
-
