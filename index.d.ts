@@ -34,7 +34,7 @@ declare module 'json-refs' {
      *          and whose values are {@link UnresolvedRefDetails}.
      * @throws when the input arguments fail validation or if `options.subDocPath` points to an invalid location
      */
-    export function findRefs(obj: any | object, options?: JsonRefsOptions): object;
+    export function findRefs(obj: any[] | object, options?: JsonRefsOptions): object;
 
     /**
      * Finds JSON References defined within the document at the provided location.
@@ -120,7 +120,7 @@ declare module 'json-refs' {
      *          when `options.subDocPath` points to an invalid location or when the location argument points to an unloadable
      *          resource
      */
-    export function resolveRefs(obj: any | object, options?: JsonRefsOptions): Promise<ResolvedRefsResults>;
+    export function resolveRefs(obj: any[] | object, options?: JsonRefsOptions): Promise<ResolvedRefsResults>;
 
     /**
      * Resolves JSON References defined within the document at the provided location.
@@ -140,7 +140,7 @@ declare module 'json-refs' {
     /**
      * The options used for various JsonRefs APIs.
      */
-    declare interface JsonRefsOptions {
+    interface JsonRefsOptions {
         /**
          * The filter to use when gathering JSON
          * References *(If this value is a single string or an array of strings, the value(s) are expected to be the `type(s)`
@@ -216,7 +216,7 @@ declare module 'json-refs' {
     /**
      * Detailed information about resolved JSON References.
      */
-    declare interface ResolvedRefDetails {
+    interface ResolvedRefDetails {
         /**
          * Whether or not the JSON Reference is circular *(Will not be set if the JSON
          * Reference is not circular)*
@@ -241,7 +241,7 @@ declare module 'json-refs' {
     /**
      * The results of resolving the JSON References of an array/object.
      */
-    declare interface ResolvedRefsResults {
+    interface ResolvedRefsResults {
         /**
          * An object whose keys are JSON Pointers *(fragment version)*
          * to where the JSON Reference is defined and whose values are {@link ResolvedRefDetails}
@@ -256,7 +256,7 @@ declare module 'json-refs' {
     /**
      * An object containing the retrieved document and detailed information about its JSON References.
      */
-    declare interface RetrievedRefsResults {
+    interface RetrievedRefsResults {
         /**
          * The retrieved document
          */
@@ -267,7 +267,7 @@ declare module 'json-refs' {
      * An object containing the retrieved document, the document with its references resolved and  detailed information
      * about its JSON References.
      */
-    declare interface RetrievedResolvedRefsResults {
+    interface RetrievedResolvedRefsResults {
         /**
          * An object whose keys are JSON Pointers *(fragment version)*
          * to where the JSON Reference is defined and whose values are {@link UnresolvedRefDetails}
@@ -287,7 +287,7 @@ declare module 'json-refs' {
     /**
      * Detailed information about unresolved JSON References.
      */
-    declare interface UnresolvedRefDetails {
+    interface UnresolvedRefDetails {
         /**
          * The JSON Reference definition
          */

@@ -1,8 +1,12 @@
 ## Release Notes
 
+### v3.0.10 (2018-08-31)
+
+* Another attempt at fixing the TypeScript declarations *(Issue #139)*
+
 ### v3.0.9 (2018-08-26)
 
-* Another attempt at fixing the TypeScript declarations
+* Another attempt at fixing the TypeScript declarations *(Issue #139)*
 
 ### v3.0.8 (2018-08-08)
 

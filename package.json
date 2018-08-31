@@ -38,7 +38,7 @@
     "json"
   ],
   "devDependencies": {
-    "@otris/jsdoc-tsd": "^1.0.0",
+    "@otris/jsdoc-tsd": "^1.0.4",
     "brfs": "~1.4.3",
     "browserify": "~14.4.0",
     "connect": "^3.6.1",
