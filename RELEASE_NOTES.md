@@ -1,5 +1,9 @@
 ## Release Notes
 
+### v3.0.11 (2018-10-04)
+
+* Fixed the TypeScript definition for `RetrievedResolvedRefsResults` *(Issue #145)*
+
 ### v3.0.10 (2018-08-31)
 
 * Another attempt at fixing the TypeScript declarations *(Issue #139)*

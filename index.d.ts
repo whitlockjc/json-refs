@@ -277,7 +277,7 @@ declare module 'json-refs' {
          * An object whose keys are JSON Pointers *(fragment version)*
          * to where the JSON Reference is defined and whose values are {@link ResolvedRefDetails}
          */
-        undefined: ResolvedRefsResults;
+        resolved: ResolvedRefsResults;
         /**
          * The retrieved document
          */

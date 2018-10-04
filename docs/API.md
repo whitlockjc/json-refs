@@ -138,7 +138,7 @@ about its JSON References.
 | Name | Type | Description |
 | --- | --- | --- |
 | refs | <code>module:json-refs~UnresolvedRefDetails</code> | An object whose keys are JSON Pointers *(fragment version)* to where the JSON Reference is defined and whose values are [module:json-refs~UnresolvedRefDetails](module:json-refs~UnresolvedRefDetails) |
-|  | <code>module:json-refs~ResolvedRefsResults</code> | An object whose keys are JSON Pointers *(fragment version)* to where the JSON Reference is defined and whose values are [module:json-refs~ResolvedRefDetails](module:json-refs~ResolvedRefDetails) |
+| resolved | <code>module:json-refs~ResolvedRefsResults</code> | An object whose keys are JSON Pointers *(fragment version)* to where the JSON Reference is defined and whose values are [module:json-refs~ResolvedRefDetails](module:json-refs~ResolvedRefDetails) |
 | value | <code>object</code> | The retrieved document |
 
 <a name="module_json-refs.UnresolvedRefDetails"></a>
