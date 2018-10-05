@@ -274,10 +274,9 @@ declare module 'json-refs' {
          */
         refs: UnresolvedRefDetails;
         /**
-         * An object whose keys are JSON Pointers *(fragment version)*
-         * to where the JSON Reference is defined and whose values are {@link ResolvedRefDetails}
+         * The array/object with its JSON References fully resolved
          */
-        resolved: ResolvedRefsResults;
+        resolved: object;
         /**
          * The retrieved document
          */
