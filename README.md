@@ -29,40 +29,17 @@ json-refs is available for both Node.js and the browser.  Installation instructi
 
 ### Browser
 
-Installation for browser applications can be done via [Bower][bower] or by downloading a standalone binary.
+json-refs binaries for the browser are available in the `dist/` directory:
 
-#### Using Bower
-
-Installation is standard fare:
-
-```
-bower install json-refs --save
-```
-
-To use the Bower install, your HTML includes might look like this:
-
-``` html
-<!-- ... -->
-<script src="bower_components/lodash/dist/lodash.min.js"></script>
-<script src="bower_components/graphlib/dist/graphlib.core.min.js"></script>
-<script src="bower_components/path-loader/browser/path-loader-min.js"></script>
-<script src="bower_components/json-refs/browser/json-refs-min.js"></script>
-<!-- ... -->
-```
-
-#### Standalone Binaries
-
-The standalone binaries come in two flavors:
-
-* [json-refs-standalone.js](https://raw.github.com/whitlockjc/json-refs/master/browser/json-refs-standalone.js): _1,904kb_, full source source maps
-* [json-refs-standalone-min.js](https://raw.github.com/whitlockjc/json-refs/master/browser/json-refs-standalone-min.js): _140kb_, minified, compressed and no sourcemap
+* [json-refs.js](https://raw.github.com/whitlockjc/json-refs/master/dist/json-refs.js): _2,292kb_, full source source maps
+* [json-refs-min.js](https://raw.github.com/whitlockjc/json-refs/master/dist/json-refs-min.js): _148kb_, minified, compressed and no sourcemap
 
 Of course, these links are for the master builds so feel free to download from the release of your choice.  Once you've
 gotten them downloaded, to use the standalone binaries, your HTML include might look like this:
 
 ``` html
 <!-- ... -->
-<script src="json-refs-standalone.js"></script>
+<script src="json-refs.js"></script>
 <!-- ... -->
 ```
 
@@ -82,7 +59,6 @@ npm install json-refs --global
 
 After this, feel free to run `json-refs help` to see what you can do or view the CLI documentation linked above
 
-[bower]: http://bower.io/
 [npm]: https://www.npmjs.com/
 [json-reference-draft-spec]: http://tools.ietf.org/html/draft-pbryan-zyp-json-ref-03
 [json-pointer-spec]: http://tools.ietf.org/html/rfc6901

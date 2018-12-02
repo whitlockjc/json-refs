@@ -29,16 +29,14 @@ var $ = require('gulp-load-plugins')({
     'gulp-jsdoc-to-markdown': 'jsdoc2MD'
   }
 });
-var browserify = require('browserify');
-var buffer = require('vinyl-buffer');
 var del = require('del');
-var exposify = require('exposify');
-var fs = require('fs');
 var gulp = require('gulp');
+var gutil = require('gulp-util');
 var KarmaServer = require('karma').Server;
 var path = require('path');
 var runSequence = require('run-sequence');
-var source = require('vinyl-source-stream');
+var webpack = require('webpack');
+var webpackConfig = require('./webpack.config');
 
 var runningAllTests = false;
 
@@ -53,49 +51,6 @@ function displayCoverageReport (display) {
       .pipe($.istanbul.writeReports());
   }
 }
-
-gulp.task('browserify', function (cb) {
-  function browserifyBuild (isStandalone, useDebug) {
-    return function () {
-      return new Promise(function (resolve, reject) {
-        var b = browserify('./index.js', {
-          debug: useDebug,
-          standalone: 'JsonRefs'
-        });
-
-        if (!isStandalone) {
-          // Expose Bower modules so they can be required
-          exposify.config = {
-            'graphlib': 'graphlib',
-            'lodash': '_',
-            'path-loader': 'PathLoader'
-          };
-
-          b.transform('exposify');
-        }
-
-        b.bundle()
-          .pipe(source('json-refs' + (isStandalone ? '-standalone' : '') + (!useDebug ? '-min' : '') + '.js'))
-          .pipe($.if(!useDebug, buffer()))
-          .pipe($.if(!useDebug, $.uglify()))
-          .pipe(gulp.dest('browser/'))
-          .on('error', reject)
-          .on('end', resolve);
-      });
-    };
-  }
-
-  Promise.resolve()
-    // Standalone build with source maps and complete source
-    .then(browserifyBuild(true, true))
-    // Standalone build minified and without source maps
-    .then(browserifyBuild(true, false))
-    // Bower build with source maps and complete source
-    .then(browserifyBuild(false, true))
-    // Bower build minified and without source maps
-    .then(browserifyBuild(false, false))
-    .then(cb, cb);
-});
 
 gulp.task('clean', function (done) {
   del([
@@ -114,7 +69,17 @@ gulp.task('docs', function () {
     .pipe(gulp.dest('docs'));
 });
 
-gulp.task('docs-ts-raw', function (cb) {
+gulp.task('dist', function (done) {
+	webpack(webpackConfig, function (err, stats) {
+		if (err) throw new gutil.PluginError('webpack', err);
+		gutil.log('[webpack]', 'Bundles generated:\n' + stats.toString('minimal').split('\n').map(function (line) {
+      return '  ' + line.replace('Child ', 'dist/').replace(':', '.js:');
+    }).join('\n'));
+		done();
+	});
+});
+
+gulp.task('docs-ts-raw', function (done) {
   gulp.src([
     './index.js',
     './lib/typedefs.js'
@@ -124,7 +89,7 @@ gulp.task('docs-ts-raw', function (cb) {
         destination: 'index.d.ts',
         template: 'node_modules/@otris/jsdoc-tsd'
       }
-    }, cb));
+    }, done));
 });
 
 // Due to bugs in @otris/jsdoc-tsd, we need to "fix" the generated TSD.
@@ -152,13 +117,13 @@ gulp.task('lint', function () {
     .pipe($.eslint.failAfterError());
 });
 
-gulp.task('nsp', function (cb) {
+gulp.task('nsp', function (done) {
   $.nsp({
     package: path.join(__dirname, 'package.json')
-  }, cb);
+  }, done);
 });
 
-gulp.task('test-node', function (cb) {
+gulp.task('test-node', function (done) {
   Promise.resolve()
     .then(function () {
       return new Promise(function (resolve, reject) {
@@ -187,10 +152,10 @@ gulp.task('test-node', function (cb) {
         });
       });
     })
-    .then(cb, cb);
+    .then(done, done);
 });
 
-gulp.task('test-browser', ['browserify'], function (cb) {
+gulp.task('test-browser', function (done) {
   var basePath = './test/browser/';
 
   function cleanUp () {
@@ -213,49 +178,9 @@ gulp.task('test-browser', ['browserify'], function (cb) {
   Promise.resolve()
     .then(cleanUp)
     .then(function () {
-      // Copy the browser build of json-refs to the test directory
-      fs.createReadStream('./browser/json-refs.js')
-        .pipe(fs.createWriteStream(basePath + 'json-refs.js'));
-      fs.createReadStream('./browser/json-refs-standalone.js')
-        .pipe(fs.createWriteStream(basePath + 'json-refs-standalone.js'));
-
-      return new Promise(function (resolve, reject) {
-        var b = browserify([
-          './test/test-json-refs.js'
-        ], {
-          debug: true
-        });
-
-        b.transform('brfs')
-          .bundle()
-          .pipe(source('test-browser.js'))
-          .pipe(gulp.dest(basePath))
-          .on('error', function (err) {
-            reject(err);
-          })
-          .on('end', function () {
-            resolve();
-        });
-      });
-    })
-    .then(function () {
       return new Promise(function (resolve, reject) {
         new KarmaServer({
-          configFile: path.join(__dirname, 'test/browser/karma-bower.conf.js'),
-          singleRun: true
-        }, function (err) {
-          if (err) {
-            reject(err);
-          } else {
-            resolve();
-          }
-        }).start();
-      });
-    })
-    .then(function () {
-      return new Promise(function (resolve, reject) {
-        new KarmaServer({
-          configFile: path.join(__dirname, 'test/browser/karma-standalone.conf.js'),
+          configFile: path.join(__dirname, 'test/browser/karma.conf.js'),
           singleRun: true
         }, function (err) {
           if (err) {
@@ -267,15 +192,18 @@ gulp.task('test-browser', ['browserify'], function (cb) {
       });
     })
     .then(finisher, finisher)
-    .then(cb, cb);
+    .then(done, done);
 });
 
-gulp.task('test', function (cb) {
+gulp.task('test', function (done) {
   runningAllTests = true;
 
   // Done this way to ensure that test-node runs prior to test-browser.  Since both of those tasks are independent,
   // doing this 'The Gulp Way' isn't feasible.
-  runSequence('test-node', 'test-browser', cb);
+  runSequence('test-node', 'test-browser', done);
 });
 
-gulp.task('default', ['lint', 'nsp', 'test', 'browserify', 'docs', 'docs-ts']);
+gulp.task('default', function (done) {
+  // Done this way to run in series until we upgrade to Gulp 4.x+
+  runSequence('lint', 'nsp', 'test', 'dist', 'docs', 'docs-ts', done);
+});

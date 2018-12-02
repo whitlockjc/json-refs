@@ -29,7 +29,7 @@
 var _ = require('lodash');
 var assert = require('assert');
 var fs = require('fs');
-var JsonRefs = typeof window === 'undefined' ? require('../') : window.JsonRefs;
+var JsonRefs = require('../');
 var path = require('path');
 var URI = require('uri-js');
 var YAML = require('js-yaml');
@@ -41,7 +41,7 @@ var objTypeError = new TypeError('obj must be an Array or an Object');
 var optionsTypeError = new TypeError('options must be an Object');
 var testDocumentLocation = path.join(typeof window === 'undefined' ?
                                        path.join(__dirname, 'browser', 'documents') :
-                                       'base/documents',
+                                       'base/browser/documents',
                                      'test-document.yaml');
 // These variables do not use documentBase because doing so breaks browserify's brfs transform
 var circularRoot = YAML.safeLoad(fs.readFileSync(path.join(__dirname, 'browser', 'documents', 'circular-root.yaml'),
@@ -1546,7 +1546,7 @@ describe('json-refs API', function () {
       it('should handle multi-document circular references', function (done) {
         JsonRefs.resolveRefsAt(path.join(typeof window === 'undefined' ?
                                            path.join(__dirname, 'browser', 'documents') :
-                                           'base/documents',
+                                           'base/browser/documents',
                                          'circular-root.yaml'), {
           loaderOptions: {
             processContent: yamlContentProcessor

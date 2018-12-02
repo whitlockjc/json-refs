@@ -10,8 +10,7 @@ Before contributing to json-refs, it makes sense to understand the development p
 no time will be spent talking about it.  json-refs uses Gulp as its task runner, which is used to build, lint, test,
 etc. all parts of json-refs.  Below are the gulp tasks:
 
-* `browserify`: Builds the browser binaries using [Browserify][browserify]
-* `clean`: Removes all development artifacts *(`bower_components`, `coverage`, ...)*
+* `clean`: Removes all development artifacts *(``coverage`, ...)*
 * `docs`: Generates `docs/API.md` from the [jsdoc][jsdoc] in the necessary sources
 * `lint`: Lint checks the necessary sources using [ESLint][eslint]
 * `test-browser`: Runs the test suite for the browser
@@ -56,7 +55,6 @@ checks and failing tests but this is a safety net only)*
 clear)*
 4. Should include tests *(Bug fixes and features should have tests included with them at all times)*
 
-[bower]: http://bower.io/
 [browserify]: http://browserify.org/
 [eslint]: http://eslint.org/
 [gulp]: http://gulpjs.com/
