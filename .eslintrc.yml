@@ -10,6 +10,14 @@
   globals:
     Promise: true
 
+  parserOptions:
+    sourceType: "module"
+
+  overrides:
+    - files: ["bin/**", "gulpfile.js"]
+      parserOptions:
+        sourceType: "script"
+
   rules:
     array-bracket-spacing: [2, "never"]
     brace-style: [2, "1tbs"]
@@ -37,5 +45,4 @@
     space-in-parens: [2, "never"]
     spaced-comment: [2, "always"]
     strict: [2, "global"]
-    valid-jsdoc: [2, {"requireReturn": false, "prefer": {"return": "returns"}}]
     wrap-iife: 2

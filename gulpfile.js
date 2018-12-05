@@ -24,42 +24,40 @@
 
 'use strict';
 
+var path = require('path');
+
 var $ = require('gulp-load-plugins')({
   rename: {
     'gulp-jsdoc-to-markdown': 'jsdoc2MD'
   }
 });
-var del = require('del');
 var gulp = require('gulp');
-var gutil = require('gulp-util');
+var del = require('del');
 var KarmaServer = require('karma').Server;
-var path = require('path');
-var runSequence = require('run-sequence');
-var webpack = require('webpack');
-var webpackConfig = require('./webpack.config');
-
-var runningAllTests = false;
 
 // Load promises polyfill if necessary
 if (typeof Promise === 'undefined') {
   require('native-promise-only');
 }
 
+var runningAllTests = false;
+
 function displayCoverageReport (display) {
   if (display) {
-    gulp.src([])
-      .pipe($.istanbul.writeReports());
+    // The following line wasn't working, so replaced with that below
+    // gulp.src([]).pipe($.istanbul.writeReports());
+
+    $.istanbul.writeReports();
   }
 }
 
-gulp.task('clean', function (done) {
+function clean (done) {
   del([
-    'bower_components',
     'coverage'
   ], done);
-});
+}
 
-gulp.task('docs-raw', function () {
+function docsRaw () {
   return gulp.src([
     './index.js',
     './lib/typedefs.js'
@@ -67,19 +65,24 @@ gulp.task('docs-raw', function () {
     .pipe($.concat('API.md'))
     .pipe($.jsdoc2MD({'sort-by': ['category', 'name'], 'conf': 'jsdoc.config.json'}))
     .pipe(gulp.dest('docs'));
-});
+}
 
 // Due to bugs in @otris/jsdoc-tsd, we need to "fix" the generated Markdown.
 //
 //  * https://github.com/jsdoc2md/jsdoc-to-markdown/issues/138
-gulp.task('docs', ['docs-raw'], function () {
+var docs = gulp.series(docsRaw, function () {
   return gulp.src(['docs/API.md'])
     .pipe($.replace('module:json-refs.UnresolvedRefDetails',
                     '[UnresolvedRefDetails](#module_json-refs.UnresolvedRefDetails)'))
     .pipe(gulp.dest('docs'));
 });
 
-gulp.task('dist', function (done) {
+function dist () {
+  /*
+  var webpack = require('webpack');
+  var webpackConfig = require('./webpack.config');
+  var gutil = require('gulp-util');
+
 	webpack(webpackConfig, function (err, stats) {
 		if (err) throw new gutil.PluginError('webpack', err);
 		gutil.log('[webpack]', 'Bundles generated:\n' + stats.toString('minimal').split('\n').map(function (line) {
@@ -87,9 +90,10 @@ gulp.task('dist', function (done) {
     }).join('\n'));
 		done();
 	});
-});
+  */
+}
 
-gulp.task('docs-ts-raw', function (done) {
+function docsTsRaw (done) {
   gulp.src([
     './index.js',
     './lib/typedefs.js'
@@ -100,13 +104,13 @@ gulp.task('docs-ts-raw', function (done) {
         template: 'node_modules/@otris/jsdoc-tsd'
       }
     }, done));
-});
+}
 
 // Due to bugs in @otris/jsdoc-tsd, we need to "fix" the generated TSD.
 //
 //  * https://github.com/otris/jsdoc-tsd/issues/38
 //  * https://github.com/otris/jsdoc-tsd/issues/39
-gulp.task('docs-ts', ['docs-ts-raw'], function () {
+var docsTs = gulp.series(docsTsRaw, function () {
   return gulp.src(['index.d.ts'])
     .pipe($.replace('<*>', '<any>'))
     .pipe($.replace('module:json-refs~', ''))
@@ -115,7 +119,7 @@ gulp.task('docs-ts', ['docs-ts-raw'], function () {
     .pipe(gulp.dest('.'));
 });
 
-gulp.task('lint', function () {
+function lint () {
   return gulp.src([
       'index.js',
       'lib/typedefs.js',
@@ -126,32 +130,33 @@ gulp.task('lint', function () {
     .pipe($.eslint())
     .pipe($.eslint.format('stylish'))
     .pipe($.eslint.failAfterError());
-});
+}
 
-gulp.task('pre-test', function () {
+function preTest () {
   return gulp.src([
-    'index.js',
+    'dist/json-refs-min.js',
     'lib/**/*.js'
   ])
     .pipe($.istanbul({includeUntested: true}))
     .pipe($.istanbul.hookRequire()); // Force `require` to return covered files
-});
+}
 
-gulp.task('test-node', ['pre-test'], function () {
+var testNode = gulp.series(preTest, function () {
   return gulp.src([
     'test/test-cli.js',
     'test/test-json-refs.js'
   ])
     .pipe($.mocha({
       reporter: 'spec',
-      timeout: 5000
+      timeout: 5000,
+      require: 'esm'
     }))
     .on('end', function () {
       displayCoverageReport(!runningAllTests);
     });
 });
 
-gulp.task('test-browser', function () {
+function testBrowser () {
   var basePath = './test/browser/';
 
   function cleanUp () {
@@ -182,17 +187,26 @@ gulp.task('test-browser', function () {
       }
     }).start();
   });
-});
+}
 
-gulp.task('test', function (done) {
+var test = gulp.series(function (done) {
   runningAllTests = true;
-
+  done();
   // Done this way to ensure that test-node runs prior to test-browser.  Since both of those tasks are independent,
   // doing this 'The Gulp Way' isn't feasible.
-  runSequence('test-node', 'test-browser', done);
-});
+}, testNode, testBrowser);
 
-gulp.task('default', function (done) {
-  // Done this way to run in series until we upgrade to Gulp 4.x+
-  runSequence('lint', 'test', 'dist', 'docs', 'docs-ts', done);
-});
+
+exports.clean = clean;
+exports['docs-raw'] = docsRaw;
+exports.docs = docs;
+exports.dist = dist;
+exports['docs-ts-raw'] = docsTsRaw;
+exports['docs-ts'] = docsTs;
+exports.lint = lint;
+exports['pre-test'] = preTest;
+exports['test-node'] = testNode;
+exports['test-browser'] = testBrowser;
+exports.test = test;
+
+exports.default = gulp.series(lint, test, dist, docs, docsTs);
