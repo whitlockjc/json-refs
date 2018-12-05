@@ -38,10 +38,10 @@
     "json"
   ],
   "devDependencies": {
+    "@babel/core": "^7.2.0",
+    "@babel/preset-env": "^7.2.0",
     "@otris/jsdoc-tsd": "^1.0.4",
-    "babel-core": "^6.26.3",
-    "babel-loader": "^7.1.5",
-    "babel-preset-es2015": "^6.24.1",
+    "babel-loader": "^8.0.4",
     "brfs": "~1.4.3",
     "connect": "^3.6.1",
     "del": "^3.0.0",
@@ -60,7 +60,6 @@
     "karma-mocha-reporter": "^2.2.3",
     "karma-phantomjs-launcher": "^1.0.4",
     "karma-webpack": "^4.0.0-rc.5",
-    "lodash": "^4.17.4",
     "mocha": "^4.0.1",
     "phantomjs-prebuilt": "^2.1.14",
     "run-sequence": "^2.2.0",
