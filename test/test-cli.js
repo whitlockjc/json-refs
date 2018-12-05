@@ -44,51 +44,40 @@ var jsonRefsOptions = {
 };
 
 var globalHelp = [
+  'Usage: json-refs [options] [command]',
   '',
-  '  Usage: json-refs [options] [command]',
+  'Options:',
+  '  -V, --version                 output the version number',
+  '  -h, --help                    output usage information',
   '',
-  '',
-  '  Options:',
-  '',
-  '    -V, --version  output the version number',
-  '    -h, --help     output usage information',
-  '',
-  '',
-  '  Commands:',
-  '',
-  '    help [command]                Display help information',
-  '    resolve [options] <location>  Prints document at location with its JSON References resolved',
+  'Commands:',
+  '  help [command]                Display help information',
+  '  resolve [options] <location>  Prints document at location with its JSON References resolved',
   '',
 ].join('\n');
 
 var helpHelp = [
+  'Usage: help [options] [command]',
   '',
-  '  Usage: help [options] [command]',
+  'Display help information',
   '',
-  '  Display help information',
-  '',
-  '',
-  '  Options:',
-  '',
-  '    -h, --help  output usage information',
+  'Options:',
+  '  -h, --help  output usage information',
   ''
 ].join('\n');
 
 var resolveHelp = [
+  'Usage: resolve [options] <location>',
   '',
-  '  Usage: resolve [options] <location>',
+  'Prints document at location with its JSON References resolved',
   '',
-  '  Prints document at location with its JSON References resolved',
-  '',
-  '',
-  '  Options:',
-  '',
-  '    -f, --force               Do not fail when the document has invalid JSON References',
-  '    -H, --header <header>     The header to use when retrieving a remote document',
-  '    -I, --filter <type>       The type of JSON References to resolved',
-  '    -w, --warnings-as-errors  Treat warnings as errors',
-  '    -y, --yaml                Output as YAML',
-  '    -h, --help                output usage information',
+  'Options:',
+  '  -f, --force               Do not fail when the document has invalid JSON References',
+  '  -H, --header <header>     The header to use when retrieving a remote document (default: [])',
+  '  -I, --filter <type>       The type of JSON References to resolved (default: [])',
+  '  -w, --warnings-as-errors  Treat warnings as errors',
+  '  -y, --yaml                Output as YAML',
+  '  -h, --help                output usage information',
   ''
 ].join('\n');
 
@@ -200,9 +189,7 @@ describe('json-refs CLI', function () {
     it('no arguments', function (done) {
       executeJsonRefs(['resolve'], function (stderr, stdout) {
         assert.equal(stderr, [
-          '',
-          '  error: missing required argument `location\'',
-          '',
+          'error: missing required argument `location\'',
           '',
         ].join('\n'));
         assert.equal(stdout, '');
