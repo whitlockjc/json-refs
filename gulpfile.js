@@ -35,6 +35,7 @@ var gutil = require('gulp-util');
 var KarmaServer = require('karma').Server;
 var path = require('path');
 var runSequence = require('run-sequence');
+var snyk = require('snyk');
 var webpack = require('webpack');
 var webpackConfig = require('./webpack.config');
 
@@ -117,10 +118,18 @@ gulp.task('lint', function () {
     .pipe($.eslint.failAfterError());
 });
 
-gulp.task('nsp', function (done) {
-  $.nsp({
-    package: path.join(__dirname, 'package.json')
-  }, done);
+gulp.task('snyk', function (done) {
+  snyk.test('.')
+    .then(function (data) {
+      if (data.vulnerabilities.length) { 
+        gutil.log(gutil.colors.red(data.vulnerabilities));
+
+        throw new Error('Snyk found ' + data.vulnerabilities.length + 'vulnernabilities');
+      } else {
+        gutil.log(gutil.colors.green(data.summary));
+      }
+    })
+    .then(done, done);
 });
 
 gulp.task('test-node', function (done) {
@@ -205,5 +214,5 @@ gulp.task('test', function (done) {
 
 gulp.task('default', function (done) {
   // Done this way to run in series until we upgrade to Gulp 4.x+
-  runSequence('lint', 'nsp', 'test', 'dist', 'docs', 'docs-ts', done);
+  runSequence('lint', 'snyk', 'test', 'dist', 'docs', 'docs-ts', done);
 });

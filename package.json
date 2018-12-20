@@ -53,7 +53,6 @@
     "gulp-jsdoc3": "^2.0.0",
     "gulp-load-plugins": "^1.5.0",
     "gulp-mocha": "~3.0.1",
-    "gulp-nsp": "^2.4.2",
     "gulp-replace": "^1.0.0",
     "jsdoc": "^3.5.5",
     "karma": "^1.6.0",
@@ -76,6 +75,7 @@
     "native-promise-only": "^0.8.1",
     "path-loader": "^1.0.5",
     "slash": "^1.0.0",
+    "snyk": "^1.118.2",
     "uri-js": "^3.0.2"
   }
 }
