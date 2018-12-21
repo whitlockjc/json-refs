@@ -13,7 +13,11 @@ module.exports = [{
         use: {
           loader: 'babel-loader',
           options: {
-            presets: ['@babel/env']
+            presets: [
+              ['@babel/env', {
+                targets: 'cover 100%'
+              }]
+            ]
           }
         }
       }
@@ -38,7 +42,11 @@ module.exports = [{
         use: {
           loader: 'babel-loader',
           options: {
-            presets: ['@babel/env']
+            presets: [
+              ['@babel/env', {
+                targets: 'cover 100%'
+              }]
+            ]
           }
         }
       }
