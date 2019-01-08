@@ -214,5 +214,5 @@ gulp.task('test', function (done) {
 
 gulp.task('default', function (done) {
   // Done this way to run in series until we upgrade to Gulp 4.x+
-  runSequence('lint', 'snyk', 'test', 'dist', 'docs', 'docs-ts', done);
+  runSequence('lint', 'test', 'dist', 'docs', 'docs-ts', done);
 });
