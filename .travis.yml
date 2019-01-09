@@ -5,7 +5,4 @@ language: node_js
 node_js:
   - "node"
   - "6"
-script:
-  - gulp
-  - gulp snyk
 sudo: false
