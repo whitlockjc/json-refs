@@ -121,7 +121,7 @@ gulp.task('lint', function () {
 gulp.task('snyk', function (done) {
   snyk.test('.')
     .then(function (data) {
-      if (data.vulnerabilities.length) { 
+      if (data.vulnerabilities.length) {
         gutil.log(gutil.colors.red(data.vulnerabilities));
 
         throw new Error('Snyk found ' + data.vulnerabilities.length + 'vulnernabilities');
@@ -133,35 +133,32 @@ gulp.task('snyk', function (done) {
 });
 
 gulp.task('test-node', function (done) {
-  Promise.resolve()
-    .then(function () {
-      return new Promise(function (resolve, reject) {
-        gulp.src([
-          'index.js'
-        ])
-        .pipe($.istanbul({includeUntested: true}))
-        .pipe($.istanbul.hookRequire()) // Force `require` to return covered files
-        .on('finish', function () {
-          gulp.src([
-            './test/test-json-refs.js',
-            './test/test-cli.js'
-          ])
-            .pipe($.mocha({
-              reporter: 'spec',
-              timeout: 5000
-            }))
-            .on('error', function (err) {
-              reject(err);
-            })
-            .on('end', function () {
-              displayCoverageReport(!runningAllTests);
+  return new Promise(function (resolve, reject) {
+    gulp.src([
+      'index.js'
+    ])
+    .pipe($.istanbul({includeUntested: true}))
+    .pipe($.istanbul.hookRequire()) // Force `require` to return covered files
+    .on('finish', function () {
+      gulp.src([
+        './test/test-json-refs.js',
+        './test/test-cli.js'
+      ])
+        .pipe($.mocha({
+          reporter: 'spec',
+          timeout: 5000
+        }))
+        .on('error', function (err) {
+          reject(err);
+        })
+        .on('end', function () {
+          displayCoverageReport(!runningAllTests);
 
-              resolve();
-            });
+          resolve();
         });
-      });
-    })
-    .then(done, done);
+    });
+  })
+  .then(done, done);
 });
 
 gulp.task('test-browser', function (done) {

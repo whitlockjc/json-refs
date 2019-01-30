@@ -4,7 +4,8 @@
   "description": "Various utilities for JSON References (http://tools.ietf.org/html/draft-pbryan-zyp-json-ref-03).",
   "main": "index.js",
   "scripts": {
-    "test": "node ./node_modules/gulp/bin/gulp.js test"
+    "gulp": "gulp",
+    "test": "gulp test"
   },
   "author": {
     "name": "Jeremy Whitlock",
@@ -38,44 +39,43 @@
     "json"
   ],
   "devDependencies": {
+    "@babel/core": "^7.2.2",
+    "@babel/preset-env": "^7.2.3",
     "@otris/jsdoc-tsd": "^1.0.4",
-    "babel-core": "^6.26.3",
-    "babel-loader": "^7.1.5",
-    "babel-preset-es2015": "^6.24.1",
-    "brfs": "~1.4.3",
-    "connect": "^3.6.1",
+    "babel-loader": "^8.0.5",
+    "brfs": "~2.0.1",
+    "connect": "^3.6.6",
     "del": "^3.0.0",
     "gulp": "~3.9.1",
     "gulp-concat": "^2.6.1",
-    "gulp-eslint": "^4.0.0",
-    "gulp-istanbul": "~1.1.1",
+    "gulp-eslint": "^5.0.0",
+    "gulp-istanbul": "~1.1.3",
     "gulp-jsdoc-to-markdown": "^1.2.2",
     "gulp-jsdoc3": "^2.0.0",
     "gulp-load-plugins": "^1.5.0",
-    "gulp-mocha": "~3.0.1",
+    "gulp-mocha": "~6.0.0",
     "gulp-replace": "^1.0.0",
     "jsdoc": "^3.5.5",
-    "karma": "^1.6.0",
+    "karma": "^3.1.4",
     "karma-mocha": "^1.3.0",
-    "karma-mocha-reporter": "^2.2.3",
+    "karma-mocha-reporter": "^2.2.5",
     "karma-phantomjs-launcher": "^1.0.4",
     "karma-webpack": "^4.0.0-rc.5",
-    "lodash": "^4.17.4",
-    "mocha": "^4.0.1",
-    "phantomjs-prebuilt": "^2.1.14",
-    "run-sequence": "^2.2.0",
+    "mocha": "^5.2.0",
+    "phantomjs-prebuilt": "^2.1.16",
+    "run-sequence": "^2.2.1",
     "transform-loader": "^0.2.4",
-    "webpack": "^4.26.1"
+    "webpack": "^4.28.1"
   },
   "dependencies": {
-    "commander": "~2.11.0",
-    "graphlib": "^2.1.1",
-    "js-yaml": "^3.10.0",
-    "lodash": "^4.17.4",
+    "commander": "~2.19.0",
+    "graphlib": "^2.1.7",
+    "js-yaml": "^3.12.1",
+    "lodash": "^4.17.11",
     "native-promise-only": "^0.8.1",
-    "path-loader": "^1.0.5",
-    "slash": "^1.0.0",
-    "snyk": "^1.118.2",
-    "uri-js": "^3.0.2"
+    "path-loader": "^1.0.9",
+    "slash": "^2.0.0",
+    "snyk": "^1.121.1",
+    "uri-js": "^4.2.2"
   }
 }

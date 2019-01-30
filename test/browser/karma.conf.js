@@ -47,7 +47,7 @@ module.exports = function (config) {
             use: {
               loader: 'babel-loader',
               options: {
-                presets: ['es2015']
+                presets: ['@babel/env']
               }
             }
           }
