@@ -34,7 +34,7 @@ declare module 'json-refs' {
      *          and whose values are {@link UnresolvedRefDetails}.
      * @throws when the input arguments fail validation or if `options.subDocPath` points to an invalid location
      */
-    export function findRefs(obj: any[] | object, options?: JsonRefsOptions): object;
+    export function findRefs(obj: any[] | object, options?: JsonRefsOptions): { [key: string]: UnresolvedRefDetails | undefined };
 
     /**
      * Finds JSON References defined within the document at the provided location.
