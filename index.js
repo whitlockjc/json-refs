@@ -1165,7 +1165,7 @@ module.exports.encodePath = function (path) {
  * @param {array|object} obj - The structure to find JSON References within
  * @param {module:json-refs~JsonRefsOptions} [options] - The JsonRefs options
  *
- * @returns {Object.<string,module:json-refs~UnresolvedRefDetails>} an object whose keys are JSON Pointers *(fragment version)* to where the JSON Reference is defined
+ * @returns {Object.<string,module:json-refs~UnresolvedRefDetails|undefined>} an object whose keys are JSON Pointers *(fragment version)* to where the JSON Reference is defined
  * and whose values are {@link UnresolvedRefDetails}.
  *
  * @throws {Error} when the input arguments fail validation or if `options.subDocPath` points to an invalid location
