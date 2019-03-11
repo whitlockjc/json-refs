@@ -5,3 +5,5 @@ local:
   $ref: '#/name'
 missing:
   $ref: '#/some/missing/path'
+remote:
+  $ref: 'https://rawgit.com/whitlockjc/json-refs/master/package.json'
