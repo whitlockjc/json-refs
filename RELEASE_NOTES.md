@@ -1,5 +1,10 @@
 ## Release Notes
 
+### v3.0.13 (2019-04-01)
+
+* Upgrade `path-loader` so that the location being resolved is passed to `options.loaderOptions.processContent`
+*(Issue #157)*
+
 ### v3.0.12 (2018-10-05)
 
 * Another attempt at fixing the TypeScript definition for `RetrievedResolvedRefsResults` *(Issue #145)*

@@ -1163,7 +1163,7 @@ module.exports.encodePath = function (path) {
  * Finds JSON References defined within the provided array/object.
  *
  * @param {array|object} obj - The structure to find JSON References within
- * @param {module:json-refs~JsonRefsOptions} [options] - The JsonRefs options
+ * @param {module:json-refs.JsonRefsOptions} [options] - The JsonRefs options
  *
  * @returns {Object.<string,module:json-refs~UnresolvedRefDetails|undefined>} an object whose keys are JSON Pointers *(fragment version)* to where the JSON Reference is defined
  * and whose values are {@link UnresolvedRefDetails}.
@@ -1189,11 +1189,11 @@ module.exports.findRefs = function (obj, options) {
  * return the result of {@link findRefs} on the retrieved document.
  *
  * @param {string} location - The location to retrieve *(Can be relative or absolute, just make sure you look at the
- * {@link module:json-refs~JsonRefsOptions|options documentation} to see how relative references are handled.)*
- * @param {module:json-refs~JsonRefsOptions} [options] - The JsonRefs options
+ * {@link module:json-refs.JsonRefsOptions|options documentation} to see how relative references are handled.)*
+ * @param {module:json-refs.JsonRefsOptions} [options] - The JsonRefs options
  *
- * @returns {Promise<module:json-refs~RetrievedRefsResults>} a promise that resolves a
- * {@link module:json-refs~RetrievedRefsResults} and rejects with an `Error` when the input arguments fail validation,
+ * @returns {Promise<module:json-refs.RetrievedRefsResults>} a promise that resolves a
+ * {@link module:json-refs.RetrievedRefsResults} and rejects with an `Error` when the input arguments fail validation,
  * when `options.subDocPath` points to an invalid location or when the location argument points to an unloadable
  * resource
  *
@@ -1220,7 +1220,7 @@ module.exports.findRefsAt = function (location, options) {
  *
  * @param {object} obj - The JSON Reference definition
  *
- * @returns {module:json-refs~UnresolvedRefDetails} the detailed information
+ * @returns {module:json-refs.UnresolvedRefDetails} the detailed information
  */
 module.exports.getRefDetails = function (obj) {
   return getRefDetails(obj);
@@ -1331,10 +1331,10 @@ module.exports.pathToPtr = function (path, hashPrefix) {
  * Finds JSON References defined within the provided array/object and resolves them.
  *
  * @param {array|object} obj - The structure to find JSON References within
- * @param {module:json-refs~JsonRefsOptions} [options] - The JsonRefs options
+ * @param {module:json-refs.JsonRefsOptions} [options] - The JsonRefs options
  *
- * @returns {Promise<module:json-refs~ResolvedRefsResults>} a promise that resolves a
- * {@link module:json-refs~ResolvedRefsResults} and rejects with an `Error` when the input arguments fail validation,
+ * @returns {Promise<module:json-refs.ResolvedRefsResults>} a promise that resolves a
+ * {@link module:json-refs.ResolvedRefsResults} and rejects with an `Error` when the input arguments fail validation,
  * when `options.subDocPath` points to an invalid location or when the location argument points to an unloadable
  * resource
  *
@@ -1363,11 +1363,11 @@ module.exports.resolveRefs = function (obj, options) {
  * then return the result of {@link module:json-refs.resolveRefs} on the retrieved document.
  *
  * @param {string} location - The location to retrieve *(Can be relative or absolute, just make sure you look at the
- * {@link module:json-refs~JsonRefsOptions|options documentation} to see how relative references are handled.)*
- * @param {module:json-refs~JsonRefsOptions} [options] - The JsonRefs options
+ * {@link module:json-refs.JsonRefsOptions|options documentation} to see how relative references are handled.)*
+ * @param {module:json-refs.JsonRefsOptions} [options] - The JsonRefs options
  *
- * @returns {Promise<module:json-refs~RetrievedResolvedRefsResults>} a promise that resolves a
- * {@link module:json-refs~RetrievedResolvedRefsResults} and rejects with an `Error` when the input arguments fail
+ * @returns {Promise<module:json-refs.RetrievedResolvedRefsResults>} a promise that resolves a
+ * {@link module:json-refs.RetrievedResolvedRefsResults} and rejects with an `Error` when the input arguments fail
  * validation, when `options.subDocPath` points to an invalid location or when the location argument points to an
  * unloadable resource
  *

@@ -35,7 +35,6 @@ var gutil = require('gulp-util');
 var KarmaServer = require('karma').Server;
 var path = require('path');
 var runSequence = require('run-sequence');
-var snyk = require('snyk');
 var webpack = require('webpack');
 var webpackConfig = require('./webpack.config');
 
@@ -98,7 +97,7 @@ gulp.task('docs-ts-raw', function (done) {
 //  * https://github.com/otris/jsdoc-tsd/issues/38
 //  * https://github.com/otris/jsdoc-tsd/issues/39
 gulp.task('docs-ts', ['docs-ts-raw'], function () {
-  gulp.src(['index.d.ts'])
+  return gulp.src(['index.d.ts'])
     .pipe($.replace('<*>', '<any>'))
     .pipe($.replace('module:json-refs~', ''))
     .pipe($.replace('Promise.<', 'Promise<'))
@@ -118,50 +117,30 @@ gulp.task('lint', function () {
     .pipe($.eslint.failAfterError());
 });
 
-gulp.task('snyk', function (done) {
-  snyk.test('.')
-    .then(function (data) {
-      if (data.vulnerabilities.length) {
-        gutil.log(gutil.colors.red(data.vulnerabilities));
-
-        throw new Error('Snyk found ' + data.vulnerabilities.length + 'vulnernabilities');
-      } else {
-        gutil.log(gutil.colors.green(data.summary));
-      }
-    })
-    .then(done, done);
-});
-
-gulp.task('test-node', function (done) {
-  return new Promise(function (resolve, reject) {
-    gulp.src([
-      'index.js'
-    ])
+gulp.task('pre-test', function () {
+  return gulp.src([
+    'index.js',
+    'lib/**/*.js'
+  ])
     .pipe($.istanbul({includeUntested: true}))
-    .pipe($.istanbul.hookRequire()) // Force `require` to return covered files
-    .on('finish', function () {
-      gulp.src([
-        './test/test-json-refs.js',
-        './test/test-cli.js'
-      ])
-        .pipe($.mocha({
-          reporter: 'spec',
-          timeout: 5000
-        }))
-        .on('error', function (err) {
-          reject(err);
-        })
-        .on('end', function () {
-          displayCoverageReport(!runningAllTests);
-
-          resolve();
-        });
-    });
-  })
-  .then(done, done);
+    .pipe($.istanbul.hookRequire()); // Force `require` to return covered files
 });
 
-gulp.task('test-browser', function (done) {
+gulp.task('test-node', ['pre-test'], function () {
+  return gulp.src([
+    'test/test-cli.js',
+    'test/test-json-refs.js'
+  ])
+    .pipe($.mocha({
+      reporter: 'spec',
+      timeout: 5000
+    }))
+    .on('end', function () {
+      displayCoverageReport(!runningAllTests);
+    });
+});
+
+gulp.task('test-browser', function () {
   var basePath = './test/browser/';
 
   function cleanUp () {
@@ -173,32 +152,25 @@ gulp.task('test-browser', function (done) {
     ]);
   }
 
-  function finisher (err) {
+
+  return new Promise(function (resolve, reject) {
     cleanUp();
 
-    displayCoverageReport(runningAllTests);
+    new KarmaServer({
+      configFile: path.join(__dirname, 'test/browser/karma.conf.js'),
+      singleRun: true
+    }, function (err) {
+      cleanUp();
 
-    return err;
-  }
+      displayCoverageReport(runningAllTests);
 
-  Promise.resolve()
-    .then(cleanUp)
-    .then(function () {
-      return new Promise(function (resolve, reject) {
-        new KarmaServer({
-          configFile: path.join(__dirname, 'test/browser/karma.conf.js'),
-          singleRun: true
-        }, function (err) {
-          if (err) {
-            reject(err);
-          } else {
-            resolve();
-          }
-        }).start();
-      });
-    })
-    .then(finisher, finisher)
-    .then(done, done);
+      if (err) {
+        reject(err);
+      } else {
+        resolve();
+      }
+    }).start();
+  });
 });
 
 gulp.task('test', function (done) {
