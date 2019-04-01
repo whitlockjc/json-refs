@@ -1542,6 +1542,32 @@ describe('json-refs API', function () {
   });
 
   describe('issues', function () {
+    describe('Issue #157', function () {
+      it('should pass location to loaderOptions.processContent', function (done) {
+        var location = 'https://rawgit.com/apigee-127/swagger-tools/master/samples/2.0/petstore.json';
+
+        JsonRefs.resolveRefsAt(location, {
+          loaderOptions: {
+            processContent: function (res, cb) {
+              var cbErr;
+
+              try {
+                assert.equal(res.location, location);
+              } catch (err) {
+                cbErr = err;
+              }
+
+              cb(cbErr, JSON.parse(res.text));
+            }
+          }
+        })
+          .then(function (results) {
+            assert.equal(Object.keys(JsonRefs.findRefs(results.resolved)).length, 0);
+          })
+          .then(done, done);
+      });
+    });
+
     describe('Issue #135', function () {
       it('should handle multi-document circular references', function (done) {
         JsonRefs.resolveRefsAt(path.join(typeof window === 'undefined' ?

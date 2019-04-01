@@ -100,6 +100,7 @@ gulp.task('docs-ts', ['docs-ts-raw'], function () {
   return gulp.src(['index.d.ts'])
     .pipe($.replace('<*>', '<any>'))
     .pipe($.replace('module:json-refs~', ''))
+    .pipe($.replace('module:json-refs.', ''))
     .pipe($.replace('Promise.<', 'Promise<'))
     .pipe(gulp.dest('.'));
 });

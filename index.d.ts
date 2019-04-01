@@ -34,7 +34,7 @@ declare module 'json-refs' {
      *          and whose values are {@link UnresolvedRefDetails}.
      * @throws when the input arguments fail validation or if `options.subDocPath` points to an invalid location
      */
-    export function findRefs(obj: any[] | object, options?: JsonRefsOptions): { [key: string]: (module:json-refs.UnresolvedRefDetails|undefined) };
+    export function findRefs(obj: any[] | object, options?: JsonRefsOptions): { [key: string]: (UnresolvedRefDetails|undefined) };
 
     /**
      * Finds JSON References defined within the document at the provided location.
@@ -42,21 +42,21 @@ declare module 'json-refs' {
      * This API is identical to {@link findRefs} except this API will retrieve a remote document and then
      * return the result of {@link findRefs} on the retrieved document.
      * @param location - The location to retrieve *(Can be relative or absolute, just make sure you look at the
-     *        {@link module:json-refs.JsonRefsOptions|options documentation} to see how relative references are handled.)*
+     *        {@link JsonRefsOptions|options documentation} to see how relative references are handled.)*
      * @param options - The JsonRefs options
      * @returns a promise that resolves a
-     *          {@link module:json-refs.RetrievedRefsResults} and rejects with an `Error` when the input arguments fail validation,
+     *          {@link RetrievedRefsResults} and rejects with an `Error` when the input arguments fail validation,
      *          when `options.subDocPath` points to an invalid location or when the location argument points to an unloadable
      *          resource
      */
-    export function findRefsAt(location: string, options?: module:json-refs.JsonRefsOptions): Promise<module:json-refs.RetrievedRefsResults>;
+    export function findRefsAt(location: string, options?: JsonRefsOptions): Promise<RetrievedRefsResults>;
 
     /**
      * Returns detailed information about the JSON Reference.
      * @param obj - The JSON Reference definition
      * @returns the detailed information
      */
-    export function getRefDetails(obj: object): module:json-refs.UnresolvedRefDetails;
+    export function getRefDetails(obj: object): UnresolvedRefDetails;
 
     /**
      * Returns whether the argument represents a JSON Pointer.
@@ -116,26 +116,26 @@ declare module 'json-refs' {
      * @param obj - The structure to find JSON References within
      * @param options - The JsonRefs options
      * @returns a promise that resolves a
-     *          {@link module:json-refs.ResolvedRefsResults} and rejects with an `Error` when the input arguments fail validation,
+     *          {@link ResolvedRefsResults} and rejects with an `Error` when the input arguments fail validation,
      *          when `options.subDocPath` points to an invalid location or when the location argument points to an unloadable
      *          resource
      */
-    export function resolveRefs(obj: any[] | object, options?: module:json-refs.JsonRefsOptions): Promise<module:json-refs.ResolvedRefsResults>;
+    export function resolveRefs(obj: any[] | object, options?: JsonRefsOptions): Promise<ResolvedRefsResults>;
 
     /**
      * Resolves JSON References defined within the document at the provided location.
      * 
-     * This API is identical to {@link module:json-refs.resolveRefs} except this API will retrieve a remote document and
-     * then return the result of {@link module:json-refs.resolveRefs} on the retrieved document.
+     * This API is identical to {@link resolveRefs} except this API will retrieve a remote document and
+     * then return the result of {@link resolveRefs} on the retrieved document.
      * @param location - The location to retrieve *(Can be relative or absolute, just make sure you look at the
-     *        {@link module:json-refs.JsonRefsOptions|options documentation} to see how relative references are handled.)*
+     *        {@link JsonRefsOptions|options documentation} to see how relative references are handled.)*
      * @param options - The JsonRefs options
      * @returns a promise that resolves a
-     *          {@link module:json-refs.RetrievedResolvedRefsResults} and rejects with an `Error` when the input arguments fail
+     *          {@link RetrievedResolvedRefsResults} and rejects with an `Error` when the input arguments fail
      *          validation, when `options.subDocPath` points to an invalid location or when the location argument points to an
      *          unloadable resource
      */
-    export function resolveRefsAt(location: string, options?: module:json-refs.JsonRefsOptions): Promise<module:json-refs.RetrievedResolvedRefsResults>;
+    export function resolveRefsAt(location: string, options?: JsonRefsOptions): Promise<RetrievedResolvedRefsResults>;
 
     /**
      * The options used for various JsonRefs APIs.
@@ -144,8 +144,8 @@ declare module 'json-refs' {
         /**
          * The filter to use when gathering JSON
          * References *(If this value is a single string or an array of strings, the value(s) are expected to be the `type(s)`
-         * you are interested in collecting as described in {@link module:json-refs.getRefDetails}.  If it is a function, it is
-         * expected that the function behaves like {@link module:json-refs.RefDetailsFilter}.)*
+         * you are interested in collecting as described in {@link getRefDetails}.  If it is a function, it is
+         * expected that the function behaves like {@link RefDetailsFilter}.)*
          */
         filter?: string | string[] | Function;
         /**
@@ -172,12 +172,12 @@ declare module 'json-refs' {
          * The callback used to pre-process a JSON Reference like
          * object *(This is called prior to validating the JSON Reference like object and getting its details)*
          */
-        refPreProcessor?: module:json-refs.RefPreProcessor;
+        refPreProcessor?: RefPreProcessor;
         /**
          * The callback used to post-process the JSON Reference
          * metadata *(This is called prior filtering the references)*
          */
-        refPostProcessor?: module:json-refs.RefPostProcessor;
+        refPostProcessor?: RefPostProcessor;
         /**
          * Whether to resolve circular references
          */
@@ -195,7 +195,7 @@ declare module 'json-refs' {
      * @param path - The path to the JSON Reference
      * @returns whether the JSON Reference should be filtered *(out)* or not
      */
-    export type RefDetailsFilter = (refDetails: module:json-refs.UnresolvedRefDetails, path: string[])=>boolean;
+    export type RefDetailsFilter = (refDetails: UnresolvedRefDetails, path: string[])=>boolean;
 
     /**
      * Simple function used to pre-process a JSON Reference like object.
@@ -211,7 +211,7 @@ declare module 'json-refs' {
      * @param path - The path to the JSON Reference
      * @returns the processed JSON Reference details object
      */
-    export type RefPostProcessor = (refDetails: module:json-refs.UnresolvedRefDetails, path: string[])=>object;
+    export type RefPostProcessor = (refDetails: UnresolvedRefDetails, path: string[])=>object;
 
     /**
      * Detailed information about resolved JSON References.
@@ -224,7 +224,7 @@ declare module 'json-refs' {
         circular?: boolean;
         /**
          * The fully-qualified version of the `uri` property for
-         * {@link module:json-refs.UnresolvedRefDetails} but with the value being relative to the root document
+         * {@link UnresolvedRefDetails} but with the value being relative to the root document
          */
         fqURI: string;
         /**
@@ -244,9 +244,9 @@ declare module 'json-refs' {
     interface ResolvedRefsResults {
         /**
          * An object whose keys are JSON Pointers *(fragment version)*
-         * to where the JSON Reference is defined and whose values are {@link module:json-refs.ResolvedRefDetails}
+         * to where the JSON Reference is defined and whose values are {@link ResolvedRefDetails}
          */
-        refs: module:json-refs.ResolvedRefDetails;
+        refs: ResolvedRefDetails;
         /**
          * The array/object with its JSON References fully resolved
          */
@@ -270,9 +270,9 @@ declare module 'json-refs' {
     interface RetrievedResolvedRefsResults {
         /**
          * An object whose keys are JSON Pointers *(fragment version)*
-         * to where the JSON Reference is defined and whose values are {@link module:json-refs.UnresolvedRefDetails}
+         * to where the JSON Reference is defined and whose values are {@link UnresolvedRefDetails}
          */
-        refs: module:json-refs.UnresolvedRefDetails;
+        refs: UnresolvedRefDetails;
         /**
          * The array/object with its JSON References fully resolved
          */
