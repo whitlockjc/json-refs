@@ -264,22 +264,7 @@ describe('json-refs API', function () {
       name: testTypesDocument.definitions.String
     }
   };
-  var expectedRelativeValue = {
-    name: testNestedDocument.name,
-    child: {
-      name: testNestedDocument1.name,
-      ancestor: {
-        name: testDocument1.name,
-        nested: testDocument1.nested,
-        local: testDocument1.name,
-        missing: testDocument1.missing
-      },
-      local: testNestedDocument1.name,
-      missing: testNestedDocument1.missing
-    },
-    local: testNestedDocument.name,
-    missing: testNestedDocument.missing
-  };
+  var expectedRelativeValue;
   var expectedValidResolveRefs;
   var expectedFullyResolved;
   var remotePkgJson;
@@ -288,6 +273,23 @@ describe('json-refs API', function () {
     JsonRefs.findRefsAt('https://rawgit.com/whitlockjc/json-refs/master/package.json')
       .then(function (refs) {
         remotePkgJson = refs.value;
+        expectedRelativeValue = {
+          name: testNestedDocument.name,
+          child: {
+            name: testNestedDocument1.name,
+            ancestor: {
+              name: testDocument1.name,
+              nested: testDocument1.nested,
+              local: testDocument1.name,
+              missing: testDocument1.missing
+            },
+            local: testNestedDocument1.name,
+            missing: testNestedDocument1.missing
+          },
+          local: testNestedDocument.name,
+          missing: testNestedDocument.missing,
+          remote: remotePkgJson
+        };
         expectedValidResolveRefs = {
           '#/local': {
             def: testDocument.local,
@@ -526,6 +528,14 @@ describe('json-refs API', function () {
             type: 'local',
             error: new Error('JSON Pointer points to missing location: #/some/missing/path'),
             missing: true
+          },
+          '#/remote/relative/remote': {
+            def: testNestedDocument.remote,
+            fqURI: testNestedDocument.remote.$ref,
+            uri: testNestedDocument.remote.$ref,
+            uriDetails: URI.parse(testNestedDocument.remote.$ref),
+            type: 'remote',
+            value: expectedRelativeValue.remote
           },
           '#/definitions/Person/properties/name': {
             def: testDocument.definitions.Person.properties.name,
@@ -1349,7 +1359,8 @@ describe('json-refs API', function () {
                 name: testNestedDocument.name,
                 child: expectedRelativeValue.child,
                 local: testNestedDocument.name,
-                missing: testNestedDocument.missing
+                missing: testNestedDocument.missing,
+                remote: expectedRelativeValue.remote
               },
             },
             '#/remote/relative/child': {
@@ -1427,6 +1438,14 @@ describe('json-refs API', function () {
               type: 'local',
               error: new Error('JSON Pointer points to missing location: #/some/missing/path'),
               missing: true
+            },
+            '#/remote/relative/remote': {
+              def: testNestedDocument.remote,
+              fqURI: testNestedDocument.remote.$ref,
+              uri: testNestedDocument.remote.$ref,
+              uriDetails: URI.parse(testNestedDocument.remote.$ref),
+              type: 'remote',
+              value: expectedRelativeValue.remote
             }
           });
         })
@@ -1542,6 +1561,20 @@ describe('json-refs API', function () {
   });
 
   describe('issues', function () {
+    describe('Issue #154', function () {
+      it('should not resolve remote references contained by relative references when options.filter does not indicate it', function (done) {
+        JsonRefs.resolveRefs(testDocument, {
+          filter: ['relative'],
+          loaderOptions: {
+            processContent: yamlContentProcessor
+          },
+          location: testDocumentLocation
+        }).then(function (res) {
+          assert.deepEqual(res.resolved.remote.relative.remote, testNestedDocument.remote);
+        })
+        .then(done, done);
+      });
+    });
     describe('Issue #135', function () {
       it('should handle multi-document circular references', function (done) {
         JsonRefs.resolveRefsAt(path.join(typeof window === 'undefined' ?
