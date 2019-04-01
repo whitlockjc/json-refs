@@ -30,8 +30,8 @@ declare module 'json-refs' {
      * Finds JSON References defined within the provided array/object.
      * @param obj - The structure to find JSON References within
      * @param options - The JsonRefs options
-     * @returns an object whose keys are JSON Pointers *(fragment version)* to where the JSON Reference is defined
-     *          and whose values are {@link UnresolvedRefDetails}.
+     * @returns an object whose keys are JSON Pointers
+     *          *(fragment version)* to where the JSON Reference is defined and whose values are {@link UnresolvedRefDetails}.
      * @throws when the input arguments fail validation or if `options.subDocPath` points to an invalid location
      */
     export function findRefs(obj: any[] | object, options?: JsonRefsOptions): { [key: string]: (UnresolvedRefDetails|undefined) };

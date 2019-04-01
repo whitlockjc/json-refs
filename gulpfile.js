@@ -59,13 +59,23 @@ gulp.task('clean', function (done) {
   ], done);
 });
 
-gulp.task('docs', function () {
+gulp.task('docs-raw', function () {
   return gulp.src([
     './index.js',
     './lib/typedefs.js'
   ])
     .pipe($.concat('API.md'))
     .pipe($.jsdoc2MD({'sort-by': ['category', 'name']}))
+    .pipe(gulp.dest('docs'));
+});
+
+// Due to bugs in @otris/jsdoc-tsd, we need to "fix" the generated Markdown.
+//
+//  * https://github.com/jsdoc2md/jsdoc-to-markdown/issues/138
+gulp.task('docs', ['docs-raw'], function () {
+  return gulp.src(['docs/API.md'])
+    .pipe($.replace('module:json-refs.UnresolvedRefDetails',
+                    '[UnresolvedRefDetails](#module_json-refs.UnresolvedRefDetails)'))
     .pipe(gulp.dest('docs'));
 });
 

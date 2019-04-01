@@ -18,7 +18,7 @@ JSON Pointers *(https://tools.ietf.org/html/rfc6901)*.
     * [.clearCache()](#module_json-refs.clearCache)
     * [.decodePath(path)](#module_json-refs.decodePath) ⇒ <code>string</code>
     * [.encodePath(path)](#module_json-refs.encodePath) ⇒ <code>string</code>
-    * [.findRefs(obj, [options])](#module_json-refs.findRefs) ⇒ <code>Object.&lt;string, (module:json-refs~UnresolvedRefDetails\|undefined)&gt;</code>
+    * [.findRefs(obj, [options])](#module_json-refs.findRefs) ⇒ <code>Object.&lt;string, ([UnresolvedRefDetails](#module_json-refs.UnresolvedRefDetails)\|undefined)&gt;</code>
     * [.findRefsAt(location, [options])](#module_json-refs.findRefsAt) ⇒ <code>[Promise.&lt;RetrievedRefsResults&gt;](#module_json-refs.RetrievedRefsResults)</code>
     * [.getRefDetails(obj)](#module_json-refs.getRefDetails) ⇒ <code>[UnresolvedRefDetails](#module_json-refs.UnresolvedRefDetails)</code>
     * [.isPtr(ptr, [throwWithDetails])](#module_json-refs.isPtr) ⇒ <code>boolean</code>
@@ -200,12 +200,12 @@ Takes an array of path segments and encodes the special JSON Pointer characters 
 
 <a name="module_json-refs.findRefs"></a>
 
-### json-refs.findRefs(obj, [options]) ⇒ <code>Object.&lt;string, (module:json-refs~UnresolvedRefDetails\|undefined)&gt;</code>
+### json-refs.findRefs(obj, [options]) ⇒ <code>Object.&lt;string, ([UnresolvedRefDetails](#module_json-refs.UnresolvedRefDetails)\|undefined)&gt;</code>
 Finds JSON References defined within the provided array/object.
 
 **Kind**: static method of <code>[json-refs](#module_json-refs)</code>  
-**Returns**: <code>Object.&lt;string, (module:json-refs~UnresolvedRefDetails\|undefined)&gt;</code> - an object whose keys are JSON Pointers *(fragment version)* to where the JSON Reference is defined
-and whose values are [UnresolvedRefDetails](UnresolvedRefDetails).  
+**Returns**: <code>Object.&lt;string, ([UnresolvedRefDetails](#module_json-refs.UnresolvedRefDetails)\|undefined)&gt;</code> - an object whose keys are JSON Pointers
+*(fragment version)* to where the JSON Reference is defined and whose values are [UnresolvedRefDetails](UnresolvedRefDetails).  
 **Throws**:
 
 - <code>Error</code> when the input arguments fail validation or if `options.subDocPath` points to an invalid location
