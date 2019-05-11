@@ -65,7 +65,7 @@ gulp.task('docs-raw', function () {
     './lib/typedefs.js'
   ])
     .pipe($.concat('API.md'))
-    .pipe($.jsdoc2MD({'sort-by': ['category', 'name']}))
+    .pipe($.jsdoc2MD({'sort-by': ['category', 'name'], 'conf': 'jsdoc.config.json'}))
     .pipe(gulp.dest('docs'));
 });
 

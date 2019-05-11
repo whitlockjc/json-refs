@@ -1134,7 +1134,7 @@ module.exports.clearCache = function () {
  *
  * @param {string[]} path - The array of path segments
  *
- * @returns {string} the array of path segments with their JSON Pointer tokens decoded
+ * @returns {string[]} the array of path segments with their JSON Pointer tokens decoded
  *
  * @throws {Error} if the path is not an `Array`
  *
@@ -1149,7 +1149,7 @@ module.exports.decodePath = function (path) {
  *
  * @param {string[]} path - The array of path segments
  *
- * @returns {string} the array of path segments with their JSON Pointer tokens encoded
+ * @returns {string[]} the array of path segments with their JSON Pointer tokens encoded
  *
  * @throws {Error} if the path is not an `Array`
  *

@@ -16,8 +16,8 @@ JSON Pointers *(https://tools.ietf.org/html/rfc6901)*.
     * [.RetrievedResolvedRefsResults](#module_json-refs.RetrievedResolvedRefsResults) : <code>object</code>
     * [.UnresolvedRefDetails](#module_json-refs.UnresolvedRefDetails) : <code>object</code>
     * [.clearCache()](#module_json-refs.clearCache)
-    * [.decodePath(path)](#module_json-refs.decodePath) ⇒ <code>string</code>
-    * [.encodePath(path)](#module_json-refs.encodePath) ⇒ <code>string</code>
+    * [.decodePath(path)](#module_json-refs.decodePath) ⇒ <code>Array.&lt;string&gt;</code>
+    * [.encodePath(path)](#module_json-refs.encodePath) ⇒ <code>Array.&lt;string&gt;</code>
     * [.findRefs(obj, [options])](#module_json-refs.findRefs) ⇒ <code>Object.&lt;string, ([UnresolvedRefDetails](#module_json-refs.UnresolvedRefDetails)\|undefined)&gt;</code>
     * [.findRefsAt(location, [options])](#module_json-refs.findRefsAt) ⇒ <code>[Promise.&lt;RetrievedRefsResults&gt;](#module_json-refs.RetrievedRefsResults)</code>
     * [.getRefDetails(obj)](#module_json-refs.getRefDetails) ⇒ <code>[UnresolvedRefDetails](#module_json-refs.UnresolvedRefDetails)</code>
@@ -166,11 +166,11 @@ Clears the internal cache of remote documents, reference details, etc.
 **Kind**: static method of <code>[json-refs](#module_json-refs)</code>  
 <a name="module_json-refs.decodePath"></a>
 
-### json-refs.decodePath(path) ⇒ <code>string</code>
+### json-refs.decodePath(path) ⇒ <code>Array.&lt;string&gt;</code>
 Takes an array of path segments and decodes the JSON Pointer tokens in them.
 
 **Kind**: static method of <code>[json-refs](#module_json-refs)</code>  
-**Returns**: <code>string</code> - the array of path segments with their JSON Pointer tokens decoded  
+**Returns**: <code>Array.&lt;string&gt;</code> - the array of path segments with their JSON Pointer tokens decoded  
 **Throws**:
 
 - <code>Error</code> if the path is not an `Array`
@@ -183,11 +183,11 @@ Takes an array of path segments and decodes the JSON Pointer tokens in them.
 
 <a name="module_json-refs.encodePath"></a>
 
-### json-refs.encodePath(path) ⇒ <code>string</code>
+### json-refs.encodePath(path) ⇒ <code>Array.&lt;string&gt;</code>
 Takes an array of path segments and encodes the special JSON Pointer characters in them.
 
 **Kind**: static method of <code>[json-refs](#module_json-refs)</code>  
-**Returns**: <code>string</code> - the array of path segments with their JSON Pointer tokens encoded  
+**Returns**: <code>Array.&lt;string&gt;</code> - the array of path segments with their JSON Pointer tokens encoded  
 **Throws**:
 
 - <code>Error</code> if the path is not an `Array`
