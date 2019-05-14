@@ -15,7 +15,7 @@ declare module 'json-refs' {
      * @throws if the path is not an `Array`
      * @see
      */
-    export function decodePath(path: string[]): string;
+    export function decodePath(path: string[]): string[];
 
     /**
      * Takes an array of path segments and encodes the special JSON Pointer characters in them.
@@ -24,7 +24,7 @@ declare module 'json-refs' {
      * @throws if the path is not an `Array`
      * @see
      */
-    export function encodePath(path: string[]): string;
+    export function encodePath(path: string[]): string[];
 
     /**
      * Finds JSON References defined within the provided array/object.
