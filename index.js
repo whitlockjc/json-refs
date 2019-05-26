@@ -22,15 +22,14 @@
  * THE SOFTWARE.
  */
 
-'use strict';
+import path from 'path';
+import qs from 'querystring';
 
-var _ = require('lodash');
-var gl = require('graphlib');
-var path = require('path');
-var PathLoader = require('path-loader');
-var qs = require('querystring');
-var slash = require('slash');
-var URI = require('uri-js');
+import _ from 'lodash';
+import gl from 'graphlib';
+import PathLoader from 'path-loader';
+import slash from 'slash';
+import URI from 'uri-js';
 
 var badPtrTokenRegex = /~(?:[^01]|$)/g;
 var remoteCache = {};
@@ -136,7 +135,7 @@ function findValue (obj, path) {
     if (seg in value) {
       value = value[seg];
     } else {
-      throw Error('JSON Pointer points to missing location: ' + pathToPtr(path));
+      throw Error('JSON Pointer points to missing location: ' + _pathToPtr(path));
     }
   });
 
@@ -276,7 +275,7 @@ function makeSubDocPath (options) {
   if (_.isArray(options.subDocPath)) {
     subDocPath = options.subDocPath;
   } else if (_.isString(options.subDocPath)) {
-    subDocPath = pathFromPtr(options.subDocPath);
+    subDocPath = _pathFromPtr(options.subDocPath);
   } else if (_.isUndefined(options.subDocPath)) {
     subDocPath = [];
   }
@@ -296,7 +295,7 @@ function parseURI (uri) {
 
 function buildRefModel (document, options, metadata) {
   var allTasks = Promise.resolve();
-  var subDocPtr = pathToPtr(options.subDocPath);
+  var subDocPtr = _pathToPtr(options.subDocPath);
   var absLocation = makeAbsolute(options.location);
   var relativeBase = path.dirname(options.location);
   var docDepKey = absLocation + subDocPtr;
@@ -313,7 +312,7 @@ function buildRefModel (document, options, metadata) {
     metadata.deps[docDepKey] = {};
 
     // Find the references based on the options
-    refs = findRefs(document, options);
+    refs = _findRefs(document, options);
 
     // Iterate over the references and process
     _.forOwn(refs, function (refDetails, refPtr) {
@@ -351,7 +350,7 @@ function buildRefModel (document, options, metadata) {
 
       rOptions.subDocPath = _.isUndefined(refDetails.uriDetails.fragment) ?
                                      [] :
-                                     pathFromPtr(decodeURI(refDetails.uriDetails.fragment));
+                                     _pathFromPtr(decodeURI(refDetails.uriDetails.fragment));
 
       // Resolve the reference
       if (isRemote(refDetails)) {
@@ -492,7 +491,7 @@ function validateOptions (options, obj) {
     throw new TypeError('options.refPostProcessor must be a Function');
   } else if (!_.isUndefined(options.subDocPath) &&
              !_.isArray(options.subDocPath) &&
-             !isPtr(options.subDocPath)) {
+             !_isPtr(options.subDocPath)) {
     // If a pointer is provided, throw an error if it's not the proper type
     throw new TypeError('options.subDocPath must be an Array of path segments or a valid JSON Pointer');
   }
@@ -542,7 +541,7 @@ function validateOptions (options, obj) {
   return options;
 }
 
-function decodePath (path) {
+function _decodePath (path) {
   if (!_.isArray(path)) {
     throw new TypeError('path must be an array');
   }
@@ -556,7 +555,7 @@ function decodePath (path) {
   });
 }
 
-function encodePath (path) {
+function _encodePath (path) {
   if (!_.isArray(path)) {
     throw new TypeError('path must be an array');
   }
@@ -570,7 +569,7 @@ function encodePath (path) {
   });
 }
 
-function findRefs (obj, options) {
+function _findRefs (obj, options) {
   var refs = {};
 
   // Validate the provided document
@@ -596,7 +595,7 @@ function findRefs (obj, options) {
              node = options.refPreProcessor(_.cloneDeep(node), path);
            }
 
-           refDetails = getRefDetails(node);
+           refDetails = _getRefDetails(node);
 
            // Post-process the reference details
            if (!_.isUndefined(options.refPostProcessor)) {
@@ -604,7 +603,7 @@ function findRefs (obj, options) {
            }
 
            if (options.filter(refDetails, path)) {
-             refPtr = pathToPtr(path);
+             refPtr = _pathToPtr(path);
 
              refs[refPtr] = refDetails;
            }
@@ -622,7 +621,7 @@ function findRefs (obj, options) {
   return refs;
 }
 
-function findRefsAt (location, options) {
+function _findRefsAt (location, options) {
   var allTasks = Promise.resolve();
 
   allTasks = allTasks
@@ -658,7 +657,7 @@ function findRefsAt (location, options) {
 
         cOptions.includeInvalid = true;
 
-        remoteCache[options.location].refs = findRefs(res, cOptions);
+        remoteCache[options.location].refs = _findRefs(res, cOptions);
       }
 
       // Add the filter options back
@@ -667,14 +666,14 @@ function findRefsAt (location, options) {
       }
 
       if (!_.isUndefined(uriDetails.fragment)) {
-        cOptions.subDocPath = pathFromPtr(decodeURI(uriDetails.fragment));
+        cOptions.subDocPath = _pathFromPtr(decodeURI(uriDetails.fragment));
       } else if (!_.isUndefined(uriDetails.subDocPath)) {
         cOptions.subDocPath = options.subDocPath;
       }
 
       // This will use the cache so don't worry about calling it twice
       return {
-        refs: findRefs(res, cOptions),
+        refs: _findRefs(res, cOptions),
         value: res
       };
     });
@@ -682,7 +681,7 @@ function findRefsAt (location, options) {
   return allTasks;
 }
 
-function getRefDetails (obj) {
+function _getRefDetails (obj) {
   var details = {
     def: obj
   };
@@ -708,9 +707,9 @@ function getRefDetails (obj) {
         // Validate the JSON Pointer
         try {
           if (['#', '/'].indexOf(cacheKey[0]) > -1) {
-            isPtr(cacheKey, true);
+            _isPtr(cacheKey, true);
           } else if (cacheKey.indexOf('#') > -1) {
-            isPtr(uriDetails.fragment, true);
+            _isPtr(uriDetails.fragment, true);
           }
         } catch (err) {
           details.error = err.message;
@@ -738,7 +737,7 @@ function getRefDetails (obj) {
   return details;
 }
 
-function isPtr (ptr, throwWithDetails) {
+function _isPtr (ptr, throwWithDetails) {
   var valid = true;
   var firstChar;
 
@@ -769,13 +768,13 @@ function isPtr (ptr, throwWithDetails) {
   return valid;
 }
 
-function isRef (obj, throwWithDetails) {
-  return isRefLike(obj, throwWithDetails) && getRefDetails(obj, throwWithDetails).type !== 'invalid';
+function _isRef (obj, throwWithDetails) {
+  return isRefLike(obj, throwWithDetails) && _getRefDetails(obj, throwWithDetails).type !== 'invalid';
 }
 
-function pathFromPtr (ptr) {
+function _pathFromPtr (ptr) {
   try {
-    isPtr(ptr, true);
+    _isPtr(ptr, true);
   } catch (err) {
     throw new Error('ptr must be a JSON Pointer: ' + err.message);
   }
@@ -785,19 +784,19 @@ function pathFromPtr (ptr) {
   // Remove the first segment
   segments.shift();
 
-  return decodePath(segments);
+  return _decodePath(segments);
 }
 
-function pathToPtr (path, hashPrefix) {
+function _pathToPtr (path, hashPrefix) {
   if (!_.isArray(path)) {
     throw new Error('path must be an Array');
   }
 
   // Encode each segment and return
-  return (hashPrefix !== false ? '#' : '') + (path.length > 0 ? '/' : '') + encodePath(path).join('/');
+  return (hashPrefix !== false ? '#' : '') + (path.length > 0 ? '/' : '') + _encodePath(path).join('/');
 }
 
-function resolveRefs (obj, options) {
+function _resolveRefs (obj, options) {
   var allTasks = Promise.resolve();
 
   allTasks = allTasks
@@ -831,7 +830,7 @@ function resolveRefs (obj, options) {
       var circulars = [];
       var depGraph = new gl.Graph();
       var fullLocation = makeAbsolute(options.location);
-      var refsRoot = fullLocation + pathToPtr(options.subDocPath);
+      var refsRoot = fullLocation + _pathToPtr(options.subDocPath);
       var relativeBase = path.dirname(fullLocation);
 
       // Identify circulars
@@ -910,13 +909,13 @@ function resolveRefs (obj, options) {
         var deps = results.deps[parentPtr];
         var pPtrParts = parentPtr.split('#');
         var pDocument = results.docs[pPtrParts[0]];
-        var pPtrPath = pathFromPtr(pPtrParts[1]);
+        var pPtrPath = _pathFromPtr(pPtrParts[1]);
 
         _.forOwn(deps, function (dep, prop) {
           var depParts = dep.split('#');
           var dDocument = results.docs[depParts[0]];
-          var dPtrPath = pPtrPath.concat(pathFromPtr(prop));
-          var refDetails = results.refs[pPtrParts[0] + pathToPtr(dPtrPath)];
+          var dPtrPath = pPtrPath.concat(_pathFromPtr(prop));
+          var refDetails = results.refs[pPtrParts[0] + _pathToPtr(dPtrPath)];
 
           // Resolve reference if valid
           if (_.isUndefined(refDetails.error) && _.isUndefined(refDetails.missing)) {
@@ -924,7 +923,7 @@ function resolveRefs (obj, options) {
               refDetails.value = refDetails.def;
             } else {
               try {
-                refDetails.value = findValue(dDocument, pathFromPtr(depParts[1]));
+                refDetails.value = findValue(dDocument, _pathFromPtr(depParts[1]));
               } catch (err) {
                 markMissing(refDetails, err);
 
@@ -951,7 +950,7 @@ function resolveRefs (obj, options) {
         // Record the reference (relative to the root document unless the reference is in the root document)
         allRefs[refPtrParts[0] === options.location ?
                   '#' + refPtrParts[1] :
-                  pathToPtr(options.subDocPath.concat(refPath))] = refDetails;
+                  _pathToPtr(options.subDocPath.concat(refPath))] = refDetails;
 
         // Do not walk invalid references
         if (refDetails.circular || !isValid(refDetails)) {
@@ -979,7 +978,7 @@ function resolveRefs (obj, options) {
 
         if (refDetails.refdId.indexOf(root) !== 0) {
           Object.keys(refDeps).forEach(function (prop) {
-            walkRefs(refDetails.refdId, refDetails.refdId + prop.substr(1), refPath.concat(pathFromPtr(prop)));
+            walkRefs(refDetails.refdId, refDetails.refdId + prop.substr(1), refPath.concat(_pathFromPtr(prop)));
           });
         }
       }
@@ -1038,7 +1037,7 @@ function resolveRefs (obj, options) {
           return;
         }
 
-        walkRefs(refsRoot, refPtr, pathFromPtr(refPtr.substr(refsRoot.length)));
+        walkRefs(refsRoot, refPtr, _pathFromPtr(refPtr.substr(refsRoot.length)));
       });
 
       // Sanitize the reference details
@@ -1062,7 +1061,7 @@ function resolveRefs (obj, options) {
   return allTasks;
 }
 
-function resolveRefsAt (location, options) {
+function _resolveRefsAt (location, options) {
   var allTasks = Promise.resolve();
 
   allTasks = allTasks
@@ -1092,10 +1091,10 @@ function resolveRefsAt (location, options) {
 
       // Set the sub document path if necessary
       if (!_.isUndefined(uriDetails.fragment)) {
-        cOptions.subDocPath = pathFromPtr(decodeURI(uriDetails.fragment));
+        cOptions.subDocPath = _pathFromPtr(decodeURI(uriDetails.fragment));
       }
 
-      return resolveRefs(res, cOptions)
+      return _resolveRefs(res, cOptions)
         .then(function (res2) {
           return {
             refs: res2.refs,
@@ -1117,7 +1116,7 @@ function resolveRefsAt (location, options) {
 
 /**
  * A number of functions exported below are used within the exported functions.  Typically, I would use a function
- * declaration _(with documenation)_ above and then just export a reference to the function but due to a bug in JSDoc
+ * declaration _(with documentation)_ above and then just export a reference to the function but due to a bug in JSDoc
  * (https://github.com/jsdoc3/jsdoc/issues/679), this breaks the generated API documentation and TypeScript
  * declarations.  So that's why each `module.exports` below basically just wraps a call to the function declaration.
  */
@@ -1125,9 +1124,9 @@ function resolveRefsAt (location, options) {
  /**
  * Clears the internal cache of remote documents, reference details, etc.
  */
-module.exports.clearCache = function () {
+export function clearCache () {
   remoteCache = {};
-};
+}
 
 /**
  * Takes an array of path segments and decodes the JSON Pointer tokens in them.
@@ -1140,9 +1139,9 @@ module.exports.clearCache = function () {
  *
  * @see {@link https://tools.ietf.org/html/rfc6901#section-3}
  */
-module.exports.decodePath = function (path) {
-  return decodePath(path);
-};
+export function decodePath (path) {
+  return _decodePath(path);
+}
 
 /**
  * Takes an array of path segments and encodes the special JSON Pointer characters in them.
@@ -1155,9 +1154,9 @@ module.exports.decodePath = function (path) {
  *
  * @see {@link https://tools.ietf.org/html/rfc6901#section-3}
  */
-module.exports.encodePath = function (path) {
-  return encodePath(path);
-};
+export function encodePath (path) {
+  return _encodePath(path);
+}
 
 /**
  * Finds JSON References defined within the provided array/object.
@@ -1178,9 +1177,9 @@ module.exports.encodePath = function (path) {
  * // Finding all invalid references
  * var invalidRefs = JsonRefs.findRefs(obj, {filter: 'invalid', includeInvalid: true});
  */
-module.exports.findRefs = function (obj, options) {
-  return findRefs(obj, options);
-};
+export function findRefs (obj, options) {
+  return _findRefs(obj, options);
+}
 
 /**
  * Finds JSON References defined within the document at the provided location.
@@ -1211,9 +1210,9 @@ module.exports.findRefs = function (obj, options) {
  *     console.log(err.stack);
  *   });
  */
-module.exports.findRefsAt = function (location, options) {
-  return findRefsAt(location, options);
-};
+export function findRefsAt (location, options) {
+  return _findRefsAt(location, options);
+}
 
 /**
  * Returns detailed information about the JSON Reference.
@@ -1222,9 +1221,9 @@ module.exports.findRefsAt = function (location, options) {
  *
  * @returns {module:json-refs.UnresolvedRefDetails} the detailed information
  */
-module.exports.getRefDetails = function (obj) {
-  return getRefDetails(obj);
-};
+export function getRefDetails (obj) {
+  return _getRefDetails(obj);
+}
 
 /**
  * Returns whether the argument represents a JSON Pointer.
@@ -1257,9 +1256,9 @@ module.exports.getRefDetails = function (obj) {
  *   }
  * }
  */
-module.exports.isPtr = function (ptr, throwWithDetails) {
-  return isPtr(ptr, throwWithDetails);
-};
+export function isPtr (ptr, throwWithDetails) {
+  return _isPtr(ptr, throwWithDetails);
+}
 
 /**
  * Returns whether the argument represents a JSON Reference.
@@ -1294,9 +1293,9 @@ module.exports.isPtr = function (ptr, throwWithDetails) {
  *   }
  * }
  */
-module.exports.isRef = function (obj, throwWithDetails) {
-  return isRef(obj, throwWithDetails);
-};
+export function isRef (obj, throwWithDetails) {
+  return _isRef(obj, throwWithDetails);
+}
 
 /**
  * Returns an array of path segments for the provided JSON Pointer.
@@ -1307,9 +1306,9 @@ module.exports.isRef = function (obj, throwWithDetails) {
  *
  * @throws {Error} if the provided `ptr` argument is not a JSON Pointer
  */
-module.exports.pathFromPtr = function (ptr) {
-  return pathFromPtr(ptr);
-};
+export function pathFromPtr (ptr) {
+  return _pathFromPtr(ptr);
+}
 
 /**
  * Returns a JSON Pointer for the provided array of path segments.
@@ -1323,9 +1322,9 @@ module.exports.pathFromPtr = function (ptr) {
  *
  * @throws {Error} if the `path` argument is not an array
  */
-module.exports.pathToPtr = function (path, hashPrefix) {
-  return pathToPtr(path, hashPrefix);
-};
+export function pathToPtr (path, hashPrefix) {
+  return _pathToPtr(path, hashPrefix);
+}
 
 /**
  * Finds JSON References defined within the provided array/object and resolves them.
@@ -1352,9 +1351,9 @@ module.exports.pathToPtr = function (path, hashPrefix) {
  *     console.log(err.stack);
  *   });
  */
-module.exports.resolveRefs = function (obj, options) {
-  return resolveRefs(obj, options);
-};
+export function resolveRefs (obj, options) {
+  return _resolveRefs(obj, options);
+}
 
 /**
  * Resolves JSON References defined within the document at the provided location.
@@ -1384,6 +1383,6 @@ module.exports.resolveRefs = function (obj, options) {
  *     console.log(err.stack);
  *   });
  */
-module.exports.resolveRefsAt = function (location, options) {
-  return resolveRefsAt(location, options);
-};
+export function resolveRefsAt (location, options) {
+  return _resolveRefsAt(location, options);
+}

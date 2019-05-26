@@ -26,10 +26,11 @@
 
 'use strict';
 
-var JsonRefs = require('..');
 var program = require('commander');
-var pkg = require('../package.json');
 var YAML = require('js-yaml');
+
+var JsonRefs = require('..');
+var pkg = require('../package.json');
 
 // Load promises polyfill if necessary
 /* istanbul ignore if */
