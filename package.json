@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "gulp": "gulp",
-    "test": "gulp test"
+    "test": "gulp test",
+    "snyk-protect": "snyk protect",
+    "prepare": "npm run snyk-protect"
   },
   "author": {
     "name": "Jeremy Whitlock",
@@ -75,6 +77,8 @@
     "native-promise-only": "^0.8.1",
     "path-loader": "^1.0.10",
     "slash": "^2.0.0",
-    "uri-js": "^4.2.2"
-  }
+    "uri-js": "^4.2.2",
+    "snyk": "^1.189.0"
+  },
+  "snyk": true
 }
