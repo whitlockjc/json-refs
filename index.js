@@ -770,7 +770,7 @@ function isPtr (ptr, throwWithDetails) {
 }
 
 function isRef (obj, throwWithDetails) {
-  return isRefLike(obj, throwWithDetails) && getRefDetails(obj, throwWithDetails).type !== 'invalid';
+  return isRefLike(obj, throwWithDetails) && getRefDetails(obj).type !== 'invalid';
 }
 
 function pathFromPtr (ptr) {
