@@ -1,5 +1,9 @@
 ## Release Notes
 
+### TBD
+
+* Fix a bug where `.` and `..` in relative references could be represented wrongly in `refDetails.fqURI`
+
 ### v3.0.13 (2019-04-01)
 
 * Upgrade `path-loader` so that the location being resolved is passed to `options.loaderOptions.processContent`

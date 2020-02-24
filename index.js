@@ -649,7 +649,6 @@ function findRefsAt (location, options) {
     .then(function (res) {
       var cacheEntry = _.cloneDeep(remoteCache[options.location]);
       var cOptions = _.cloneDeep(options);
-      var uriDetails = parseURI(options.location);
 
       if (_.isUndefined(cacheEntry.refs)) {
         // Do not filter any references so the cache is complete
@@ -664,12 +663,6 @@ function findRefsAt (location, options) {
       // Add the filter options back
       if (!_.isUndefined(options.filter)) {
         cOptions.filter = options.filter;
-      }
-
-      if (!_.isUndefined(uriDetails.fragment)) {
-        cOptions.subDocPath = pathFromPtr(decodeURI(uriDetails.fragment));
-      } else if (!_.isUndefined(uriDetails.subDocPath)) {
-        cOptions.subDocPath = options.subDocPath;
       }
 
       // This will use the cache so don't worry about calling it twice
@@ -691,44 +684,43 @@ function getRefDetails (obj) {
   var uriDetails;
 
   try {
-    if (isRefLike(obj, true)) {
-      cacheKey = obj.$ref;
-      uriDetails = uriDetailsCache[cacheKey];
+    // This will throw so the result doesn't matter
+    isRefLike(obj, true);
 
-      if (_.isUndefined(uriDetails)) {
-        uriDetails = uriDetailsCache[cacheKey] = parseURI(cacheKey);
-      }
+    cacheKey = obj.$ref;
+    uriDetails = uriDetailsCache[cacheKey];
 
-      details.uri = cacheKey;
-      details.uriDetails = uriDetails;
+    if (_.isUndefined(uriDetails)) {
+      uriDetails = uriDetailsCache[cacheKey] = parseURI(cacheKey);
+    }
 
-      if (_.isUndefined(uriDetails.error)) {
-        details.type = getRefType(details);
+    details.uri = cacheKey;
+    details.uriDetails = uriDetails;
 
-        // Validate the JSON Pointer
-        try {
-          if (['#', '/'].indexOf(cacheKey[0]) > -1) {
-            isPtr(cacheKey, true);
-          } else if (cacheKey.indexOf('#') > -1) {
-            isPtr(uriDetails.fragment, true);
-          }
-        } catch (err) {
-          details.error = err.message;
-          details.type = 'invalid';
+    if (_.isUndefined(uriDetails.error)) {
+      details.type = getRefType(details);
+
+      // Validate the JSON Pointer
+      try {
+        if (['#', '/'].indexOf(cacheKey[0]) > -1) {
+          isPtr(cacheKey, true);
+        } else if (cacheKey.indexOf('#') > -1) {
+          isPtr(uriDetails.fragment, true);
         }
-      } else {
-        details.error = details.uriDetails.error;
+      } catch (err) {
+        details.error = err.message;
         details.type = 'invalid';
       }
-
-      // Identify warning
-      extraKeys = getExtraRefKeys(obj);
-
-      if (extraKeys.length > 0) {
-        details.warning = 'Extra JSON Reference properties will be ignored: ' + extraKeys.join(', ');
-      }
     } else {
+      details.error = details.uriDetails.error;
       details.type = 'invalid';
+    }
+
+    // Identify warning
+    extraKeys = getExtraRefKeys(obj);
+
+    if (extraKeys.length > 0) {
+      details.warning = 'Extra JSON Reference properties will be ignored: ' + extraKeys.join(', ');
     }
   } catch (err) {
     details.error = err.message;
@@ -1009,11 +1001,11 @@ function resolveRefs (obj, options) {
           // we need to replace each URI segment in reverse order.
           _.times(uriSegments.length - 1, function (time) {
             var nSeg = uriSegments[uriSegments.length - time - 1];
+            var pSeg = uriSegments[uriSegments.length - time];
             var fqSegIndex = fqURISegments.length - time - 1;
-            var fqSeg = fqURISegments[fqSegIndex];
 
-            if (nSeg === '.' || nSeg === '..') {
-              nSeg = fqSeg;
+            if (nSeg === '.' || nSeg === '..' || pSeg === '..') {
+              return;
             }
 
             fqURISegments[fqSegIndex] = nSeg;
@@ -1087,15 +1079,7 @@ function resolveRefsAt (location, options) {
       return getRemoteDocument(options.location, options);
     })
     .then(function (res) {
-      var cOptions = _.cloneDeep(options);
-      var uriDetails = parseURI(options.location);
-
-      // Set the sub document path if necessary
-      if (!_.isUndefined(uriDetails.fragment)) {
-        cOptions.subDocPath = pathFromPtr(decodeURI(uriDetails.fragment));
-      }
-
-      return resolveRefs(res, cOptions)
+      return resolveRefs(res, options)
         .then(function (res2) {
           return {
             refs: res2.refs,

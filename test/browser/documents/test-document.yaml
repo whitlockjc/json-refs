@@ -111,6 +111,8 @@ remote:
     $ref: './test-types.yaml#/definitions/Person'
   relative-with-hash3:
     $ref: './test-types.yaml#/missing'
+  relative-with-inline-relative-path:
+    $ref: './nested/../test-types.yaml#/definitions/Integer'
 
 # A reference with extra properties that should produce a warning
 warning:

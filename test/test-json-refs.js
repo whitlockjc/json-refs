@@ -502,6 +502,14 @@ describe('json-refs API', function () {
             error: new Error('JSON Pointer points to missing location: ./test-types.yaml#/missing'),
             missing: true
           },
+          '#/remote/relative-with-inline-relative-path': {
+            def: testDocument.remote['relative-with-inline-relative-path'],
+            fqURI: './test-types.yaml#/definitions/Integer',
+            uri: testDocument.remote['relative-with-inline-relative-path'].$ref,
+            uriDetails: URI.parse(testDocument.remote['relative-with-inline-relative-path'].$ref),
+            type: 'relative',
+            value: testTypesDocument.definitions.Integer
+          },
           '#/remote/relative/child': {
             def: testNestedDocument.child,
             fqURI: './nested/test-nested-1.yaml',
@@ -724,12 +732,20 @@ describe('json-refs API', function () {
                 }
               }
             },
-            'relative-with-hash3': testDocument.remote['relative-with-hash3']
+            'relative-with-hash3': testDocument.remote['relative-with-hash3'],
+            'relative-with-inline-relative-path': testTypesDocument.definitions.Integer
           },
           warning: testDocument.project.name
         };
       })
       .then(done, done);
+  });
+
+  // This is here for code coverage
+  describe('#clearCache', function () {
+    it('should not throw', function () {
+      JsonRefs.clearCache();
+    });
   });
 
   describe('#decodePath', function () {
@@ -800,6 +816,7 @@ describe('json-refs API', function () {
       '#/remote/relative-with-hash': testDocument.remote['relative-with-hash'],
       '#/remote/relative-with-hash2': testDocument.remote['relative-with-hash2'],
       '#/remote/relative-with-hash3': testDocument.remote['relative-with-hash3'],
+      '#/remote/relative-with-inline-relative-path': testDocument.remote['relative-with-inline-relative-path'],
       '#/warning': testDocument.warning
     };
 
@@ -845,7 +862,8 @@ describe('json-refs API', function () {
             '#/remote/relative-missing',
             '#/remote/relative-with-hash',
             '#/remote/relative-with-hash2',
-            '#/remote/relative-with-hash3'
+            '#/remote/relative-with-hash3',
+            '#/remote/relative-with-inline-relative-path'
           ]);
         });
 
@@ -861,7 +879,8 @@ describe('json-refs API', function () {
             '#/remote/relative-missing',
             '#/remote/relative-with-hash',
             '#/remote/relative-with-hash2',
-            '#/remote/relative-with-hash3'
+            '#/remote/relative-with-hash3',
+            '#/remote/relative-with-inline-relative-path'
           ]);
         });
       });
@@ -1332,7 +1351,8 @@ describe('json-refs API', function () {
               'relative-missing': testDocument.remote['relative-missing'],
               'relative-with-hash': testDocument.remote['relative-with-hash'],
               'relative-with-hash2': testDocument.remote['relative-with-hash2'],
-              'relative-with-hash3': testDocument.remote['relative-with-hash3']
+              'relative-with-hash3': testDocument.remote['relative-with-hash3'],
+              'relative-with-inline-relative-path': testDocument.remote['relative-with-inline-relative-path']
             },
             warning: testDocument.warning
           });
