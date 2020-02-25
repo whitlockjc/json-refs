@@ -57,7 +57,7 @@ var globalHelp = [
 ].join('\n');
 
 var helpHelp = [
-  'Usage: help [options] [command]',
+  'Usage: json-refs help [options] [command]',
   '',
   'Display help information',
   '',
@@ -67,7 +67,7 @@ var helpHelp = [
 ].join('\n');
 
 var resolveHelp = [
-  'Usage: resolve [options] <location>',
+  'Usage: json-refs resolve [options] <location>',
   '',
   'Prints document at location with its JSON References resolved',
   '',
@@ -189,7 +189,7 @@ describe('json-refs CLI', function () {
     it('no arguments', function (done) {
       executeJsonRefs(['resolve'], function (stderr, stdout) {
         assert.equal(stderr, [
-          'error: missing required argument `location\'',
+          'error: missing required argument \'location\'',
           '',
         ].join('\n'));
         assert.equal(stdout, '');

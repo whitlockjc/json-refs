@@ -1,6 +1,6 @@
 ## Release Notes
 
-### TBD
+### v3.0.14 (2020-02-25)
 
 * Fix a bug where `.` and `..` in relative references could be represented wrongly in `refDetails.fqURI`
 * Fix a bug where locally-circular references to itself is identified

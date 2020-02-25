@@ -26,6 +26,9 @@
 
 'use strict';
 
+// Set here so that commander does the right thing
+process.stdout.columns = 120;
+
 var JsonRefs = require('..');
 var program = require('commander');
 var pkg = require('../package.json');
@@ -57,7 +60,7 @@ function optionArrayAppender (values) {
 
 function handleUnknownCommand (command) {
   // Using log instead of error since commander.js uses console.log for help output
-  console.log(program._name + ' does not support the ' + command + ' command.');
+  console.log(program._name + ' does not support the ' + command.parent.args[0] + ' command.');
 
   program.outputHelp();
 };
