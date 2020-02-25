@@ -1,5 +1,10 @@
 ## Release Notes
 
+### v3.0.15 (2020-02-25)
+
+* Fix a regression where a reference to the original JSON Reference defintion was not available in the resolution
+metadata *(Issue #176)*
+
 ### v3.0.14 (2020-02-25)
 
 * Fix a bug where `.` and `..` in relative references could be represented wrongly in `refDetails.fqURI`

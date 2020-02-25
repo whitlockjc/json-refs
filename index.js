@@ -677,7 +677,7 @@ function findRefsAt (location, options) {
 
 function getRefDetails (obj) {
   var details = {
-    def: _.cloneDeep(obj)
+    def: obj
   };
   var cacheKey;
   var extraKeys;
