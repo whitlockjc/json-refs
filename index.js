@@ -340,7 +340,7 @@ function buildRefModel (document, options, metadata) {
       metadata.deps[docDepKey][refPtr === subDocPtr ? '#' : refPtr.replace(subDocPtr + '/', '#/')] = refdKey;
 
       // Do not process directly-circular references (to an ancestor or self)
-      if (refKey.indexOf(refdKey + '/') === 0) {
+      if (refKey.indexOf(refdKey + '/') === 0 || refKey === refdKey) {
         refDetails.circular = true;
 
         return;
@@ -677,7 +677,7 @@ function findRefsAt (location, options) {
 
 function getRefDetails (obj) {
   var details = {
-    def: obj
+    def: _.cloneDeep(obj)
   };
   var cacheKey;
   var extraKeys;
@@ -913,7 +913,7 @@ function resolveRefs (obj, options) {
           // Resolve reference if valid
           if (_.isUndefined(refDetails.error) && _.isUndefined(refDetails.missing)) {
             if (!options.resolveCirculars && refDetails.circular) {
-              refDetails.value = refDetails.def;
+              refDetails.value = _.cloneDeep(refDetails.def);
             } else {
               try {
                 refDetails.value = findValue(dDocument, pathFromPtr(depParts[1]));
@@ -1034,9 +1034,16 @@ function resolveRefs (obj, options) {
       });
 
       // Sanitize the reference details
-      _.forOwn(results.refs, function (refDetails) {
+      _.forOwn(allRefs, function (refDetails, refPtr) {
         // Delete the reference id used for dependency tracking and circular identification
         delete refDetails.refdId;
+
+        // For locally-circular references, update the $ref to be fully qualified (Issue #175)
+        if (refDetails.circular && refDetails.type === 'local') {
+          refDetails.value.$ref = refDetails.fqURI;
+
+          setValue(results.docs[fullLocation], pathFromPtr(refPtr), refDetails.value);
+        }
 
         // To avoid the error message being URI encoded/decoded by mistake, replace the current JSON Pointer with the
         // value in the JSON Reference definition.

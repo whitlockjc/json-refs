@@ -44,10 +44,12 @@ var testDocumentLocation = path.join(typeof window === 'undefined' ?
                                        'base/browser/documents',
                                      'test-document.yaml');
 // These variables do not use documentBase because doing so breaks browserify's brfs transform
-var circularRoot = YAML.safeLoad(fs.readFileSync(path.join(__dirname, 'browser', 'documents', 'circular-root.yaml'),
-                                                 'utf-8'));
 var circularChild = YAML.safeLoad(fs.readFileSync(path.join(__dirname, 'browser', 'documents', 'circular-child.yaml'),
                                                   'utf-8'));
+var circularLocal = YAML.safeLoad(fs.readFileSync(path.join(__dirname, 'browser', 'documents', 'circular-local.yaml'),
+                                                  'utf-8'));
+var circularRoot = YAML.safeLoad(fs.readFileSync(path.join(__dirname, 'browser', 'documents', 'circular-root.yaml'),
+                                                 'utf-8'));
 var personDocument = require('./browser/documents/{id}/person.json');
 var testDocument = YAML.safeLoad(fs.readFileSync(path.join(__dirname, 'browser', 'documents', 'test-document.yaml'),
                                                  'utf-8'));
@@ -258,7 +260,7 @@ describe('json-refs API', function () {
       family: {
         type: 'array',
         items: {
-          $ref: '#/definitions/Person'
+          $ref: './test-types.yaml#/definitions/Person'
         }
       },
       name: testTypesDocument.definitions.String
@@ -656,7 +658,9 @@ describe('json-refs API', function () {
             uri: testTypesDocument.definitions.Person.properties.family.items.$ref,
             uriDetails: URI.parse(testTypesDocument.definitions.Person.properties.family.items.$ref),
             type: 'local',
-            value: expectedPersonValue.properties.family.items,
+            value: {
+              $ref: './test-types.yaml#/definitions/Person'
+            },
             circular: true
           }
         };
@@ -728,7 +732,9 @@ describe('json-refs API', function () {
                 age: testTypesDocument.definitions.Integer,
                 family: {
                   type: 'array',
-                  items: testTypesDocument.definitions.Person.properties.family.items
+                  items: {
+                    $ref: './test-types.yaml#/definitions/Person'
+                  }
                 }
               }
             },
@@ -1562,6 +1568,61 @@ describe('json-refs API', function () {
   });
 
   describe('issues', function () {
+    describe('Issue #175', function () {
+      it('should locally-circular references in remote documents relative', function (done) {
+        var doc = {
+          'remote-with-local-circulars': {
+            $ref: './circular-local.yaml'
+          }
+        };
+
+        JsonRefs.resolveRefs(doc, {
+          loaderOptions: {
+            processContent: yamlContentProcessor
+          },
+          location: path.join(path.dirname(testDocumentLocation), 'root.json')
+        })
+          .then(function (res) {
+            var eResolved = {
+              'remote-with-local-circulars': {
+                definitions: {
+                  root: {
+                    $ref: './circular-local.yaml#'
+                  },
+                  self: {
+                    $ref: './circular-local.yaml#/definitions/self'
+                  }
+                }
+              }
+            };
+
+            // Prior tests were required to be modified to pass now that this change was in place.  While this test
+            // isn't mandatory, explicit testing is nice for visibility.
+            assert.deepEqual(res.resolved, eResolved);
+            assert.deepEqual(Object.keys(res.refs), [
+              '#/remote-with-local-circulars',
+              '#/remote-with-local-circulars/definitions/root',
+              '#/remote-with-local-circulars/definitions/self'
+            ]);
+
+            assert.deepEqual(res.refs['#/remote-with-local-circulars'].def, doc['remote-with-local-circulars']);
+            assert.deepEqual(res.refs['#/remote-with-local-circulars'].value,
+                             eResolved['remote-with-local-circulars']);
+
+            assert.deepEqual(res.refs['#/remote-with-local-circulars/definitions/root'].def,
+                             circularLocal.definitions.root);
+            assert.deepEqual(res.refs['#/remote-with-local-circulars/definitions/root'].value,
+                             eResolved['remote-with-local-circulars'].definitions.root);
+
+            assert.deepEqual(res.refs['#/remote-with-local-circulars/definitions/self'].def,
+                             circularLocal.definitions.self);
+            assert.deepEqual(res.refs['#/remote-with-local-circulars/definitions/self'].value,
+                             eResolved['remote-with-local-circulars'].definitions.self);
+          })
+          .then(done, done);
+      });
+    });
+
     describe('Issue #157', function () {
       it('should pass location to loaderOptions.processContent', function (done) {
         var location = 'https://rawgit.com/apigee-127/swagger-tools/master/samples/2.0/petstore.json';

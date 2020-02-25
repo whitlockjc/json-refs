@@ -1,0 +1,5 @@
+definitions:
+  root:
+    $ref: '#'
+  self:
+    $ref: '#/definitions/self'

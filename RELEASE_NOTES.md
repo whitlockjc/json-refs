@@ -3,6 +3,9 @@
 ### TBD
 
 * Fix a bug where `.` and `..` in relative references could be represented wrongly in `refDetails.fqURI`
+* Fix a bug where locally-circular references to itself is identified
+* Fix a bug where when locally-circular references in relative/remote documents are handled inappropriately such that
+the local reference is left intact instead of representing in a relative way *(Issue #175)*
 
 ### v3.0.13 (2019-04-01)
 
