@@ -71,7 +71,7 @@
     "commander": "~4.1.1",
     "graphlib": "^2.1.8",
     "js-yaml": "^3.13.1",
-    "lodash": "^4.17.15",
+    "lodash": "^4.17.17",
     "native-promise-only": "^0.8.1",
     "path-loader": "^1.0.10",
     "slash": "^3.0.0",
