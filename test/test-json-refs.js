@@ -24,15 +24,13 @@
  * THE SOFTWARE.
  */
 
-'use strict';
-
-var _ = require('lodash');
-var assert = require('assert');
-var fs = require('fs');
-var JsonRefs = require('../');
-var path = require('path');
-var URI = require('uri-js');
-var YAML = require('js-yaml');
+import _ from 'lodash';
+import assert from 'assert';
+import fs from 'fs';
+import * as JsonRefs from '../src';
+import path from 'path';
+import * as URI from 'uri-js';
+import YAML from 'js-yaml';
 
 var ofTypeError = new TypeError('options.filter must be an Array, a Function of a String');
 var osdpTypeError = new TypeError('options.subDocPath must be an Array of path segments or a valid JSON Pointer');

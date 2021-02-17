@@ -29,7 +29,7 @@
 // Set here so that commander does the right thing
 process.stdout.columns = 120;
 
-var JsonRefs = require('..');
+var JsonRefs = require('../dist/json-refs.cjs');
 var program = require('commander');
 var pkg = require('../package.json');
 var YAML = require('js-yaml');

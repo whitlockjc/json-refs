@@ -2,12 +2,7 @@
  * Various utilities for JSON References *(http://tools.ietf.org/html/draft-pbryan-zyp-json-ref-03)* and
  * JSON Pointers *(https://tools.ietf.org/html/rfc6901)*.
  */
-declare module 'json-refs' {
-    /**
-     * Clears the internal cache of remote documents, reference details, etc.
-     */
-    export function clearCache(): void;
-
+declare module ' {
     /**
      * Takes an array of path segments and decodes the JSON Pointer tokens in them.
      * @param path - The array of path segments
@@ -15,7 +10,7 @@ declare module 'json-refs' {
      * @throws if the path is not an `Array`
      * @see
      */
-    export function decodePath(path: string[]): string[];
+    function decodePath(path: string[]): string[];
 
     /**
      * Takes an array of path segments and encodes the special JSON Pointer characters in them.
@@ -24,7 +19,7 @@ declare module 'json-refs' {
      * @throws if the path is not an `Array`
      * @see
      */
-    export function encodePath(path: string[]): string[];
+    function encodePath(path: string[]): string[];
 
     /**
      * Finds JSON References defined within the provided array/object.
@@ -34,7 +29,7 @@ declare module 'json-refs' {
      *          *(fragment version)* to where the JSON Reference is defined and whose values are {@link UnresolvedRefDetails}.
      * @throws when the input arguments fail validation or if `options.subDocPath` points to an invalid location
      */
-    export function findRefs(obj: any[] | object, options?: JsonRefsOptions): { [key: string]: (UnresolvedRefDetails|undefined) };
+    function findRefs(obj: any[] | object, options?: JsonRefsOptions): { [key: string]: (UnresolvedRefDetails|undefined) };
 
     /**
      * Finds JSON References defined within the document at the provided location.
@@ -49,14 +44,14 @@ declare module 'json-refs' {
      *          when `options.subDocPath` points to an invalid location or when the location argument points to an unloadable
      *          resource
      */
-    export function findRefsAt(location: string, options?: JsonRefsOptions): Promise<RetrievedRefsResults>;
+    function findRefsAt(location: string, options?: JsonRefsOptions): Promise<RetrievedRefsResults>;
 
     /**
      * Returns detailed information about the JSON Reference.
      * @param obj - The JSON Reference definition
      * @returns the detailed information
      */
-    export function getRefDetails(obj: object): UnresolvedRefDetails;
+    function getRefDetails(obj: object): UnresolvedRefDetails;
 
     /**
      * Returns whether the argument represents a JSON Pointer.
@@ -72,7 +67,7 @@ declare module 'json-refs' {
      * @throws when the provided value is invalid and the `throwWithDetails` argument is `true`
      * @see
      */
-    export function isPtr(ptr: string, throwWithDetails?: boolean): boolean;
+    function isPtr(ptr: string, throwWithDetails?: boolean): boolean;
 
     /**
      * Returns whether the argument represents a JSON Reference.
@@ -90,7 +85,7 @@ declare module 'json-refs' {
      * @throws when the provided value is invalid and the `throwWithDetails` argument is `true`
      * @see
      */
-    export function isRef(obj: object, throwWithDetails?: boolean): boolean;
+    function isRef(obj: object, throwWithDetails?: boolean): boolean;
 
     /**
      * Returns an array of path segments for the provided JSON Pointer.
@@ -98,7 +93,7 @@ declare module 'json-refs' {
      * @returns the path segments
      * @throws if the provided `ptr` argument is not a JSON Pointer
      */
-    export function pathFromPtr(ptr: string): string[];
+    function pathFromPtr(ptr: string): string[];
 
     /**
      * Returns a JSON Pointer for the provided array of path segments.
@@ -109,7 +104,7 @@ declare module 'json-refs' {
      * @returns the corresponding JSON Pointer
      * @throws if the `path` argument is not an array
      */
-    export function pathToPtr(path: string[], hashPrefix?: boolean): string;
+    function pathToPtr(path: string[], hashPrefix?: boolean): string;
 
     /**
      * Finds JSON References defined within the provided array/object and resolves them.
@@ -120,7 +115,7 @@ declare module 'json-refs' {
      *          when `options.subDocPath` points to an invalid location or when the location argument points to an unloadable
      *          resource
      */
-    export function resolveRefs(obj: any[] | object, options?: JsonRefsOptions): Promise<ResolvedRefsResults>;
+    function resolveRefs(obj: any[] | object, options?: JsonRefsOptions): Promise<ResolvedRefsResults>;
 
     /**
      * Resolves JSON References defined within the document at the provided location.
@@ -135,7 +130,12 @@ declare module 'json-refs' {
      *          validation, when `options.subDocPath` points to an invalid location or when the location argument points to an
      *          unloadable resource
      */
-    export function resolveRefsAt(location: string, options?: JsonRefsOptions): Promise<RetrievedResolvedRefsResults>;
+    function resolveRefsAt(location: string, options?: JsonRefsOptions): Promise<RetrievedResolvedRefsResults>;
+
+    /**
+     * Clears the internal cache of remote documents, reference details, etc.
+     */
+    function clearCache(): void;
 
     /**
      * The options used for various JsonRefs APIs.
@@ -195,7 +195,7 @@ declare module 'json-refs' {
      * @param path - The path to the JSON Reference
      * @returns whether the JSON Reference should be filtered *(out)* or not
      */
-    export type RefDetailsFilter = (refDetails: UnresolvedRefDetails, path: string[])=>boolean;
+    type RefDetailsFilter = (refDetails: UnresolvedRefDetails, path: string[])=>boolean;
 
     /**
      * Simple function used to pre-process a JSON Reference like object.
@@ -203,7 +203,7 @@ declare module 'json-refs' {
      * @param path - The path to the JSON Reference like object
      * @returns the processed JSON Reference like object
      */
-    export type RefPreProcessor = (obj: object, path: string[])=>object;
+    type RefPreProcessor = (obj: object, path: string[])=>object;
 
     /**
      * Simple function used to post-process a JSON Reference details.
@@ -211,7 +211,7 @@ declare module 'json-refs' {
      * @param path - The path to the JSON Reference
      * @returns the processed JSON Reference details object
      */
-    export type RefPostProcessor = (refDetails: UnresolvedRefDetails, path: string[])=>object;
+    type RefPostProcessor = (refDetails: UnresolvedRefDetails, path: string[])=>object;
 
     /**
      * Detailed information about resolved JSON References.

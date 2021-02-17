@@ -1,6 +1,5 @@
 /* Karma configuration for standalone build */
-
-'use strict';
+const webpack = require('webpack');
 
 module.exports = function (config) {
   console.log();
@@ -10,8 +9,8 @@ module.exports = function (config) {
   config.set({
     autoWatch: false,
     basePath: '..',
-    browsers: ['PhantomJS'],
-    frameworks: ['mocha'],
+    browsers: ['jsdom'],
+    frameworks: ['webpack', 'mocha'],
     reporters: ['mocha'],
     singleRun: true,
     files: [
@@ -26,10 +25,10 @@ module.exports = function (config) {
       }
     },
     plugins: [
+      'karma-jsdom-launcher',
       'karma-mocha',
       'karma-mocha-reporter',
-      'karma-phantomjs-launcher',
-      'karma-webpack'
+      'karma-webpack',
     ],
     preprocessors: {
       'test-json-refs.js': ['webpack']
@@ -40,22 +39,33 @@ module.exports = function (config) {
         rules: [
           {
             test: /\.js$/,
-            loader: 'transform-loader?brfs'
-          },
-          {
-            test: /\.js$/,
-            use: {
-              loader: 'babel-loader',
-              options: {
-                presets: ['@babel/env']
-              }
+            loader: 'babel-loader',
+            options: {
+              presets: ['@babel/env'],
+              plugins: ['babel-plugin-static-fs']
             }
           }
         ]
       },
       node: {
-        fs: 'empty'
-      }
+        global: true,
+      },
+      resolve: {
+        fallback: {
+          'path': require.resolve('path-browserify'),
+          'querystring': require.resolve('query-string'),
+          'assert': require.resolve('assert'),
+          'buffer': require.resolve('buffer'),
+        }
+      },
+      plugins: [
+        new webpack.ProvidePlugin({
+          process: 'process',
+        }),
+        // new webpack.DefinePlugin({
+        //   global: 'window'
+        // })
+      ]
     },
     webpackMiddleware: {
       stats: 'errors-only'
