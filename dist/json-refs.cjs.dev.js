@@ -1,10 +1,23 @@
-import _ from 'lodash';
-import gl from 'graphlib';
-import path from 'path';
-import PathLoader from 'path-loader';
-import qs from 'querystring';
-import slash from 'slash';
-import { parse, serialize } from 'uri-js';
+'use strict';
+
+Object.defineProperty(exports, '__esModule', { value: true });
+
+var _ = require('lodash');
+var gl = require('graphlib');
+var path = require('path');
+var PathLoader = require('path-loader');
+var qs = require('querystring');
+var slash = require('slash');
+var URI = require('uri-js');
+
+function _interopDefault (e) { return e && e.__esModule ? e : { 'default': e }; }
+
+var ___default = /*#__PURE__*/_interopDefault(_);
+var gl__default = /*#__PURE__*/_interopDefault(gl);
+var path__default = /*#__PURE__*/_interopDefault(path);
+var PathLoader__default = /*#__PURE__*/_interopDefault(PathLoader);
+var qs__default = /*#__PURE__*/_interopDefault(qs);
+var slash__default = /*#__PURE__*/_interopDefault(slash);
 
 /*
  * The MIT License (MIT)
@@ -54,39 +67,39 @@ function combineQueryParams(qs1, qs2) {
   var combined = {};
 
   function mergeQueryParams(obj) {
-    _.forOwn(obj, function (val, key) {
+    ___default['default'].forOwn(obj, function (val, key) {
       combined[key] = val;
     });
   }
 
-  mergeQueryParams(qs.parse(qs1 || ''));
-  mergeQueryParams(qs.parse(qs2 || ''));
-  return Object.keys(combined).length === 0 ? undefined : qs.stringify(combined);
+  mergeQueryParams(qs__default['default'].parse(qs1 || ''));
+  mergeQueryParams(qs__default['default'].parse(qs2 || ''));
+  return Object.keys(combined).length === 0 ? undefined : qs__default['default'].stringify(combined);
 }
 
 function combineURIs(u1, u2) {
   // Convert Windows paths
-  if (_.isString(u1)) {
-    u1 = slash(u1);
+  if (___default['default'].isString(u1)) {
+    u1 = slash__default['default'](u1);
   }
 
-  if (_.isString(u2)) {
-    u2 = slash(u2);
+  if (___default['default'].isString(u2)) {
+    u2 = slash__default['default'](u2);
   }
 
-  var u2Details = parseURI(_.isUndefined(u2) ? '' : u2);
+  var u2Details = parseURI(___default['default'].isUndefined(u2) ? '' : u2);
   var u1Details;
   var combinedDetails;
 
   if (remoteUriTypes.indexOf(u2Details.reference) > -1) {
     combinedDetails = u2Details;
   } else {
-    u1Details = _.isUndefined(u1) ? undefined : parseURI(u1);
+    u1Details = ___default['default'].isUndefined(u1) ? undefined : parseURI(u1);
 
-    if (!_.isUndefined(u1Details)) {
+    if (!___default['default'].isUndefined(u1Details)) {
       combinedDetails = u1Details; // Join the paths
 
-      combinedDetails.path = slash(path.join(u1Details.path, u2Details.path)); // Join query parameters
+      combinedDetails.path = slash__default['default'](path__default['default'].join(u1Details.path, u2Details.path)); // Join query parameters
 
       combinedDetails.query = combineQueryParams(u1Details.query, u2Details.query);
     } else {
@@ -97,7 +110,7 @@ function combineURIs(u1, u2) {
 
   combinedDetails.fragment = undefined; // For relative URIs, add back the '..' since it was removed above
 
-  return (remoteUriTypes.indexOf(combinedDetails.reference) === -1 && combinedDetails.path.indexOf('../') === 0 ? '../' : '') + serialize(combinedDetails);
+  return (remoteUriTypes.indexOf(combinedDetails.reference) === -1 && combinedDetails.path.indexOf('../') === 0 ? '../' : '') + URI.serialize(combinedDetails);
 }
 
 function findAncestors(obj, path) {
@@ -122,7 +135,7 @@ function isRemote(refDetails) {
 }
 
 function isValid(refDetails) {
-  return _.isUndefined(refDetails.error) && refDetails.type !== 'invalid';
+  return ___default['default'].isUndefined(refDetails.error) && refDetails.type !== 'invalid';
 }
 
 function findValue(obj, path) {
@@ -168,18 +181,18 @@ function getRemoteDocument(url, options) {
   var cacheEntry = remoteCache[url];
   var allTasks = Promise.resolve();
 
-  var loaderOptions = _.cloneDeep(options.loaderOptions || {});
+  var loaderOptions = ___default['default'].cloneDeep(options.loaderOptions || {});
 
-  if (_.isUndefined(cacheEntry)) {
+  if (___default['default'].isUndefined(cacheEntry)) {
     // If there is no content processor, default to processing the raw response as JSON
-    if (_.isUndefined(loaderOptions.processContent)) {
+    if (___default['default'].isUndefined(loaderOptions.processContent)) {
       loaderOptions.processContent = function (res, callback) {
         callback(undefined, JSON.parse(res.text));
       };
     } // Attempt to load the resource using path-loader
 
 
-    allTasks = PathLoader.load(decodeURI(url), loaderOptions); // Update the cache
+    allTasks = PathLoader__default['default'].load(decodeURI(url), loaderOptions); // Update the cache
 
     allTasks = allTasks.then(function (res) {
       remoteCache[url] = {
@@ -195,7 +208,7 @@ function getRemoteDocument(url, options) {
   } else {
     // Return the cached version
     allTasks = allTasks.then(function () {
-      if (_.isError(cacheEntry.error)) {
+      if (___default['default'].isError(cacheEntry.error)) {
         throw cacheEntry.error;
       } else {
         return cacheEntry.value;
@@ -205,7 +218,7 @@ function getRemoteDocument(url, options) {
 
 
   allTasks = allTasks.then(function (res) {
-    return _.cloneDeep(res);
+    return ___default['default'].cloneDeep(res);
   });
   return allTasks;
 }
@@ -214,9 +227,9 @@ function isRefLike(obj, throwWithDetails) {
   var refLike = true;
 
   try {
-    if (!_.isPlainObject(obj)) {
+    if (!___default['default'].isPlainObject(obj)) {
       throw new Error('obj is not an Object');
-    } else if (!_.isString(obj.$ref)) {
+    } else if (!___default['default'].isString(obj.$ref)) {
       throw new Error('obj.$ref is not a String');
     }
   } catch (err) {
@@ -231,8 +244,8 @@ function isRefLike(obj, throwWithDetails) {
 }
 
 function makeAbsolute(location) {
-  if (location.indexOf('://') === -1 && !path.isAbsolute(location)) {
-    return path.resolve(process.cwd(), location);
+  if (location.indexOf('://') === -1 && !path__default['default'].isAbsolute(location)) {
+    return path__default['default'].resolve(process.cwd(), location);
   } else {
     return location;
   }
@@ -242,16 +255,16 @@ function makeRefFilter(options) {
   var refFilter;
   var validTypes;
 
-  if (_.isArray(options.filter) || _.isString(options.filter)) {
-    validTypes = _.isString(options.filter) ? [options.filter] : options.filter;
+  if (___default['default'].isArray(options.filter) || ___default['default'].isString(options.filter)) {
+    validTypes = ___default['default'].isString(options.filter) ? [options.filter] : options.filter;
 
     refFilter = function refFilter(refDetails) {
       // Check the exact type or for invalid URIs, check its original type
       return validTypes.indexOf(refDetails.type) > -1 || validTypes.indexOf(getRefType(refDetails)) > -1;
     };
-  } else if (_.isFunction(options.filter)) {
+  } else if (___default['default'].isFunction(options.filter)) {
     refFilter = options.filter;
-  } else if (_.isUndefined(options.filter)) {
+  } else if (___default['default'].isUndefined(options.filter)) {
     refFilter = function refFilter() {
       return true;
     };
@@ -265,11 +278,11 @@ function makeRefFilter(options) {
 function makeSubDocPath(options) {
   var subDocPath;
 
-  if (_.isArray(options.subDocPath)) {
+  if (___default['default'].isArray(options.subDocPath)) {
     subDocPath = options.subDocPath;
-  } else if (_.isString(options.subDocPath)) {
+  } else if (___default['default'].isString(options.subDocPath)) {
     subDocPath = pathFromPtr(options.subDocPath);
-  } else if (_.isUndefined(options.subDocPath)) {
+  } else if (___default['default'].isUndefined(options.subDocPath)) {
     subDocPath = [];
   }
 
@@ -283,29 +296,29 @@ function markMissing(refDetails, err) {
 
 function parseURI(uri) {
   // We decode first to avoid doubly encoding
-  return parse(uri);
+  return URI.parse(uri);
 }
 
 function buildRefModel(document, options, metadata) {
   var allTasks = Promise.resolve();
   var subDocPtr = pathToPtr(options.subDocPath);
   var absLocation = makeAbsolute(options.location);
-  var relativeBase = path.dirname(options.location);
+  var relativeBase = path__default['default'].dirname(options.location);
   var docDepKey = absLocation + subDocPtr;
   var refs;
   var rOptions; // Store the document in the metadata if necessary
 
-  if (_.isUndefined(metadata.docs[absLocation])) {
+  if (___default['default'].isUndefined(metadata.docs[absLocation])) {
     metadata.docs[absLocation] = document;
   } // If there are no dependencies stored for the location+subDocPath, we've never seen it before and will process it
 
 
-  if (_.isUndefined(metadata.deps[docDepKey])) {
+  if (___default['default'].isUndefined(metadata.deps[docDepKey])) {
     metadata.deps[docDepKey] = {}; // Find the references based on the options
 
     refs = findRefs(document, options); // Iterate over the references and process
 
-    _.forOwn(refs, function (refDetails, refPtr) {
+    ___default['default'].forOwn(refs, function (refDetails, refPtr) {
       var refKey = makeAbsolute(options.location) + refPtr;
       var refdKey = refDetails.refdId = decodeURI(makeAbsolute(isRemote(refDetails) ? combineURIs(relativeBase, refDetails.uri) : options.location) + '#' + (refDetails.uri.indexOf('#') > -1 ? refDetails.uri.split('#')[1] : '')); // Record reference metadata
 
@@ -326,8 +339,8 @@ function buildRefModel(document, options, metadata) {
       } // Prepare the options for subsequent processDocument calls
 
 
-      rOptions = _.cloneDeep(options);
-      rOptions.subDocPath = _.isUndefined(refDetails.uriDetails.fragment) ? [] : pathFromPtr(decodeURI(refDetails.uriDetails.fragment)); // Resolve the reference
+      rOptions = ___default['default'].cloneDeep(options);
+      rOptions.subDocPath = ___default['default'].isUndefined(refDetails.uriDetails.fragment) ? [] : pathFromPtr(decodeURI(refDetails.uriDetails.fragment)); // Resolve the reference
 
       if (isRemote(refDetails)) {
         // Delete filter.options because all remote references should be fully resolved
@@ -339,7 +352,7 @@ function buildRefModel(document, options, metadata) {
             var rAbsLocation = makeAbsolute(nOptions.location);
             var rDoc = nMetadata.docs[rAbsLocation];
 
-            if (_.isUndefined(rDoc)) {
+            if (___default['default'].isUndefined(rDoc)) {
               // We have no cache so we must retrieve the document
               return getRemoteDocument(rAbsLocation, nOptions)["catch"](function (err) {
                 // Store the response in the document cache
@@ -365,7 +378,7 @@ function buildRefModel(document, options, metadata) {
 
       allTasks = allTasks.then(function (nMetadata, nOptions, nRefDetails) {
         return function (doc) {
-          if (_.isError(doc)) {
+          if (___default['default'].isError(doc)) {
             markMissing(nRefDetails, doc);
           } else {
             // Wrapped in a try/catch since findRefs throws
@@ -399,7 +412,7 @@ function walk(ancestors, node, path, fn) {
   } // Call the iteratee
 
 
-  if (_.isFunction(fn)) {
+  if (___default['default'].isFunction(fn)) {
     processChildren = fn(ancestors, node, path);
   } // We do not process circular objects again
 
@@ -408,12 +421,12 @@ function walk(ancestors, node, path, fn) {
     ancestors.push(node);
 
     if (processChildren !== false) {
-      if (_.isArray(node)) {
+      if (___default['default'].isArray(node)) {
         node.forEach(function (member, index) {
           walkItem(member, index.toString());
         });
-      } else if (_.isObject(node)) {
-        _.forOwn(node, function (cNode, key) {
+      } else if (___default['default'].isObject(node)) {
+        ___default['default'].forOwn(node, function (cNode, key) {
           walkItem(cNode, key);
         });
       }
@@ -427,41 +440,41 @@ function validateOptions(options, obj) {
   var locationParts;
   var shouldDecode;
 
-  if (_.isUndefined(options)) {
+  if (___default['default'].isUndefined(options)) {
     // Default to an empty options object
     options = {};
   } else {
     // Clone the options so we do not alter the ones passed in
-    options = _.cloneDeep(options);
+    options = ___default['default'].cloneDeep(options);
   }
 
-  if (!_.isObject(options)) {
+  if (!___default['default'].isObject(options)) {
     throw new TypeError('options must be an Object');
-  } else if (!_.isUndefined(options.resolveCirculars) && !_.isBoolean(options.resolveCirculars)) {
+  } else if (!___default['default'].isUndefined(options.resolveCirculars) && !___default['default'].isBoolean(options.resolveCirculars)) {
     throw new TypeError('options.resolveCirculars must be a Boolean');
-  } else if (!_.isUndefined(options.filter) && !_.isArray(options.filter) && !_.isFunction(options.filter) && !_.isString(options.filter)) {
+  } else if (!___default['default'].isUndefined(options.filter) && !___default['default'].isArray(options.filter) && !___default['default'].isFunction(options.filter) && !___default['default'].isString(options.filter)) {
     throw new TypeError('options.filter must be an Array, a Function of a String');
-  } else if (!_.isUndefined(options.includeInvalid) && !_.isBoolean(options.includeInvalid)) {
+  } else if (!___default['default'].isUndefined(options.includeInvalid) && !___default['default'].isBoolean(options.includeInvalid)) {
     throw new TypeError('options.includeInvalid must be a Boolean');
-  } else if (!_.isUndefined(options.location) && !_.isString(options.location)) {
+  } else if (!___default['default'].isUndefined(options.location) && !___default['default'].isString(options.location)) {
     throw new TypeError('options.location must be a String');
-  } else if (!_.isUndefined(options.refPreProcessor) && !_.isFunction(options.refPreProcessor)) {
+  } else if (!___default['default'].isUndefined(options.refPreProcessor) && !___default['default'].isFunction(options.refPreProcessor)) {
     throw new TypeError('options.refPreProcessor must be a Function');
-  } else if (!_.isUndefined(options.refPostProcessor) && !_.isFunction(options.refPostProcessor)) {
+  } else if (!___default['default'].isUndefined(options.refPostProcessor) && !___default['default'].isFunction(options.refPostProcessor)) {
     throw new TypeError('options.refPostProcessor must be a Function');
-  } else if (!_.isUndefined(options.subDocPath) && !_.isArray(options.subDocPath) && !isPtr(options.subDocPath)) {
+  } else if (!___default['default'].isUndefined(options.subDocPath) && !___default['default'].isArray(options.subDocPath) && !isPtr(options.subDocPath)) {
     // If a pointer is provided, throw an error if it's not the proper type
     throw new TypeError('options.subDocPath must be an Array of path segments or a valid JSON Pointer');
   } // Default to false for allowing circulars
 
 
-  if (_.isUndefined(options.resolveCirculars)) {
+  if (___default['default'].isUndefined(options.resolveCirculars)) {
     options.resolveCirculars = false;
   }
 
   options.filter = makeRefFilter(options); // options.location is not officially supported yet but will be when Issue 88 is complete
 
-  if (_.isUndefined(options.location)) {
+  if (___default['default'].isUndefined(options.location)) {
     options.location = makeAbsolute('./root.json');
   }
 
@@ -482,7 +495,7 @@ function validateOptions(options, obj) {
 
   options.subDocPath = makeSubDocPath(options);
 
-  if (!_.isUndefined(obj)) {
+  if (!___default['default'].isUndefined(obj)) {
     try {
       findValue(obj, options.subDocPath);
     } catch (err) {
@@ -507,12 +520,12 @@ function validateOptions(options, obj) {
 
 
 function decodePath(path) {
-  if (!_.isArray(path)) {
+  if (!___default['default'].isArray(path)) {
     throw new TypeError('path must be an array');
   }
 
   return path.map(function (seg) {
-    if (!_.isString(seg)) {
+    if (!___default['default'].isString(seg)) {
       seg = JSON.stringify(seg);
     }
 
@@ -532,12 +545,12 @@ function decodePath(path) {
  */
 
 function encodePath(path) {
-  if (!_.isArray(path)) {
+  if (!___default['default'].isArray(path)) {
     throw new TypeError('path must be an array');
   }
 
   return path.map(function (seg) {
-    if (!_.isString(seg)) {
+    if (!___default['default'].isString(seg)) {
       seg = JSON.stringify(seg);
     }
 
@@ -567,27 +580,27 @@ function encodePath(path) {
 function findRefs(obj, options) {
   var refs = {}; // Validate the provided document
 
-  if (!_.isArray(obj) && !_.isObject(obj)) {
+  if (!___default['default'].isArray(obj) && !___default['default'].isObject(obj)) {
     throw new TypeError('obj must be an Array or an Object');
   } // Validate options
 
 
   options = validateOptions(options, obj); // Walk the document (or sub document) and find all JSON References
 
-  walk(findAncestors(obj, options.subDocPath), findValue(obj, options.subDocPath), _.cloneDeep(options.subDocPath), function (ancestors, node, path) {
+  walk(findAncestors(obj, options.subDocPath), findValue(obj, options.subDocPath), ___default['default'].cloneDeep(options.subDocPath), function (ancestors, node, path) {
     var processChildren = true;
     var refDetails;
     var refPtr;
 
     if (isRefLike(node)) {
       // Pre-process the node when necessary
-      if (!_.isUndefined(options.refPreProcessor)) {
-        node = options.refPreProcessor(_.cloneDeep(node), path);
+      if (!___default['default'].isUndefined(options.refPreProcessor)) {
+        node = options.refPreProcessor(___default['default'].cloneDeep(node), path);
       }
 
       refDetails = getRefDetails(node); // Post-process the reference details
 
-      if (!_.isUndefined(options.refPostProcessor)) {
+      if (!___default['default'].isUndefined(options.refPostProcessor)) {
         refDetails = options.refPostProcessor(refDetails, path);
       }
 
@@ -641,15 +654,15 @@ function findRefsAt(location, options) {
   var allTasks = Promise.resolve();
   allTasks = allTasks.then(function () {
     // Validate the provided location
-    if (!_.isString(location)) {
+    if (!___default['default'].isString(location)) {
       throw new TypeError('location must be a string');
     }
 
-    if (_.isUndefined(options)) {
+    if (___default['default'].isUndefined(options)) {
       options = {};
     }
 
-    if (_.isObject(options)) {
+    if (___default['default'].isObject(options)) {
       // Add the location to the options for processing/validation
       options.location = location;
     } // Validate options
@@ -658,11 +671,11 @@ function findRefsAt(location, options) {
     options = validateOptions(options);
     return getRemoteDocument(options.location, options);
   }).then(function (res) {
-    var cacheEntry = _.cloneDeep(remoteCache[options.location]);
+    var cacheEntry = ___default['default'].cloneDeep(remoteCache[options.location]);
 
-    var cOptions = _.cloneDeep(options);
+    var cOptions = ___default['default'].cloneDeep(options);
 
-    if (_.isUndefined(cacheEntry.refs)) {
+    if (___default['default'].isUndefined(cacheEntry.refs)) {
       // Do not filter any references so the cache is complete
       delete cOptions.filter;
       delete cOptions.subDocPath;
@@ -671,7 +684,7 @@ function findRefsAt(location, options) {
     } // Add the filter options back
 
 
-    if (!_.isUndefined(options.filter)) {
+    if (!___default['default'].isUndefined(options.filter)) {
       cOptions.filter = options.filter;
     } // This will use the cache so don't worry about calling it twice
 
@@ -705,14 +718,14 @@ function getRefDetails(obj) {
     cacheKey = obj.$ref;
     uriDetails = uriDetailsCache[cacheKey];
 
-    if (_.isUndefined(uriDetails)) {
+    if (___default['default'].isUndefined(uriDetails)) {
       uriDetails = uriDetailsCache[cacheKey] = parseURI(cacheKey);
     }
 
     details.uri = cacheKey;
     details.uriDetails = uriDetails;
 
-    if (_.isUndefined(uriDetails.error)) {
+    if (___default['default'].isUndefined(uriDetails.error)) {
       details.type = getRefType(details); // Validate the JSON Pointer
 
       try {
@@ -780,7 +793,7 @@ function isPtr(ptr, throwWithDetails) {
   var firstChar;
 
   try {
-    if (_.isString(ptr)) {
+    if (___default['default'].isString(ptr)) {
       if (ptr !== '') {
         firstChar = ptr.charAt(0);
 
@@ -878,7 +891,7 @@ function pathFromPtr(ptr) {
  */
 
 function pathToPtr(path, hashPrefix) {
-  if (!_.isArray(path)) {
+  if (!___default['default'].isArray(path)) {
     throw new Error('path must be an Array');
   } // Encode each segment and return
 
@@ -915,14 +928,14 @@ function resolveRefs(obj, options) {
   var allTasks = Promise.resolve();
   allTasks = allTasks.then(function () {
     // Validate the provided document
-    if (!_.isArray(obj) && !_.isObject(obj)) {
+    if (!___default['default'].isArray(obj) && !___default['default'].isObject(obj)) {
       throw new TypeError('obj must be an Array or an Object');
     } // Validate options
 
 
     options = validateOptions(options, obj); // Clone the input so we do not alter it
 
-    obj = _.cloneDeep(obj);
+    obj = ___default['default'].cloneDeep(obj);
   }).then(function () {
     var metadata = {
       deps: {},
@@ -939,23 +952,23 @@ function resolveRefs(obj, options) {
     var allRefs = {};
     var circularPaths = [];
     var circulars = [];
-    var depGraph = new gl.Graph();
+    var depGraph = new gl__default['default'].Graph();
     var fullLocation = makeAbsolute(options.location);
     var refsRoot = fullLocation + pathToPtr(options.subDocPath);
-    var relativeBase = path.dirname(fullLocation); // Identify circulars
+    var relativeBase = path__default['default'].dirname(fullLocation); // Identify circulars
     // Add nodes first
 
     Object.keys(results.deps).forEach(function (node) {
       depGraph.setNode(node);
     }); // Add edges
 
-    _.forOwn(results.deps, function (props, node) {
-      _.forOwn(props, function (dep) {
+    ___default['default'].forOwn(results.deps, function (props, node) {
+      ___default['default'].forOwn(props, function (dep) {
         depGraph.setEdge(node, dep);
       });
     });
 
-    circularPaths = gl.alg.findCycles(depGraph); // Create a unique list of circulars
+    circularPaths = gl__default['default'].alg.findCycles(depGraph); // Create a unique list of circulars
 
     circularPaths.forEach(function (path) {
       path.forEach(function (seg) {
@@ -965,8 +978,8 @@ function resolveRefs(obj, options) {
       });
     }); // Identify circulars
 
-    _.forOwn(results.deps, function (props, node) {
-      _.forOwn(props, function (dep, prop) {
+    ___default['default'].forOwn(results.deps, function (props, node) {
+      ___default['default'].forOwn(props, function (dep, prop) {
         var isCircular = false;
         var refPtr = node + prop.slice(1);
         var refDetails = results.refs[node + prop.slice(1)];
@@ -1011,21 +1024,21 @@ function resolveRefs(obj, options) {
     }); // Resolve the references in reverse order since the current order is top-down
 
 
-    _.forOwn(Object.keys(results.deps).reverse(), function (parentPtr) {
+    ___default['default'].forOwn(Object.keys(results.deps).reverse(), function (parentPtr) {
       var deps = results.deps[parentPtr];
       var pPtrParts = parentPtr.split('#');
       var pDocument = results.docs[pPtrParts[0]];
       var pPtrPath = pathFromPtr(pPtrParts[1]);
 
-      _.forOwn(deps, function (dep, prop) {
+      ___default['default'].forOwn(deps, function (dep, prop) {
         var depParts = dep.split('#');
         var dDocument = results.docs[depParts[0]];
         var dPtrPath = pPtrPath.concat(pathFromPtr(prop));
         var refDetails = results.refs[pPtrParts[0] + pathToPtr(dPtrPath)]; // Resolve reference if valid
 
-        if (_.isUndefined(refDetails.error) && _.isUndefined(refDetails.missing)) {
+        if (___default['default'].isUndefined(refDetails.error) && ___default['default'].isUndefined(refDetails.missing)) {
           if (!options.resolveCirculars && refDetails.circular) {
-            refDetails.value = _.cloneDeep(refDetails.def);
+            refDetails.value = ___default['default'].cloneDeep(refDetails.def);
           } else {
             try {
               refDetails.value = findValue(dDocument, pathFromPtr(depParts[1]));
@@ -1101,7 +1114,7 @@ function resolveRefs(obj, options) {
         uriSegments = refDetails.uri.split('/'); // The fully-qualified URI is unencoded so to keep the original formatting of the URI (encoded vs. unencoded),
         // we need to replace each URI segment in reverse order.
 
-        _.times(uriSegments.length - 1, function (time) {
+        ___default['default'].times(uriSegments.length - 1, function (time) {
           var nSeg = uriSegments[uriSegments.length - time - 1];
           var pSeg = uriSegments[uriSegments.length - time];
           var fqSegIndex = fqURISegments.length - time - 1;
@@ -1134,7 +1147,7 @@ function resolveRefs(obj, options) {
       walkRefs(refsRoot, refPtr, pathFromPtr(refPtr.substr(refsRoot.length)));
     }); // Sanitize the reference details
 
-    _.forOwn(allRefs, function (refDetails, refPtr) {
+    ___default['default'].forOwn(allRefs, function (refDetails, refPtr) {
       // Delete the reference id used for dependency tracking and circular identification
       delete refDetails.refdId; // For locally-circular references, update the $ref to be fully qualified (Issue #175)
 
@@ -1190,15 +1203,15 @@ function resolveRefsAt(location, options) {
   var allTasks = Promise.resolve();
   allTasks = allTasks.then(function () {
     // Validate the provided location
-    if (!_.isString(location)) {
+    if (!___default['default'].isString(location)) {
       throw new TypeError('location must be a string');
     }
 
-    if (_.isUndefined(options)) {
+    if (___default['default'].isUndefined(options)) {
       options = {};
     }
 
-    if (_.isObject(options)) {
+    if (___default['default'].isObject(options)) {
       // Add the location to the options for processing/validation
       options.location = location;
     } // Validate options
@@ -1232,4 +1245,15 @@ function clearCache() {
   remoteCache = {};
 }
 
-export { clearCache, decodePath, encodePath, findRefs, findRefsAt, getRefDetails, isPtr, isRef, pathFromPtr, pathToPtr, resolveRefs, resolveRefsAt };
+exports.clearCache = clearCache;
+exports.decodePath = decodePath;
+exports.encodePath = encodePath;
+exports.findRefs = findRefs;
+exports.findRefsAt = findRefsAt;
+exports.getRefDetails = getRefDetails;
+exports.isPtr = isPtr;
+exports.isRef = isRef;
+exports.pathFromPtr = pathFromPtr;
+exports.pathToPtr = pathToPtr;
+exports.resolveRefs = resolveRefs;
+exports.resolveRefsAt = resolveRefsAt;

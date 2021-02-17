@@ -15,7 +15,7 @@
     "test:node": "mocha --require @babel/register --reporter spec",
     "postinstall": "preconstruct dev",
     "docs": "export SOURCE=$(cat src/index.js lib/typedefs.js)  && jsdoc2md --source \"$SOURCE\" -c jsdoc.config.json > docs/API.md && shx --silent sed -i \"s/module:json-refs.UnresolvedRefDetails/[UnresolvedRefDetails](#module_json-refs.UnresolvedRefDetails)/g\" docs/API.md",
-    "build:types": " npx jsdoc -t node_modules/@otris/jsdoc-tsd -d index.d.ts src/index.js lib/typedefs.js && shx sed -i \"s/module:json-refs.//g\" index.d.ts && shx sed -i \"s/json-refs.//g\" index.d.ts"
+    "build:types": "npx jsdoc -t node_modules/@otris/jsdoc-tsd -d index.d.ts src/index.js lib/typedefs.js && shx sed -i \"s/module:json-refs\\.//g\" index.d.ts && shx sed -i \"s/json-refs\\.//g\" index.d.ts"
   },
   "author": {
     "name": "Jeremy Whitlock",
