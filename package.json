@@ -4,6 +4,7 @@
   "description": "Various utilities for JSON References (http://tools.ietf.org/html/draft-pbryan-zyp-json-ref-03).",
   "main": "dist/json-refs.cjs.js",
   "module": "dist/json-refs.esm.js",
+  "browser": "dist/json-refs-min.js",
   "scripts": {
     "gulp": "gulp",
     "lint": "eslint src",
