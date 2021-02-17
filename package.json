@@ -5,9 +5,8 @@
   "main": "dist/json-refs.cjs.js",
   "module": "dist/json-refs.esm.js",
   "scripts": {
-    "gulp": "gulp",
     "lint": "eslint src",
-    "build": "npm run build:node && npm run build:web",
+    "build": "npm run build:node && npm run build:web && npm run build:types",
     "build:node": "preconstruct build",
     "build:web": "webpack",
     "test": "npm run test:node && npm run test:browser",
@@ -15,7 +14,8 @@
     "test:node": "mocha --require @babel/register --reporter spec",
     "postinstall": "preconstruct dev",
     "docs": "export SOURCE=$(cat src/index.js lib/typedefs.js)  && jsdoc2md --source \"$SOURCE\" -c jsdoc.config.json > docs/API.md && shx --silent sed -i \"s/module:json-refs.UnresolvedRefDetails/[UnresolvedRefDetails](#module_json-refs.UnresolvedRefDetails)/g\" docs/API.md",
-    "build:types": "npx jsdoc -t node_modules/@otris/jsdoc-tsd -d index.d.ts src/index.js lib/typedefs.js && shx sed -i \"s/module:json-refs\\.//g\" index.d.ts && shx sed -i \"s/json-refs\\.//g\" index.d.ts"
+    "build:types": "npx jsdoc -t node_modules/@otris/jsdoc-tsd -d index.d.ts src/index.js lib/typedefs.js && shx sed -i \"s/module:json-refs\\.//g\" index.d.ts && shx sed -i \"s/json-refs\\.//g\" index.d.ts",
+    "prepublishOnly": "npm run build && npm run docs"
   },
   "author": {
     "name": "Jeremy Whitlock",
