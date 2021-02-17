@@ -1,39 +1,8 @@
-'use strict';
-
+var webpack = require('webpack');
 var path = require('path');
 
 module.exports = [{
-  devtool: 'inline-source-map',
-  entry: './index.js',
-  mode: 'development',
-  module: {
-    rules: [
-      {
-        test: /\.js$/,
-        use: {
-          loader: 'babel-loader',
-          options: {
-            presets: [
-              ['@babel/env', {
-                targets: 'cover 100%'
-              }]
-            ]
-          }
-        }
-      }
-    ]
-  },
-  name: 'json-refs',
-  optimization: {
-    minimize: false
-  },
-  output: {
-    path: path.resolve(__dirname, 'dist'),
-    filename: 'json-refs.js',
-    library: 'JsonRefs'
-  }
-}, {
-  entry: './index.js',
+  entry: './src/index.js',
   mode: 'production',
   module: {
     rules: [
@@ -46,7 +15,8 @@ module.exports = [{
               ['@babel/env', {
                 targets: 'cover 100%'
               }]
-            ]
+            ],
+            plugins: ['babel-plugin-lodash']
           }
         }
       }
@@ -60,5 +30,18 @@ module.exports = [{
     path: path.resolve(__dirname, 'dist'),
     filename: 'json-refs-min.js',
     library: 'JsonRefs'
-  }
+  },
+  resolve: {
+    fallback: {
+      'path': require.resolve('path-browserify'),
+      'querystring': require.resolve('query-string'),
+      'assert': require.resolve('assert'),
+      'buffer': require.resolve('buffer'),
+    }
+  },
+  plugins: [
+    new webpack.ProvidePlugin({
+      process: 'process',
+    }),
+  ]
 }];

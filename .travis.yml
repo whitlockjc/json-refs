@@ -1,8 +1,10 @@
-branches:
-  only:
-    - master
 language: node_js
 node_js:
-  - "node"
-  - "6"
+  - "10"
+  - "12"
+  - "14"
 sudo: false
+script:
+  - npm run build
+  - npm run test
+  - npm run lint

@@ -10,6 +10,10 @@
   globals:
     Promise: true
 
+  parserOptions:
+    sourceType: module
+    ecmaVersion: 2016
+
   rules:
     array-bracket-spacing: [2, "never"]
     brace-style: [2, "1tbs"]

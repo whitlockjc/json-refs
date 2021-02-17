@@ -24,16 +24,15 @@
  * THE SOFTWARE.
  */
 
-'use strict';
+import _ from 'lodash';
+import assert from 'assert';
+import * as JsonRefs from '../src/index';
+import path from 'path';
+import YAML from 'js-yaml';
+import http from 'http';
+import cp from 'child_process'
 
-var _ = require('lodash');
-var assert = require('assert');
-var cp = require('child_process');
-var http = require('http');
-var JsonRefs = require('..');
-var path = require('path');
-var pkg = require('../package.json');
-var YAML = require('js-yaml');
+const pkg = require('../package.json');
 
 var jsonRefsOptions = {
   loaderOptions: {

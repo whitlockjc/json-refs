@@ -2,6 +2,7 @@
 **/npm-debug.log
 
 coverage/
+dist/
 .tern-project
 .idea/
 .vscode/
