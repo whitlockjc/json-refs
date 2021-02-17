@@ -1,3 +1,4 @@
+var webpack = require('webpack');
 var path = require('path');
 
 module.exports = [{
@@ -37,5 +38,10 @@ module.exports = [{
       'assert': require.resolve('assert'),
       'buffer': require.resolve('buffer'),
     }
-  }
+  },
+  plugins: [
+    new webpack.ProvidePlugin({
+      process: 'process',
+    }),
+  ]
 }];

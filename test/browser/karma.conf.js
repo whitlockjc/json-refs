@@ -62,9 +62,6 @@ module.exports = function (config) {
         new webpack.ProvidePlugin({
           process: 'process',
         }),
-        // new webpack.DefinePlugin({
-        //   global: 'window'
-        // })
       ]
     },
     webpackMiddleware: {
