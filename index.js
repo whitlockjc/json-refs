@@ -318,7 +318,7 @@ function buildRefModel (document, options, metadata) {
     // Iterate over the references and process
     _.forOwn(refs, function (refDetails, refPtr) {
       var refKey = makeAbsolute(options.location) + refPtr;
-      var refdKey = refDetails.refdId = decodeURI(makeAbsolute(isRemote(refDetails) ?
+      var refdKey = refDetails.refdId = decodeURIComponent(makeAbsolute(isRemote(refDetails) ?
                                                        combineURIs(relativeBase, refDetails.uri) :
                                                        options.location) + '#' +
                                           (refDetails.uri.indexOf('#') > -1 ?
@@ -351,7 +351,7 @@ function buildRefModel (document, options, metadata) {
 
       rOptions.subDocPath = _.isUndefined(refDetails.uriDetails.fragment) ?
                                      [] :
-                                     pathFromPtr(decodeURI(refDetails.uriDetails.fragment));
+                                     pathFromPtr(decodeURIComponent(refDetails.uriDetails.fragment));
 
       // Resolve the reference
       if (isRemote(refDetails)) {
@@ -905,7 +905,7 @@ function resolveRefs (obj, options) {
         var pPtrPath = pathFromPtr(pPtrParts[1]);
 
         _.forOwn(deps, function (dep, prop) {
-          var depParts = dep.split('#');
+          var depParts = splitFragment(dep);
           var dDocument = results.docs[depParts[0]];
           var dPtrPath = pPtrPath.concat(pathFromPtr(prop));
           var refDetails = results.refs[pPtrParts[0] + pathToPtr(dPtrPath)];
@@ -1097,6 +1097,18 @@ function resolveRefsAt (location, options) {
     });
 
   return allTasks;
+}
+
+// splits a fragment from a URI using the first hash found
+function splitFragment(uri) {
+  var hash = uri.indexOf('#');
+  if (hash < 0) {
+    return [uri];
+  }
+  var parts = [];
+  parts.push(uri.substring(0, hash));
+  parts.push(uri.substring(hash + 1));
+  return parts;
 }
 
 /**

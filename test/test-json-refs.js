@@ -2096,5 +2096,32 @@ describe('json-refs API', function () {
         });
       });
     });
+
+    describe('Issue #186', function () {
+      var delims = [':', '/', '?', '#', '[', ']', '@', '!', '$', '&', '\'', '(', ')', '*', '+', ',', ';', '='];
+      delims.forEach(function (delim) {
+        it('should resolve URI encoded reference containing ' + delim, function (done) {
+          var name = delim + 'other';
+          var encname;
+          if (delim === '/') {
+            encname = '~1other';
+          } else {
+            encname = encodeURIComponent(name);
+          }
+          var doc = {
+            entity: {
+              $ref: '#/definitions/' + encname
+            },
+            definitions: {}
+          };
+          doc.definitions[name] = { type: 'string' }
+          JsonRefs.resolveRefs(doc)
+            .then(function (res) {
+              assert.deepEqual(res.resolved.entity, doc.definitions[name]);
+            })
+            .then(done, done);
+        });
+      });
+    });
   });
 });
