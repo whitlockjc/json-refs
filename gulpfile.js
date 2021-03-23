@@ -91,8 +91,8 @@ gulp.task('dist', function (done) {
 
 gulp.task('docs-ts-raw', function (done) {
   gulp.src([
-    './index.js',
-    './lib/typedefs.js'
+    './lib/typedefs.js',
+    './index.js'
   ])
     .pipe($.jsdoc3({
       opts: {
@@ -112,6 +112,8 @@ gulp.task('docs-ts', ['docs-ts-raw'], function () {
     .pipe($.replace('module:json-refs~', ''))
     .pipe($.replace('module:json-refs.', ''))
     .pipe($.replace('Promise.<', 'Promise<'))
+    .pipe($.replace(/declare\smodule\s'uri-js'\s{(?:[\s\S])+?{(?:[\s\S])+?}(?:[\s\S])+?}/, 'import { URIComponents } from \'uri-js\';'))
+    .pipe($.replace('module:uri-js~', ''))
     .pipe(gulp.dest('.'));
 });
 
