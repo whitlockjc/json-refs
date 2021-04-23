@@ -1,5 +1,8 @@
 ## Release Notes
 
+### v3.0.16 (2021-02-23)
+* Fix a bug where `resolveRefs` would fail to dereference URI where fragments were encoded with `:`, `/`, `?`, `#`, `@`, `$`, `&`, `+`, `,`, `;`, `=` *(Issue #186)*
+
 ### v3.0.15 (2020-02-25)
 
 * Fix a regression where a reference to the original JSON Reference defintion was not available in the resolution
