@@ -1,6 +1,8 @@
 name: documents/nested/test-nested.yaml
 child:
   $ref: ./test-nested-1.yaml
+invalid:
+  $ref: 'http://:8080'
 local:
   $ref: '#/name'
 missing:

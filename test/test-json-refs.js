@@ -279,6 +279,7 @@ describe('json-refs API', function () {
       local: testNestedDocument1.name,
       missing: testNestedDocument1.missing
     },
+    invalid: testNestedDocument.invalid,
     local: testNestedDocument.name,
     missing: testNestedDocument.missing
   };
@@ -1374,6 +1375,7 @@ describe('json-refs API', function () {
               value: {
                 name: testNestedDocument.name,
                 child: expectedRelativeValue.child,
+                invalid: testNestedDocument.invalid,
                 local: testNestedDocument.name,
                 missing: testNestedDocument.missing
               },
@@ -1474,6 +1476,13 @@ describe('json-refs API', function () {
             def: testDocument.invalid,
             uri: testDocument.invalid.$ref,
             uriDetails: URI.parse(testDocument.invalid.$ref),
+            error: 'HTTP URIs must have a host.',
+            type: 'invalid'
+          };
+          expectedAllResolvedRefs['#/remote/relative/invalid'] = {
+            def: testNestedDocument.invalid,
+            uri: testNestedDocument.invalid.$ref,
+            uriDetails: URI.parse(testNestedDocument.invalid.$ref),
             error: 'HTTP URIs must have a host.',
             type: 'invalid'
           };

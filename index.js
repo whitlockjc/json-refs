@@ -328,6 +328,9 @@ function buildRefModel (document, options, metadata) {
       // Record reference metadata
       metadata.refs[refKey] = refDetails;
 
+      // Record dependency (relative to the document's sub-document path)
+      metadata.deps[docDepKey][refPtr === subDocPtr ? '#' : refPtr.replace(subDocPtr + '/', '#/')] = refdKey;
+
       // Do not process invalid references
       if (!isValid(refDetails)) {
         return;
@@ -335,9 +338,6 @@ function buildRefModel (document, options, metadata) {
 
       // Record the fully-qualified URI
       refDetails.fqURI = refdKey;
-
-      // Record dependency (relative to the document's sub-document path)
-      metadata.deps[docDepKey][refPtr === subDocPtr ? '#' : refPtr.replace(subDocPtr + '/', '#/')] = refdKey;
 
       // Do not process directly-circular references (to an ancestor or self)
       if (refKey.indexOf(refdKey + '/') === 0 || refKey === refdKey) {
