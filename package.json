@@ -76,5 +76,8 @@
     "path-loader": "^1.0.10",
     "slash": "^3.0.0",
     "uri-js": "^4.2.2"
+  },
+  "overrides": {
+    "graceful-fs": "^4.2.10"
   }
 }
