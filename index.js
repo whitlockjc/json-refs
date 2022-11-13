@@ -1100,12 +1100,14 @@ function resolveRefsAt (location, options) {
 }
 
 // splits a fragment from a URI using the first hash found
-function splitFragment(uri) {
+function splitFragment (uri) {
   var hash = uri.indexOf('#');
+
   if (hash < 0) {
     return [uri];
   }
   var parts = [];
+
   parts.push(uri.substring(0, hash));
   parts.push(uri.substring(hash + 1));
   return parts;
