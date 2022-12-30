@@ -61,7 +61,7 @@
     "karma-mocha-reporter": "^2.2.5",
     "karma-phantomjs-launcher": "^1.0.4",
     "karma-webpack": "^4.0.2",
-    "mocha": "^7.0.1",
+    "mocha": "^10.2.0",
     "phantomjs-prebuilt": "^2.1.16",
     "run-sequence": "^2.2.1",
     "transform-loader": "^0.2.4",
